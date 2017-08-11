@@ -21,16 +21,29 @@
                 ".dothtml",
                 ".dotmaster",
                 ".dotcontrol"
-            ]
+            ],
+            "configuration": "./language-configuration.json"
         }],
         "grammars": [{
             "language": "dotvvm",
             "scopeName": "text.html.dotvvm",
-            "path": "./syntaxes/dotvvm.tmLanguage.json"
+            "path": "./syntaxes/dotvvm.tmLanguage.json",
+            "embeddedLanguages": {
+                "text.html": "html"
+            }
         }]
     },
     "scripts": {
         "postinstall": "node ./node_modules/vscode/bin/install"
+    },
+    "dependencies": {
+        "vscode-languageclient": "3.1.0-alpha.1",
+        "vscode-languageserver-types": "3.0.3",
+        "vscode-css-languageservice": "^2.1.0",
+        "vscode-html-languageservice": "^2.0.5",
+        "vscode-languageserver": "^3.1.0-alpha.1",
+        "vscode-nls": "^2.0.2",
+        "vscode-uri": "^1.0.0"
     },
     "devDependencies": {
         "typescript": "^2.0.3",

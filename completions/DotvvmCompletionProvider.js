@@ -6,9 +6,12 @@ class DotvvmCompletionProvider {
 
     constructor() {
         this.metadata = {};
+        this.projectFiles = {};
         this.loadMetadataFile("dotvvm.json", "DotVVM.Framework.Controls", "dot");
         this.loadMetadataFile("bootstrap.json", "DotVVM.Framework.Controls.Bootstrap", "bs");
+        this.loadMetadataFile("businesspack.json", "DotVVM.BusinessPack", "bp");
     }
+
 
     loadMetadataFile(filename, controlNamespace, tagPrefix) {
         // parse JSON metadata files
@@ -26,7 +29,9 @@ class DotvvmCompletionProvider {
 
     processMetadataFile(data, controlNamespace, tagPrefix) {
         var result = {
-            controls: {}
+            controls: {},
+            controlNamespace: controlNamespace,
+            tagPrefix: tagPrefix
         };
         
         // load all controls
@@ -59,7 +64,7 @@ class DotvvmCompletionProvider {
     provideCompletionItems(document, position, token) {
         // suggest all elements
         if (this.getTextBeforePosition(document, position, 1) === "<") {
-            return this.getElementCompletionItems(); 
+            return this.filterElementCompletionItemsByProject(this.getElementCompletionItems(), document.fileName); 
         }
         
         // suggest elements with specified tag prefix
@@ -141,6 +146,67 @@ class DotvvmCompletionProvider {
 
         var range = new vscode.Range(new vscode.Position(position.line, position.character - length), position);
         return document.getText(range);
+    }
+
+    filterElementCompletionItemsByProject(items, fullPath) {
+        // find or load project file and included libraries
+        var projectFileName = null;
+        for (let projectFile in this.projectFiles) {
+            var projectDir = path.dirname(projectFile);
+            if (fullPath.indexOf(projectDir) === 0) {
+                projectFileName = projectFile;
+                break;
+            }
+        }        
+        var project = this.detectInstalledLibraries(projectFileName || this.findProjectFile(fullPath));
+
+        // filter the results
+        return items.filter(i => project.tagPrefixes.indexOf(i.label.substring(0, i.label.indexOf(":")).toLowerCase()) >= 0);
+    }
+
+    findProjectFile(fullPath) {
+        // finds the csproj file in the same directory or in parent directories
+        var parentDir = path.dirname(fullPath);
+        var projectFile = fs.readdirSync(parentDir).find(f => f.match(/\.csproj/i));
+        if (projectFile) {
+            return path.join(parentDir, projectFile);
+        }
+        
+        if (parentDir != fullPath) {
+            return this.findProjectFile(parentDir);
+        }
+        return;
+    }
+
+    detectInstalledLibraries(projectFile) {
+        if (!projectFile) {
+            // project file not found, return default configuration
+            return {
+                tagPrefixes: ["dot"]
+            };
+        }
+
+        if (this.projectFiles[projectFile]) {
+            // project file found in cache
+            return this.projectFiles[projectFile];
+        }
+        
+        // load project file
+        var _this = this;
+        var data = fs.readFileSync(projectFile, 'utf8');
+
+        // find package or assembly references
+        var result = ["dot"];
+        for (let library in _this.metadata) {
+            if (library !== "dot") {
+                if (data.indexOf(_this.metadata[library].controlNamespace) >= 0) {
+                    result.push(library);
+                }
+            }
+        }
+        return _this.projectFiles[projectFile] = {
+            tagPrefixes: result
+        };
     }
 }
 
