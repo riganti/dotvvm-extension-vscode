@@ -36,7 +36,7 @@ class DotvvmCompletionProvider {
         
         // load all controls
         for (let i = 0; i < data.length; i++) {
-            if (data[i].Namespace === controlNamespace) {
+            if (data[i].Namespace === controlNamespace && !data[i].IsAbstract) {
                 var properties = {};
                 var contentProperties = {};
 
