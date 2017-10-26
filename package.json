@@ -5,7 +5,7 @@
     "version": "0.0.1",
     "publisher": "RIGANTI",
     "engines": {
-        "vscode": "^1.5.0"
+        "vscode": "^1.17.0"
     },
     "categories": [
         "Other"
@@ -13,44 +13,59 @@
     "activationEvents": [
         "onLanguage:dotvvm"
     ],
-    "main": "./extension",
+    "main": "./out/src/extension",
     "contributes": {
-        "languages": [{
-            "id": "dotvvm",
-            "extensions": [
-                ".dothtml",
-                ".dotmaster",
-                ".dotcontrol"
-            ],
-            "configuration": "./language-configuration.json"
-        }],
-        "grammars": [{
-            "language": "dotvvm",
-            "scopeName": "text.html.dotvvm",
-            "path": "./syntaxes/dotvvm.tmLanguage.json",
-            "embeddedLanguages": {
-                "text.html": "html"
+        "languages": [
+            {
+                "id": "dotvvm",
+                "extensions": [
+                    ".dothtml",
+                    ".dotmaster",
+                    ".dotcontrol"
+                ],
+                "configuration": "./language-configuration.json"
             }
-        }]
+        ],
+        "grammars": [
+            {
+                "language": "dotvvm",
+                "scopeName": "text.html.dotvvm",
+                "path": "./syntaxes/dotvvm.tmLanguage.json",
+                "embeddedLanguages": {
+                    "text.html": "html"
+                }
+            }
+        ]
     },
     "scripts": {
-        "postinstall": "node ./node_modules/vscode/bin/install"
+        "vscode:prepublish": "npm run compile",
+        "compile": "tsc -p ./src/tsconfig.json",
+        "watch": "tsc -watch -p",
+        "postinstall": "node ./node_modules/vscode/bin/install",
+        "test": "npm run compile && node ./node_modules/vscode/bin/test"
     },
     "dependencies": {
-        "vscode-languageclient": "3.1.0-alpha.1",
-        "vscode-languageserver-types": "3.0.3",
-        "vscode-css-languageservice": "^2.1.0",
-        "vscode-html-languageservice": "^2.0.5",
-        "vscode-languageserver": "^3.1.0-alpha.1",
+        "babel-eslint": "^8.0.1",
+        "eslint-plugin-react": "^7.4.0",
+        "fs": "0.0.1-security",
+        "path": "^0.12.7",
+        "typescript": "^2.5.3",
+        "vscode-css-languageservice": "^2.1.10",
+        "vscode-html-languageservice": "^2.0.10",
+        "vscode-languageclient": "^3.4.5",
+        "vscode-languageserver": "^3.4.3",
+        "vscode-languageserver-types": "^3.4.0",
         "vscode-nls": "^2.0.2",
-        "vscode-uri": "^1.0.0"
+        "vscode-uri": "^1.0.1",
+        "watch": "^1.0.2"
     },
     "devDependencies": {
-        "typescript": "^2.0.3",
-        "vscode": "^1.0.0",
-        "mocha": "^2.3.3",
-        "eslint": "^3.6.0",
-        "@types/node": "^6.0.40",
-        "@types/mocha": "^2.2.32"
+        "@types/mocha": "^2.2.43",
+        "@types/node": "^8.0.44",
+        "eslint": "^4.9.0",
+        "mocha": "^4.0.1",
+        "typescript": "^2.5.3",
+        "vsce": "^1.31.1",
+        "vscode": "^1.1.5"
     }
 }
