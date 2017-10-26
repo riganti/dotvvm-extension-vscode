@@ -7,13 +7,13 @@ class DotvvmCompletionProvider {
     constructor() {
         this.metadata = {};
         this.projectFiles = {};
-        this.loadMetadataFile("dotvvm.json", "DotVVM.Framework.Controls", "dot");
-        this.loadMetadataFile("bootstrap.json", "DotVVM.Framework.Controls.Bootstrap", "bs");
-        this.loadMetadataFile("businesspack.json", "DotVVM.BusinessPack", "bp");
+        this.loadMetadataFile("dotvvm.json", "DotVVM.Framework.Controls", "dot", "DotVVM");
+        this.loadMetadataFile("bootstrap.json", "DotVVM.Framework.Controls.Bootstrap", "bs","DotVVM.Controls.Bootstrap");
+        this.loadMetadataFile("businesspack.json", "DotVVM.BusinessPack.Controls", "bp","DotVVM.BusinessPack");
     }
 
 
-    loadMetadataFile(filename, controlNamespace, tagPrefix) {
+    loadMetadataFile(filename, controlNamespace, tagPrefix, packageName) {
         // parse JSON metadata files
         var _this = this;
         fs.readFile(path.resolve(__dirname, "../metadata/" + filename), 'utf8', function (err, data) {
@@ -22,16 +22,17 @@ class DotvvmCompletionProvider {
             }
 
             var result = JSON.parse(data);
-            var metadata = _this.processMetadataFile(result, controlNamespace, tagPrefix);
+            var metadata = _this.processMetadataFile(result, controlNamespace, tagPrefix, packageName);
             _this.metadata[tagPrefix] = metadata;
         });
     }
 
-    processMetadataFile(data, controlNamespace, tagPrefix) {
+    processMetadataFile(data, controlNamespace, tagPrefix,packageName) {
         var result = {
             controls: {},
             controlNamespace: controlNamespace,
-            tagPrefix: tagPrefix
+            tagPrefix: tagPrefix,
+            packageName : packageName
         };
         
         // load all controls
@@ -64,10 +65,11 @@ class DotvvmCompletionProvider {
     provideCompletionItems(document, position, token) {
         // suggest all elements
         if (this.getTextBeforePosition(document, position, 1) === "<") {
-            return this.filterElementCompletionItemsByProject(this.getElementCompletionItems(), document.fileName); 
+            var result = this.filterElementCompletionItemsByProject(this.getElementCompletionItems(), document.fileName);
+            return result; 
         }
         
-        // suggest elements with specified tag prefix
+        // suggest elements with specified tag prefixb
         for (let prefix in this.metadata) {
             if (this.getTextBeforePosition(document, position, prefix.length + 2) === ("<" + prefix + ":")) {
                 return this.getElementCompletionItems(prefix); 
@@ -100,7 +102,7 @@ class DotvvmCompletionProvider {
     getElementCompletionItems(filterTagPrefix) {
         var completionItems = [];
         for (let prefix in this.metadata) {
-            if (filterTagPrefix && prefix !== filterTagPrefix) continue;
+        if (filterTagPrefix && prefix !== filterTagPrefix) continue;
 
             for (let control in this.metadata[prefix].controls) {
                 let item = new vscode.CompletionItem(prefix + ":" + control);
@@ -142,7 +144,9 @@ class DotvvmCompletionProvider {
     }
 
     getTextBeforePosition(document, position, length) {
-        if (position.character - length < 0) return "";
+        if (position.character - length < 0) {
+            return ""
+        };
 
         var range = new vscode.Range(new vscode.Position(position.line, position.character - length), position);
         return document.getText(range);
@@ -199,7 +203,7 @@ class DotvvmCompletionProvider {
         var result = ["dot"];
         for (let library in _this.metadata) {
             if (library !== "dot") {
-                if (data.indexOf(_this.metadata[library].controlNamespace) >= 0) {
+                if (data.indexOf(_this.metadata[library].packageName) >= 0) {
                     result.push(library);
                 }
             }
