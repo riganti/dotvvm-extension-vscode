@@ -1,9 +1,9 @@
 {
-    "name": "dotvvm-for-visual-studio-code",
+    "name": "dotvvm-vscode",
     "displayName": "DotVVM for Visual Studio Code",
     "description": "DotVVM support for VS Code",
     "version": "0.0.1",
-    "publisher": "RIGANTI",
+    "publisher": "TomasHerceg",
     "engines": {
         "vscode": "^1.5.0"
     },
