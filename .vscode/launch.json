@@ -10,7 +10,7 @@
             "args": ["--extensionDevelopmentPath=${workspaceRoot}" ],
             "stopOnEntry": false,
             "sourceMaps": true,
-            "outFiles": [ "${workspaceRoot}/out" ],
+            "outFiles": [ "${workspaceRoot}/out/src" ],
             "preLaunchTask": "build",
             "internalConsoleOptions" : "openOnSessionStart"
         },

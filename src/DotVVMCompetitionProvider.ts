@@ -2,9 +2,11 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 
+
 export class DotvvmCompletionProvider {
     private metadata;
     private projectFiles;
+    private test;
 
     constructor() {
         this.metadata = {};
@@ -14,11 +16,12 @@ export class DotvvmCompletionProvider {
         this.loadMetadataFile("businesspack.json", "DotVVM.BusinessPack.Controls", "bp","DotVVM.BusinessPack");
     }
 
-    loadMetadataFile(filename, controlNamespace, tagPrefix, packageName) {
+
+    loadMetadataFile = (filename, controlNamespace, tagPrefix, packageName) =>{
         // parse JSON metadata files
         var _this = this;
         var metadataPath = path.resolve(__dirname, "../../metadata/" + filename);
-        fs.readFile(metadataPath, 'utf8', function (err, data) {
+        fs.readFile(metadataPath, 'utf8', (err, data) => {
             if (err) {
                 throw err;
             }
@@ -28,7 +31,8 @@ export class DotvvmCompletionProvider {
         });
     }
 
-    processMetadataFile(data, controlNamespace, tagPrefix,packageName) {
+
+    processMetadataFile = (data, controlNamespace, tagPrefix,packageName) => {
         var result = {
             controls: {},
             controlNamespace: controlNamespace,
@@ -63,10 +67,10 @@ export class DotvvmCompletionProvider {
         return result;
     }
 
-    provideCompletionItems(document, position, token) {
+    provideCompletionItems = (document, position, token) => {
         // suggest all elements
         if (this.getTextBeforePosition(document, position, 1) === "<") {
-            var result = this.filterElementCompletionItemsByProject(this.getElementCompletionItems(undefined), document.fileName);
+            var result = this.filterElementCompletionItemsByProject(this.getElementCompletionItems(""), document.fileName);
             return result; 
         }
         
@@ -96,14 +100,16 @@ export class DotvvmCompletionProvider {
         return [];
     }
 
-    resolveCompletionItem(item, token) {
+    resolveCompletionItem = (item, token) => {
         return item;
     }
 
-    getElementCompletionItems(filterTagPrefix) {
+    getElementCompletionItems = (filterTagPrefix) => {
         var completionItems = [];
         for (let prefix in this.metadata) {
-        if (filterTagPrefix && prefix !== filterTagPrefix) continue;
+            if (filterTagPrefix && prefix !== filterTagPrefix) {
+                continue;
+            }
 
             for (let control in this.metadata[prefix].controls) {
                 let item = new vscode.CompletionItem(prefix + ":" + control);
@@ -119,12 +125,13 @@ export class DotvvmCompletionProvider {
         return completionItems;
     }
 
-    getAttributeCompletionItems(fullTagName) {
+    getAttributeCompletionItems = (fullTagName) => {
+
+
         var parts = fullTagName.split(":");
         if (parts.length !== 2) {
             return [];
         }
-
         var library = this.metadata[parts[0]];
         if (!library) {
             return [];
@@ -144,16 +151,16 @@ export class DotvvmCompletionProvider {
         return completionItems;
     }
 
-    getTextBeforePosition(document, position, length) {
+    getTextBeforePosition = (document, position, length) => {
         if (position.character - length < 0) {
-            return ""
-        };
+            return "";
 
+        };
         var range = new vscode.Range(new vscode.Position(position.line, position.character - length), position);
         return document.getText(range);
     }
 
-    filterElementCompletionItemsByProject(items, fullPath) {
+    filterElementCompletionItemsByProject = (items, fullPath) => {
         // find or load project file and included libraries
         var projectFileName = null;
         for (let projectFile in this.projectFiles) {
@@ -162,17 +169,26 @@ export class DotvvmCompletionProvider {
                 projectFileName = projectFile;
                 break;
             }
-        }        
-        var project = this.detectInstalledLibraries(projectFileName || this.findProjectFile(fullPath));
+        }
 
+        let project;
+        if(projectFileName === null){
+            project = this.detectInstalledLibraries(projectFileName)
+        }
+        else{
+            project = this.detectInstalledLibraries(this.findProjectFile(fullPath));
+        }
+        
         // filter the results
         return items.filter(i => project.tagPrefixes.indexOf(i.label.substring(0, i.label.indexOf(":")).toLowerCase()) >= 0);
     }
 
-    findProjectFile(fullPath) {
+    findProjectFile= (fullPath) =>{
         // finds the csproj file in the same directory or in parent directories
         var parentDir = path.dirname(fullPath);
-        var projectFile = fs.readdirSync(parentDir).find(f => f.match(/\.csproj/i).length > 0);
+       
+        var dir = fs.readdirSync(parentDir);
+        var projectFile = dir.find(f => f.match(/\.csproj/i).length > 0);
         if (projectFile) {
             return path.join(parentDir, projectFile);
         }
@@ -183,7 +199,7 @@ export class DotvvmCompletionProvider {
         return;
     }
 
-    detectInstalledLibraries(projectFile) {
+    detectInstalledLibraries= (projectFile) => {
         if (!projectFile) {
             // project file not found, return default configuration
             return {
