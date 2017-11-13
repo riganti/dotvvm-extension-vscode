@@ -4,7 +4,7 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "taskName": "build",
+            "label": "build",
             "type": "shell",
             "command": "tsc -p ./tsconfig.json",
             "group": {
@@ -27,11 +27,12 @@
                 "kind": "build",
                 "isDefault": true
             }
-        },
-        {
-            "type": "npm",
-            "script": "install",
-            "problemMatcher": []
         }
+        // ,
+        // {
+        //     "type": "npm",
+        //     "script": "install",
+        //     "problemMatcher": []
+        // }
     ]
 }

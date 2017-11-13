@@ -2,11 +2,11 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 
-
 export class DotvvmCompletionProvider {
     private metadata;
     private projectFiles;
     private test;
+    private resourceToLaunch;
 
     constructor() {
         this.metadata = {};
@@ -14,6 +14,7 @@ export class DotvvmCompletionProvider {
         this.loadMetadataFile("dotvvm.json", "DotVVM.Framework.Controls", "dot", "DotVVM");
         this.loadMetadataFile("bootstrap.json", "DotVVM.Framework.Controls.Bootstrap", "bs","DotVVM.Controls.Bootstrap");
         this.loadMetadataFile("businesspack.json", "DotVVM.BusinessPack.Controls", "bp","DotVVM.BusinessPack");
+      
     }
 
 
@@ -68,12 +69,12 @@ export class DotvvmCompletionProvider {
     }
 
     provideCompletionItems = (document, position, token) => {
-        // suggest all elements
+
         if (this.getTextBeforePosition(document, position, 1) === "<") {
             var result = this.filterElementCompletionItemsByProject(this.getElementCompletionItems(""), document.fileName);
             return result; 
         }
-        
+
         // suggest elements with specified tag prefixb
         for (let prefix in this.metadata) {
             if (this.getTextBeforePosition(document, position, prefix.length + 2) === ("<" + prefix + ":")) {
@@ -82,7 +83,7 @@ export class DotvvmCompletionProvider {
         } 
 
         // suggest attributes
-        if (this.getTextBeforePosition(document, position, 1) == " ") {
+        if (this.getTextBeforePosition(document, position, 1) === " " && !this.isCompletedElementOnLine(document,position)) {
             // find last element name
             var startPosition = new vscode.Position(Math.max(0, position.line - 5), 0);
             var text = document.getText(new vscode.Range(startPosition, position));
@@ -96,12 +97,7 @@ export class DotvvmCompletionProvider {
                 }
             }
         }
-
         return [];
-    }
-
-    resolveCompletionItem = (item, token) => {
-        return item;
     }
 
     getElementCompletionItems = (filterTagPrefix) => {
@@ -110,7 +106,6 @@ export class DotvvmCompletionProvider {
             if (filterTagPrefix && prefix !== filterTagPrefix) {
                 continue;
             }
-
             for (let control in this.metadata[prefix].controls) {
                 let item = new vscode.CompletionItem(prefix + ":" + control);
                 if (filterTagPrefix) {
@@ -151,18 +146,10 @@ export class DotvvmCompletionProvider {
         return completionItems;
     }
 
-    getTextBeforePosition = (document, position, length) => {
-        if (position.character - length < 0) {
-            return "";
-
-        };
-        var range = new vscode.Range(new vscode.Position(position.line, position.character - length), position);
-        return document.getText(range);
-    }
-
     filterElementCompletionItemsByProject = (items, fullPath) => {
         // find or load project file and included libraries
         var projectFileName = null;
+
         for (let projectFile in this.projectFiles) {
             var projectDir = path.dirname(projectFile);
             if (fullPath.indexOf(projectDir) === 0) {
@@ -172,7 +159,7 @@ export class DotvvmCompletionProvider {
         }
 
         let project;
-        if(projectFileName === null){
+        if(projectFileName !== null){
             project = this.detectInstalledLibraries(projectFileName)
         }
         else{
@@ -183,12 +170,26 @@ export class DotvvmCompletionProvider {
         return items.filter(i => project.tagPrefixes.indexOf(i.label.substring(0, i.label.indexOf(":")).toLowerCase()) >= 0);
     }
 
-    findProjectFile= (fullPath) =>{
+    getTextBeforePosition = (document, position, length) => {
+        if (position.character - length < 0) {
+            return "";
+        };
+        var range = new vscode.Range(new vscode.Position(position.line, position.character - length), position);
+        return document.getText(range);
+    }
+
+    isCompletedElementOnLine = (document,position) => {
+        if(document.lineAt(position.line).text.match("/>")){
+            return true
+        }
+        return false;
+    };
+
+    findProjectFile = (fullPath) =>{
         // finds the csproj file in the same directory or in parent directories
         var parentDir = path.dirname(fullPath);
-       
         var dir = fs.readdirSync(parentDir);
-        var projectFile = dir.find(f => f.match(/\.csproj/i).length > 0);
+        var projectFile = dir.find(f => f.match(/\.csproj/i) !== null);
         if (projectFile) {
             return path.join(parentDir, projectFile);
         }
