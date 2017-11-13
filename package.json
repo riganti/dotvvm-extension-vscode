@@ -48,6 +48,7 @@
     "dependencies": {
         "fs": "0.0.1-security",
         "path": "^0.12.7",
+        "typescript": "^2.6.1",        
         "vscode-css-languageservice": "^2.1.10",
         "vscode-html-languageservice": "^2.0.10",
         "vscode-languageclient": "^3.5.0",
