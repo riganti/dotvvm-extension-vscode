@@ -2,7 +2,7 @@
     "name": "dotvvm-for-visual-studio-code",
     "displayName": "DotVVM for Visual Studio Code",
     "description": "DotVVM support for VS Code",
-    "version": "0.0.1",
+    "version": "0.1.0",
     "icon": "images/dotvvm-logo.png",
     "publisher": "RIGANTI",
     "engines": {
@@ -48,22 +48,21 @@
     "dependencies": {
         "fs": "0.0.1-security",
         "path": "^0.12.7",
-        "typescript": "^2.5.3",
         "vscode-css-languageservice": "^2.1.10",
         "vscode-html-languageservice": "^2.0.10",
-        "vscode-languageclient": "^3.4.5",
-        "vscode-languageserver": "^3.4.3",
-        "vscode-languageserver-types": "^3.4.0",
+        "vscode-languageclient": "^3.5.0",
+        "vscode-languageserver": "^3.5.0",
+        "vscode-languageserver-types": "^3.5.0",
         "vscode-nls": "^2.0.2",
         "vscode-uri": "^1.0.1",
         "watch": "^1.0.2"
     },
     "devDependencies": {
         "@types/mocha": "^2.2.43",
-        "@types/node": "^8.0.44",
-        "eslint": "^4.9.0",
+        "@types/node": "^8.0.51",
+        "eslint": "^4.11.0",
         "mocha": "^4.0.1",
-        "typescript": "^2.5.3",
+        "typescript": "^2.6.1",
         "vsce": "^1.31.1",
         "vscode": "^1.1.5"
     }
