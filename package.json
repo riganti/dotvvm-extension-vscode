@@ -3,6 +3,7 @@
     "displayName": "DotVVM for Visual Studio Code",
     "description": "DotVVM support for VS Code",
     "version": "0.0.1",
+    "icon": "images/dotvvm-logo.png",
     "publisher": "RIGANTI",
     "engines": {
         "vscode": "^1.17.0"
