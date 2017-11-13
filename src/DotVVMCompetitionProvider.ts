@@ -5,8 +5,6 @@ import * as fs from 'fs';
 export class DotvvmCompletionProvider {
     private metadata;
     private projectFiles;
-    private test;
-    private resourceToLaunch;
 
     constructor() {
         this.metadata = {};
@@ -14,9 +12,7 @@ export class DotvvmCompletionProvider {
         this.loadMetadataFile("dotvvm.json", "DotVVM.Framework.Controls", "dot", "DotVVM");
         this.loadMetadataFile("bootstrap.json", "DotVVM.Framework.Controls.Bootstrap", "bs","DotVVM.Controls.Bootstrap");
         this.loadMetadataFile("businesspack.json", "DotVVM.BusinessPack.Controls", "bp","DotVVM.BusinessPack");
-      
     }
-
 
     loadMetadataFile = (filename, controlNamespace, tagPrefix, packageName) =>{
         // parse JSON metadata files
@@ -31,7 +27,6 @@ export class DotvvmCompletionProvider {
             _this.metadata[tagPrefix] = metadata;
         });
     }
-
 
     processMetadataFile = (data, controlNamespace, tagPrefix,packageName) => {
         var result = {
@@ -179,10 +174,8 @@ export class DotvvmCompletionProvider {
     }
 
     isCompletedElementOnLine = (document,position) => {
-        if(document.lineAt(position.line).text.match("/>")){
-            return true
-        }
-        return false;
+        var range = new vscode.Range(new vscode.Position(position.line, 0), position);
+        return document.getText(range).match("/>");
     };
 
     findProjectFile = (fullPath) =>{
