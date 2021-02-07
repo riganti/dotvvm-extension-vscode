@@ -2,14 +2,14 @@
     "name": "dotvvm-vscode",
     "displayName": "DotVVM for Visual Studio Code",
     "description": "Adds DotVVM project support in Visual Studio Code",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "icon": "images/dotvvm-logo.png",
     "publisher": "TomasHerceg",
     "engines": {
         "vscode": "^1.17.0"
     },
     "categories": [
-        "Other"
+        "Languages"
     ],
     "activationEvents": [
         "onLanguage:dotvvm"
