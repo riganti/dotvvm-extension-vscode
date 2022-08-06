@@ -25,6 +25,9 @@
         },
         {
           "include": "#literalBindings"
+        },
+        {
+          "include": "#tags"
         }
       ]
     },
@@ -72,6 +75,414 @@
         }
       },
       "contentName": "keyword.operator.dotvvm.binding"
+    },
+    "attributes": {
+      "patterns": [
+        {
+          "include": "#attributes-directives"
+        },
+        {
+          "include": "#attributes-keyvalue"
+        }
+      ]
+    },
+    "attributes-keyvalue": {
+      "begin": "([\\-_$[:alpha:]][_\\-$[:alnum:]]*)",
+      "beginCaptures": {
+        "0": {
+          "patterns": [
+            {
+              "match": ".*",
+              "name": "entity.other.attribute-name.dotvvm"
+            }
+          ]
+        }
+      },
+      "end": "(?=\\s*+[^=\\s])",
+      "name": "meta.attribute.$1.dotvvm",
+      "patterns": [
+        {
+          "begin": "=",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.separator.key-value.dotvvm"
+            }
+          },
+          "end": "(?<=[^\\s=])(?!\\s*=)|(?=/?>)",
+          "patterns": [
+            {
+              "include": "#attributes-value"
+            }
+          ]
+        }
+      ]
+    },
+    "attributes-value": {
+      "patterns": [
+        {
+          "match": "(?:(['\"])([0-9._]+[\\w%]{,4})(\\1))|(?:([0-9._]+[\\w%]{,4})(?=\\s|/?>))",
+          "captures": {
+            "1": {
+              "name": "punctuation.definition.string.begin.dotvvm"
+            },
+            "2": {
+              "name": "constant.numeric.decimal.dotvvm"
+            },
+            "3": {
+              "name": "punctuation.definition.string.end.dotvvm"
+            },
+            "4": {
+              "name": "constant.numeric.decimal.dotvvm"
+            }
+          }
+        },
+        {
+          "match": "([^\\s\"'=<>`/]|/(?!>))+",
+          "name": "string.unquoted.dotvvm",
+          "patterns": []
+        },
+        {
+          "begin": "(['\"])",
+          "end": "\\1",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.begin.dotvvm"
+            }
+          },
+          "endCaptures": {
+            "0": {
+              "name": "punctuation.definition.string.end.dotvvm"
+            }
+          },
+          "name": "string.quoted.dotvvm",
+          "patterns": []
+        }
+      ]
+    },
+    "attributes-directives-keywords": {
+      "patterns": [
+        {
+          "match": "on|use|bind",
+          "name": "keyword.control.dotvvm"
+        },
+        {
+          "match": "transition|in|out|animate",
+          "name": "keyword.other.animation.dotvvm"
+        },
+        {
+          "match": "let",
+          "name": "storage.type.dotvvm"
+        },
+        {
+          "match": "class|style",
+          "name": "entity.other.attribute-name.dotvvm"
+        }
+      ]
+    },
+    "attributes-directives-types": {
+      "patterns": [
+        {
+          "match": "(?<=(on):).*$",
+          "name": "entity.name.type.dotvvm"
+        },
+        {
+          "match": "(?<=(bind):).*$",
+          "name": "variable.parameter.dotvvm"
+        },
+        {
+          "match": "(?<=(use|transition|in|out|animate):).*$",
+          "name": "variable.function.dotvvm"
+        },
+        {
+          "match": "(?<=(let|class|style):).*$",
+          "name": "variable.parameter.dotvvm"
+        }
+      ]
+    },
+    "attributes-directives-types-assigned": {
+      "patterns": [
+        {
+          "match": "(?<=(bind):)this$",
+          "name": "variable.language.dotvvm"
+        },
+        {
+          "match": "(?<=(bind):).*$",
+          "name": "entity.name.type.dotvvm"
+        },
+        {
+          "match": "(?<=(class):).*$",
+          "name": "entity.other.attribute-name.class.dotvvm"
+        },
+        {
+          "match": "(?<=(style):).*$",
+          "name": "support.type.property-name.dotvvm"
+        },
+        {
+          "include": "#attributes-directives-types"
+        }
+      ]
+    },
+    "attributes-directives": {
+      "begin": "(?<!<)(on|use|bind|transition|in|out|animate|let|class|style)(:)(?:((?:--)?[_$[:alpha:]][_\\-$[:alnum:]]*(?=\\s*=))|((?:--)?[_$[:alpha:]][_\\-$[:alnum:]]*))((\\|\\w+)*)",
+      "beginCaptures": {
+        "1": {
+          "patterns": [
+            {
+              "include": "#attributes-directives-keywords"
+            }
+          ]
+        },
+        "2": {
+          "name": "punctuation.definition.keyword.dotvvm"
+        },
+        "3": {
+          "patterns": [
+            {
+              "include": "#attributes-directives-types-assigned"
+            }
+          ]
+        },
+        "4": {
+          "patterns": [
+            {
+              "include": "#attributes-directives-types"
+            }
+          ]
+        },
+        "5": {
+          "patterns": [
+            {
+              "match": "\\w+",
+              "name": "support.function.dotvvm"
+            },
+            {
+              "match": "\\|",
+              "name": "punctuation.separator.dotvvm"
+            }
+          ]
+        }
+      },
+      "end": "(?=\\s*+[^=\\s])",
+      "name": "meta.directive.$1.dotvvm",
+      "patterns": [
+        {
+          "begin": "=",
+          "beginCaptures": {
+            "0": {
+              "name": "punctuation.separator.key-value.dotvvm"
+            }
+          },
+          "end": "(?<=[^\\s=])(?!\\s*=)|(?=/?>)",
+          "patterns": [
+            {
+              "include": "#attributes-value"
+            }
+          ]
+        }
+      ]
+    },
+    "tags": {
+      "patterns": [
+        {
+          "include": "#tags-lang"
+        },
+        {
+          "include": "#tags-void"
+        },
+        {
+          "include": "#tags-general-end"
+        },
+        {
+          "include": "#tags-general-start"
+        }
+      ]
+    },
+    "tags-name": {
+      "patterns": [
+        {
+          "match": "(\\w+)(:)(\\w[\\w0-9:-]*)",
+          "captures": {
+            "1": {
+              "name": "keyword.control.dotvvm"
+            },
+            "2": {
+              "name": "punctuation.definition.keyword.dotvvm"
+            },
+            "3": {
+              "name": "entity.name.tag.dotvvm"
+            }
+          }
+        },
+        {
+          "match": "[a-z][\\w0-9:]*-[\\w0-9:-]*",
+          "name": "meta.tag.custom.dotvvm entity.name.tag.dotvvm"
+        },
+        {
+          "match": "[a-z][\\w0-9:-]*",
+          "name": "entity.name.tag.dotvvm"
+        }
+      ]
+    },
+    "tags-start-attributes": {
+      "begin": "\\G",
+      "end": "(?=/?>)",
+      "name": "meta.tag.start.dotvvm",
+      "patterns": [
+        {
+          "include": "#attributes"
+        }
+      ]
+    },
+    "tags-lang-start-attributes": {
+      "begin": "\\G",
+      "end": "(?=/>)|>",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.tag.end.dotvvm"
+        }
+      },
+      "name": "meta.tag.start.dotvvm",
+      "patterns": [
+        {
+          "include": "#attributes"
+        }
+      ]
+    },
+    "tags-start-node": {
+      "match": "(<)([^/\\s>/]*)",
+      "captures": {
+        "1": {
+          "name": "punctuation.definition.tag.begin.dotvvm"
+        },
+        "2": {
+          "patterns": [
+            {
+              "include": "#tags-name"
+            }
+          ]
+        }
+      },
+      "name": "meta.tag.start.dotvvm"
+    },
+    "tags-end-node": {
+      "match": "(</)(.*?)\\s*(>)|(/>)",
+      "captures": {
+        "1": {
+          "name": "meta.tag.end.dotvvm punctuation.definition.tag.begin.dotvvm"
+        },
+        "2": {
+          "name": "meta.tag.end.dotvvm",
+          "patterns": [
+            {
+              "include": "#tags-name"
+            }
+          ]
+        },
+        "3": {
+          "name": "meta.tag.end.dotvvm punctuation.definition.tag.end.dotvvm"
+        },
+        "4": {
+          "name": "meta.tag.start.dotvvm punctuation.definition.tag.end.dotvvm"
+        }
+      }
+    },
+    "tags-lang": {
+      "begin": "<(script|style|template)",
+      "end": "</\\1\\s*>|/>",
+      "beginCaptures": {
+        "0": {
+          "patterns": [
+            {
+              "include": "#tags-start-node"
+            }
+          ]
+        }
+      },
+      "endCaptures": {
+        "0": {
+          "patterns": [
+            {
+              "include": "#tags-end-node"
+            }
+          ]
+        }
+      },
+      "name": "meta.$1.dotvvm",
+      "patterns": [
+        {
+          "include": "#tags-lang-start-attributes"
+        }
+      ]
+    },
+    "tags-void": {
+      "begin": "(<)(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)(?=\\s|/?>)",
+      "beginCaptures": {
+        "1": {
+          "name": "punctuation.definition.tag.begin.dotvvm"
+        },
+        "2": {
+          "name": "entity.name.tag.dotvvm"
+        }
+      },
+      "end": "/?>",
+      "endCaptures": {
+        "0": {
+          "name": "punctuation.definition.tag.begin.dotvvm"
+        }
+      },
+      "name": "meta.tag.void.dotvvm",
+      "patterns": [
+        {
+          "include": "#attributes"
+        }
+      ]
+    },
+    "tags-general-start": {
+      "begin": "(<)([^/\\s>/]*)",
+      "end": "(/?>)",
+      "beginCaptures": {
+        "0": {
+          "patterns": [
+            {
+              "include": "#tags-start-node"
+            }
+          ]
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "meta.tag.start.dotvvm punctuation.definition.tag.end.dotvvm"
+        }
+      },
+      "name": "meta.scope.tag.$2.dotvvm",
+      "patterns": [
+        {
+          "include": "#tags-start-attributes"
+        }
+      ]
+    },
+    "tags-general-end": {
+      "begin": "(</)([^/\\s>]*)",
+      "end": "(>)",
+      "beginCaptures": {
+        "1": {
+          "name": "meta.tag.end.dotvvm punctuation.definition.tag.begin.dotvvm"
+        },
+        "2": {
+          "name": "meta.tag.end.dotvvm",
+          "patterns": [
+            {
+              "include": "#tags-name"
+            }
+          ]
+        }
+      },
+      "endCaptures": {
+        "1": {
+          "name": "meta.tag.end.dotvvm punctuation.definition.tag.end.dotvvm"
+        }
+      },
+      "name": "meta.scope.tag.$2.dotvvm"
     }
   }
 }

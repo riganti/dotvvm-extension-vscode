@@ -15,6 +15,7 @@ repository:
     - include: '#directives'
     - include: '#comments'
     - include: '#literalBindings'
+    - include: '#tags'
 
   comments:
     begin: '<%--'
@@ -41,3 +42,218 @@ repository:
     end: '\}\}'
     endCaptures: { 0: { name: markup.bold.dotvvm.binding.end } }
     contentName: keyword.operator.dotvvm.binding
+
+
+  # --- HTML stolen from https://github.com/sveltejs/language-tools/blob/master/packages/svelte-vscode/syntaxes/svelte.tmLanguage.src.yaml
+  #  ATTRIBUTES
+
+  attributes:
+    patterns:
+    - include: '#attributes-directives'
+    - include: '#attributes-keyvalue'
+
+  # Matches attribute keyvalues. (and boolean attributes as well)
+  # e.g. `class="my-class"`
+  attributes-keyvalue:
+    begin: ([\-_$[:alpha:]][_\-$[:alnum:]]*)
+    beginCaptures:
+      0:
+        patterns:
+        - match: .*
+          name: entity.other.attribute-name.dotvvm
+    end: (?=\s*+[^=\s])
+    name: 'meta.attribute.$1.dotvvm'
+    patterns:
+    - begin: '='
+      beginCaptures: { 0: { name: punctuation.separator.key-value.dotvvm } }
+      end: (?<=[^\s=])(?!\s*=)|(?=/?>)
+      patterns: [include: '#attributes-value']
+
+  # The value part of attribute keyvalues. e.g. `"my-class"` in `class="my-class"`
+  attributes-value:
+    patterns:
+    # TODO: bindings
+    # Units, meaning digit characters and an optional unit string. e.g. `15px`
+    - match: (?:(['"])([0-9._]+[\w%]{,4})(\1))|(?:([0-9._]+[\w%]{,4})(?=\s|/?>))
+      captures:
+        1: { name: punctuation.definition.string.begin.dotvvm }
+        2: { name: constant.numeric.decimal.dotvvm }
+        3: { name: punctuation.definition.string.end.dotvvm }
+        4: { name: constant.numeric.decimal.dotvvm }
+    # Unquoted strings.
+    - match: ([^\s"'=<>`/]|/(?!>))+
+      name: string.unquoted.dotvvm
+      patterns: [ ]
+    # Quoted strings.
+    - begin: (['"])
+      end: \1
+      beginCaptures: { 0: { name: punctuation.definition.string.begin.dotvvm } }
+      endCaptures:   { 0: { name: punctuation.definition.string.end.dotvvm } }
+      name: string.quoted.dotvvm
+      patterns: [ ]
+
+  # For Svelte element directives. Scopes the 'on' part in `on:click`.
+  attributes-directives-keywords:
+    patterns:
+    # If other keywords are patched in in the future, they can be added here but also need to be added
+    # where attributes-directives-keywords is included.
+    - { match: on|use|bind,               name: keyword.control.dotvvm             }
+    - { match: transition|in|out|animate, name: keyword.other.animation.dotvvm     }
+    - { match: let,                       name: storage.type.dotvvm                }
+    - { match: class|style,               name: entity.other.attribute-name.dotvvm }
+
+  # For Svelte element directives. Scopes the 'click' part in `on:click`.
+  # The scope of the variable should represent what data type it generally is.
+  attributes-directives-types:
+    patterns:
+    # If other keywords are patched in in the future, they can easily be added here.
+    - { match: '(?<=(on):).*$',                            name: entity.name.type.dotvvm   }
+    - { match: '(?<=(bind):).*$',                          name: variable.parameter.dotvvm }
+    - { match: '(?<=(use|transition|in|out|animate):).*$', name: variable.function.dotvvm  }
+    - { match: '(?<=(let|class|style):).*$',               name: variable.parameter.dotvvm }
+
+  # For directives that may be better suited using different scopes if assigned to something.
+  # e.g. `class:var={var}` is different to `class:var`.
+  # In the latter, `var` is a variable identifier and not a CSS class name.
+  attributes-directives-types-assigned:
+    patterns:
+    # Special Cases
+    # Makes 'bind:this' display like `this` would in JS.
+    - { match: '(?<=(bind):)this$', name: variable.language.dotvvm }
+    # If other keywords are patched in in the future, they can easily be added here.
+    - { match: '(?<=(bind):).*$',   name: entity.name.type.dotvvm                  }
+    - { match: '(?<=(class):).*$',  name: entity.other.attribute-name.class.dotvvm }
+    - { match: '(?<=(style):).*$',  name: support.type.property-name.dotvvm        }
+    # Defaults to the non-assignment version for everything else.
+    - include: '#attributes-directives-types'
+
+  # Matches Svelte element directives, e.g. `on:click|preventDefault={var}`
+  attributes-directives:
+    # If something is added to attributes-directives-keywords, it must be added to the begin-regex, too.
+    begin: (?<!<)(on|use|bind|transition|in|out|animate|let|class|style)(:)(?:((?:--)?[_$[:alpha:]][_\-$[:alnum:]]*(?=\s*=))|((?:--)?[_$[:alpha:]][_\-$[:alnum:]]*))((\|\w+)*)
+    beginCaptures:
+      1: { patterns: [ include: '#attributes-directives-keywords' ] }
+      2: { name: punctuation.definition.keyword.dotvvm }
+      3: { patterns: [ include: '#attributes-directives-types-assigned' ] }
+      4: { patterns: [ include: '#attributes-directives-types' ] }
+      5: { patterns: [
+           { match: '\w+', name: support.function.dotvvm },
+           { match: '\|', name: punctuation.separator.dotvvm }
+         ]}
+    end: (?=\s*+[^=\s])
+    name: meta.directive.$1.dotvvm
+    patterns:
+    - begin: '='
+      beginCaptures: { 0: { name: punctuation.separator.key-value.dotvvm } }
+      end: (?<=[^\s=])(?!\s*=)|(?=/?>)
+      patterns: [include: '#attributes-value']
+
+  # ------
+  #  TAGS
+
+  # All tags together. Used whenever a new nested scope is introduced (and the root scope, of course).
+  tags:
+    patterns:
+    # The order is important here - void tags need to matched before block tags and end before start.
+    - include: '#tags-lang'
+    - include: '#tags-void'
+    - include: '#tags-general-end'
+    - include: '#tags-general-start'
+
+  # -- TAG COMPONENTS
+
+  # Scopes the `name` part in `<name>`.
+  tags-name:
+    patterns:
+    # Svelte (`svelte:<type>`) elements.
+    - match: '(\w+)(:)(\w[\w0-9:-]*)'
+      captures:
+        1: { name: keyword.control.dotvvm }
+        2: { name: punctuation.definition.keyword.dotvvm }
+        3: { name: entity.name.tag.dotvvm }
+    # Custom elements. (has a dash, but otherwise is a valid HTML element)
+    - { match: '[a-z][\w0-9:]*-[\w0-9:-]*', name: meta.tag.custom.dotvvm entity.name.tag.dotvvm }
+    # HTML elements.
+    - { match: '[a-z][\w0-9:-]*', name: entity.name.tag.dotvvm }
+
+  # Attributes for tag start nodes. Meant to start immediately after the `<name` section.
+  tags-start-attributes:
+    begin: \G
+    end: (?=/?>)
+    name: meta.tag.start.dotvvm
+    patterns: [ include: '#attributes' ]
+
+  # Same as tags-start-attributes but slightly adjusted for special script/style/template tags.
+  tags-lang-start-attributes:
+    begin: \G
+    end: (?=/>)|>
+    endCaptures: { 0: { name: punctuation.definition.tag.end.dotvvm } }
+    name: meta.tag.start.dotvvm
+    patterns: [ include: '#attributes' ]
+
+  # Matches the beginning (`<name`) section of a tag start node.
+  tags-start-node:
+    match: (<)([^/\s>/]*)
+    captures:
+      1: { name: punctuation.definition.tag.begin.dotvvm }
+      2: { patterns: [ include: '#tags-name' ] }
+    name: meta.tag.start.dotvvm
+
+  # Matches tag end nodes.
+  tags-end-node:
+    match: (</)(.*?)\s*(>)|(/>)
+    captures:
+      1: { name: meta.tag.end.dotvvm punctuation.definition.tag.begin.dotvvm }
+      2: { name: meta.tag.end.dotvvm, patterns: [ include: '#tags-name' ] }
+      3: { name: meta.tag.end.dotvvm punctuation.definition.tag.end.dotvvm }
+      4: { name: meta.tag.start.dotvvm punctuation.definition.tag.end.dotvvm }
+
+  # -- TAG TYPES
+
+  # Language tags - they are handled differently for the purposes of language injection.
+  tags-lang:
+    begin: <(script|style|template)
+    end: </\1\s*>|/>
+    beginCaptures: { 0: { patterns: [ include: '#tags-start-node' ] } }
+    endCaptures: { 0: { patterns: [ include: '#tags-end-node' ] } }
+    name: meta.$1.dotvvm
+    patterns:
+    - include: '#tags-lang-start-attributes'
+
+  # Void element tags. They must be treated separately due to their lack of end nodes.
+  # A void element cannot be differentiated from other tags, unless you look at their name.
+  # This is because there is a specific list of void elements in HTML5. We use that to scope void elements.
+  # If we didn't, a void element would appear as an unclosed element to the grammar.
+  tags-void:
+    begin: (<)(area|base|br|col|embed|hr|img|input|link|meta|param|source|track|wbr)(?=\s|/?>)
+    beginCaptures:
+      1: { name: punctuation.definition.tag.begin.dotvvm }
+      2: { name: entity.name.tag.dotvvm }
+    end: /?>
+    endCaptures: { 0: { name: punctuation.definition.tag.begin.dotvvm } }
+    name: meta.tag.void.dotvvm
+    patterns: [ include: '#attributes' ]
+
+  # All other tags, including custom/special Svelte tags.
+  # Split up into start and end because we don't need to preserve the name
+  # inside and because it makes whitespace matching logic more robust
+  tags-general-start:
+    begin: (<)([^/\s>/]*)
+    end: (/?>)
+    beginCaptures: { 0: { patterns: [ include: '#tags-start-node' ] } }
+    endCaptures:
+      1: { name: meta.tag.start.dotvvm punctuation.definition.tag.end.dotvvm }
+    name: meta.scope.tag.$2.dotvvm
+    patterns:
+    - include: '#tags-start-attributes'
+
+  tags-general-end:
+    begin: (</)([^/\s>]*)
+    end: (>)
+    beginCaptures:
+      1: { name: meta.tag.end.dotvvm punctuation.definition.tag.begin.dotvvm }
+      2: { name: meta.tag.end.dotvvm, patterns: [ include: '#tags-name' ] }
+    endCaptures:
+      1: { name: meta.tag.end.dotvvm punctuation.definition.tag.end.dotvvm }
+    name: meta.scope.tag.$2.dotvvm
+
