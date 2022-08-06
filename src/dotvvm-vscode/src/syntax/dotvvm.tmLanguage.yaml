@@ -55,12 +55,11 @@ repository:
     contentName: meta.dotvvm.content.binding.value
     name: meta.dotvvm.content.binding
 
-  # --- HTML stolen from https://github.com/sveltejs/language-tools/blob/master/packages/svelte-vscode/syntaxes/svelte.tmLanguage.src.yaml
+  # --- HTML support heavily inspired from https://github.com/sveltejs/language-tools/blob/master/packages/svelte-vscode/syntaxes/svelte.tmLanguage.src.yaml
   #  ATTRIBUTES
 
   attributes:
     patterns:
-    - include: '#attributes-directives'
     - include: '#attributes-keyvalue'
 
   # Matches attribute keyvalues. (and boolean attributes as well)
@@ -124,62 +123,6 @@ repository:
       name: string.quoted.dotvvm
       patterns: [ ]
 
-  # For Svelte element directives. Scopes the 'on' part in `on:click`.
-  attributes-directives-keywords:
-    patterns:
-    # If other keywords are patched in in the future, they can be added here but also need to be added
-    # where attributes-directives-keywords is included.
-    - { match: on|use|bind,               name: keyword.control.dotvvm             }
-    - { match: transition|in|out|animate, name: keyword.other.animation.dotvvm     }
-    - { match: let,                       name: storage.type.dotvvm                }
-    - { match: class|style,               name: entity.other.attribute-name.dotvvm }
-
-  # For Svelte element directives. Scopes the 'click' part in `on:click`.
-  # The scope of the variable should represent what data type it generally is.
-  attributes-directives-types:
-    patterns:
-    # If other keywords are patched in in the future, they can easily be added here.
-    - { match: '(?<=(on):).*$',                            name: entity.name.type.dotvvm   }
-    - { match: '(?<=(bind):).*$',                          name: variable.parameter.dotvvm }
-    - { match: '(?<=(use|transition|in|out|animate):).*$', name: variable.function.dotvvm  }
-    - { match: '(?<=(let|class|style):).*$',               name: variable.parameter.dotvvm }
-
-  # For directives that may be better suited using different scopes if assigned to something.
-  # e.g. `class:var={var}` is different to `class:var`.
-  # In the latter, `var` is a variable identifier and not a CSS class name.
-  attributes-directives-types-assigned:
-    patterns:
-    # Special Cases
-    # Makes 'bind:this' display like `this` would in JS.
-    - { match: '(?<=(bind):)this$', name: variable.language.dotvvm }
-    # If other keywords are patched in in the future, they can easily be added here.
-    - { match: '(?<=(bind):).*$',   name: entity.name.type.dotvvm                  }
-    - { match: '(?<=(class):).*$',  name: entity.other.attribute-name.class.dotvvm }
-    - { match: '(?<=(style):).*$',  name: support.type.property-name.dotvvm        }
-    # Defaults to the non-assignment version for everything else.
-    - include: '#attributes-directives-types'
-
-  # Matches Svelte element directives, e.g. `on:click|preventDefault={var}`
-  attributes-directives:
-    # If something is added to attributes-directives-keywords, it must be added to the begin-regex, too.
-    begin: (?<!<)(on|use|bind|transition|in|out|animate|let|class|style)(:)(?:((?:--)?[_$[:alpha:]][_\-$[:alnum:]]*(?=\s*=))|((?:--)?[_$[:alpha:]][_\-$[:alnum:]]*))((\|\w+)*)
-    beginCaptures:
-      1: { patterns: [ include: '#attributes-directives-keywords' ] }
-      2: { name: punctuation.definition.keyword.dotvvm }
-      3: { patterns: [ include: '#attributes-directives-types-assigned' ] }
-      4: { patterns: [ include: '#attributes-directives-types' ] }
-      5: { patterns: [
-           { match: '\w+', name: support.function.dotvvm },
-           { match: '\|', name: punctuation.separator.dotvvm }
-         ]}
-    end: (?=\s*+[^=\s])
-    name: meta.directive.$1.dotvvm
-    patterns:
-    - begin: '='
-      beginCaptures: { 0: { name: punctuation.separator.key-value.dotvvm } }
-      end: (?<=[^\s=])(?!\s*=)|(?=/?>)
-      patterns: [include: '#attributes-value']
-
   # ------
   #  TAGS
 
@@ -197,7 +140,7 @@ repository:
   # Scopes the `name` part in `<name>`.
   tags-name:
     patterns:
-    # Svelte (`svelte:<type>`) elements.
+    # DotVVM (`<prefix>:<type>`) elements.
     - match: '(\w+)(:)(\w[\w0-9:-]*)'
       captures:
         1: { name: keyword.control.dotvvm }
@@ -266,7 +209,7 @@ repository:
     name: meta.tag.void.dotvvm
     patterns: [ include: '#attributes' ]
 
-  # All other tags, including custom/special Svelte tags.
+  # All other tags, including custom/special DotVVM tags.
   # Split up into start and end because we don't need to preserve the name
   # inside and because it makes whitespace matching logic more robust
   tags-general-start:
