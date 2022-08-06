@@ -3,15 +3,37 @@
   "fileTypes": [
     "dothtml",
     "dotmaster",
-    "dotcontrol"
+    "dotcontrol",
+    "dotlayout"
   ],
   "patterns": [
     {
+      "include": "#scope"
+    },
+    {
+      "include": "text.html.basic"
+    }
+  ],
+  "repository": {
+    "scope": {
+      "patterns": [
+        {
+          "include": "#directives"
+        },
+        {
+          "include": "#comments"
+        },
+        {
+          "include": "#literalBindings"
+        }
+      ]
+    },
+    "comments": {
       "begin": "<%--",
       "end": "--%>",
       "name": "comment.block.dotvvm.server"
     },
-    {
+    "directives": {
       "begin": "\\A",
       "end": "^(?=\\s*[^@\\s])",
       "name": "meta.dotvvm.directives",
@@ -30,7 +52,7 @@
         }
       ]
     },
-    {
+    "literalBindings": {
       "begin": "(\\{\\{)\\s*([a-zA-Z0-9]*)\\s*(:?)",
       "beginCaptures": {
         "1": {
@@ -50,9 +72,6 @@
         }
       },
       "contentName": "keyword.operator.dotvvm.binding"
-    },
-    {
-      "include": "text.html.basic"
     }
-  ]
+  }
 }
