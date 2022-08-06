@@ -35,6 +35,7 @@ import { debounceThrottle, isNotNullOrUndefined, normalizeUri, urlToPath } from 
 import { FallbackWatcher } from './lib/FallbackWatcher';
 import { createLanguageServices } from './plugins/css/service';
 import { FileSystemProvider } from './plugins/css/FileSystemProvider';
+import { SerializedConfigSeeker } from './lib/serializedConfigSeeker';
 
 namespace TagCloseRequest {
     export const type: RequestType<TextDocumentPositionParams, string | null, any> =
@@ -87,25 +88,21 @@ export function startServer(options?: LSOptions) {
     let watcher: FallbackWatcher | undefined;
 
     connection.onInitialize((evt) => {
-        const workspaceUris = evt.workspaceFolders?.map((folder) => folder.uri.toString()) ?? [
-            evt.rootUri ?? ''
-        ];
+        const workspaceUris = evt.workspaceFolders!.map((folder) => folder.uri.toString());
         Logger.log('Initialize language server at ', workspaceUris.join(', '));
         if (workspaceUris.length === 0) {
             Logger.error('No workspace path set');
         }
-
-        if (!evt.capabilities.workspace?.didChangeWatchedFiles) {
-            const workspacePaths = workspaceUris.map(urlToPath).filter(isNotNullOrUndefined);
-            watcher = new FallbackWatcher('**/*.{ts,js}', workspacePaths);
-            watcher.onDidChangeWatchedFiles(onDidChangeWatchedFiles);
-        }
+        const workspacePaths = workspaceUris.map(urlToPath).filter(isNotNullOrUndefined);
+        const configSeeker = new SerializedConfigSeeker(workspacePaths);
+        
 
         const isTrusted: boolean = evt.initializationOptions?.isTrusted ?? true;
         configManager.updateIsTrusted(isTrusted);
         if (!isTrusted) {
-            Logger.log('Workspace is not trusted, running with reduced capabilities.');
+            Logger.log("Workspace is not trusted, we basically don't care.");
         }
+        
 
         // Backwards-compatible way of setting initialization options (first `||` is the old style)
         configManager.update(
@@ -126,7 +123,7 @@ export function startServer(options?: LSOptions) {
         });
         // Order of plugin registration matters for FirstNonNull, which affects for example hover info
         pluginHost.register((new DotvvmPlugin(configManager)));
-        pluginHost.register(new HTMLPlugin(docManager, configManager));
+        pluginHost.register(new HTMLPlugin(docManager, configManager, configSeeker));
 
         const cssLanguageServices = createLanguageServices({
             clientCapabilities: evt.capabilities,
@@ -329,20 +326,6 @@ export function startServer(options?: LSOptions) {
     );
 
     const updateAllDiagnostics = debounceThrottle(() => diagnosticsManager.updateAll(), 1000);
-
-    connection.onDidChangeWatchedFiles(onDidChangeWatchedFiles);
-    function onDidChangeWatchedFiles(para: DidChangeWatchedFilesParams) {
-        const onWatchFileChangesParas = para.changes
-            .map((change) => ({
-                fileName: urlToPath(change.uri),
-                changeType: change.type
-            }))
-            .filter((change): change is OnWatchFileChangesPara => !!change.fileName);
-
-        pluginHost.onWatchFileChanges(onWatchFileChangesParas);
-
-        updateAllDiagnostics();
-    }
 
     connection.onDidSaveTextDocument(updateAllDiagnostics);
 

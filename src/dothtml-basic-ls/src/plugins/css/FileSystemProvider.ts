@@ -6,6 +6,7 @@ import {
     FileType
 } from 'vscode-css-languageservice';
 import { urlToPath } from '../../utils';
+import { DidChangeWatchedFilesParams, FileChangeType, FileEvent } from 'vscode-languageserver';
 
 interface StatLike {
     isDirectory(): boolean;

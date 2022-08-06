@@ -18,7 +18,15 @@ export function and<T>(...predicates: Array<Predicate<T>>) {
 }
 
 export function unique<T>(array: T[]): T[] {
-    return uniqWith(array, isEqual);
+    return Array.from(new Set(array));
+}
+export function uniqueBy<T>(array: T[], f: (t: T) => any): T[] {
+    const hashMap = new Map<any, T>();
+    for (let i = array.length - 1; i >= 0; i--) {
+        const key = f(array[i]);
+        hashMap.set(key, array[i]);
+    }
+    return Array.from(hashMap.values());
 }
 
 export function clamp(num: number, min: number, max: number): number {
@@ -288,4 +296,13 @@ export function returnObjectIfHasKeys<T>(obj: T | undefined): T | undefined {
     if (Object.keys(obj || {}).length > 0) {
         return obj;
     }
+}
+
+export function choose<T, U>(xs: T[], f: (t: T) => U | null | undefined): U[] {
+    var r = []
+    for (const x of xs) {
+        const u = f(x)
+        if (u != null) r.push(u)
+    }
+    return r
 }

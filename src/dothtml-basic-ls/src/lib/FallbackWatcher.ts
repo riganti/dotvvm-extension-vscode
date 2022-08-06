@@ -15,15 +15,12 @@ export class FallbackWatcher {
     private undeliveredFileEvents: FileEvent[] = [];
 
     constructor(glob: string, workspacePaths: string[]) {
-        const gitOrNodeModules = /\.git|node_modules/;
+        const ignoreRegex = /\.git|node_modules/;
         this.watcher = watch(
             workspacePaths.map((workspacePath) => join(workspacePath, glob)),
             {
                 ignored: (path: string) =>
-                    gitOrNodeModules.test(path) &&
-                    // Handle Sapper's alias mapping
-                    !path.includes('src/node_modules') &&
-                    !path.includes('src\\node_modules'),
+                    ignoreRegex.test(path),
 
                 // typescript would scan the project files on init.
                 // We only need to know what got updated.

@@ -3,7 +3,8 @@ import {
     getLanguageService,
     HTMLDocument,
     CompletionItem as HtmlCompletionItem,
-    Node
+    Node,
+    LanguageService
 } from 'vscode-html-languageservice';
 import {
     CompletionList,
@@ -24,7 +25,7 @@ import {
     getNodeIfIsInComponentStartTag
 } from '../../lib/documents';
 import { LSConfigManager, LSHTMLConfig } from '../../ls-config';
-import { dothtmlDataProvider } from './dataProvider';
+import { DothtmlDataProvider } from './dothtmlDataProvider'
 import {
     HoverProvider,
     CompletionsProvider,
@@ -33,20 +34,28 @@ import {
 } from '../interfaces';
 import { isInsideMoustacheTag, toRange } from '../../lib/documents/utils';
 import { possiblyComponent } from '../../utils';
+import { SerializedConfigSeeker } from '../../lib/serializedConfigSeeker';
 
 export class HTMLPlugin
     implements HoverProvider, CompletionsProvider, RenameProvider, LinkedEditingRangesProvider
 {
     __name = 'html';
     private configManager: LSConfigManager;
-    private lang = getLanguageService({
-        customDataProviders: [dothtmlDataProvider],
-        useDefaultDataProvider: false
-    });
     private documents = new WeakMap<Document, HTMLDocument>();
     private styleScriptTemplate = new Set(['template', 'style', 'script']);
+    dothtmlDataProvider: DothtmlDataProvider;
+    private lang: LanguageService
 
-    constructor(docManager: DocumentManager, configManager: LSConfigManager) {
+    constructor(
+        docManager: DocumentManager,
+        configManager: LSConfigManager,
+        private configSeeker: SerializedConfigSeeker) {
+        this.dothtmlDataProvider = new DothtmlDataProvider(configSeeker);
+        this.lang = getLanguageService({
+            customDataProviders: [this.dothtmlDataProvider],
+            // useDefaultDataProvider: false
+        })
+
         this.configManager = configManager;
         docManager.on('documentChange', (document) => {
             this.documents.set(document, document.html);
