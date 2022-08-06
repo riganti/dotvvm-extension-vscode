@@ -85,14 +85,16 @@
           "name": "markup.bold.dotvvm.binding.end"
         }
       },
-      "contentName": "meta.dotvvm.content.binding.value",
-      "name": "meta.dotvvm.content.binding"
+      "contentName": "meta.dotvvm.content.binding.value meta.embedded.inline.cs",
+      "name": "meta.dotvvm.content.binding",
+      "patterns": [
+        {
+          "include": "source.cs"
+        }
+      ]
     },
     "attributes": {
       "patterns": [
-        {
-          "include": "#attributes-directives"
-        },
         {
           "include": "#attributes-keyvalue"
         }
@@ -150,9 +152,13 @@
               "name": "markup.bold.dotvvm.binding.end"
             }
           },
-          "contentName": "keyword.operator.dotvvm.binding meta.dotvvm.content.binding.value",
+          "contentName": "keyword.operator.dotvvm.binding meta.dotvvm.content.binding.value meta.embedded.inline.cs",
           "name": "meta.dotvvm.content.binding",
-          "patterns": []
+          "patterns": [
+            {
+              "include": "source.cs"
+            }
+          ]
         },
         {
           "match": "([^\\s\"'=<>`/]|/(?!>))+",
@@ -187,8 +193,12 @@
               "name": "punctuation.definition.string.end.dotvvm"
             }
           },
-          "contentName": "keyword.operator.dotvvm.binding meta.dotvvm.content.binding meta.dotvvm.content.binding.value",
-          "patterns": []
+          "contentName": "keyword.operator.dotvvm.binding meta.dotvvm.content.binding meta.dotvvm.content.binding.value meta.embedded.inline.cs",
+          "patterns": [
+            {
+              "include": "source.cs"
+            }
+          ]
         },
         {
           "begin": "(['\"])",
@@ -205,128 +215,6 @@
           },
           "name": "string.quoted.dotvvm",
           "patterns": []
-        }
-      ]
-    },
-    "attributes-directives-keywords": {
-      "patterns": [
-        {
-          "match": "on|use|bind",
-          "name": "keyword.control.dotvvm"
-        },
-        {
-          "match": "transition|in|out|animate",
-          "name": "keyword.other.animation.dotvvm"
-        },
-        {
-          "match": "let",
-          "name": "storage.type.dotvvm"
-        },
-        {
-          "match": "class|style",
-          "name": "entity.other.attribute-name.dotvvm"
-        }
-      ]
-    },
-    "attributes-directives-types": {
-      "patterns": [
-        {
-          "match": "(?<=(on):).*$",
-          "name": "entity.name.type.dotvvm"
-        },
-        {
-          "match": "(?<=(bind):).*$",
-          "name": "variable.parameter.dotvvm"
-        },
-        {
-          "match": "(?<=(use|transition|in|out|animate):).*$",
-          "name": "variable.function.dotvvm"
-        },
-        {
-          "match": "(?<=(let|class|style):).*$",
-          "name": "variable.parameter.dotvvm"
-        }
-      ]
-    },
-    "attributes-directives-types-assigned": {
-      "patterns": [
-        {
-          "match": "(?<=(bind):)this$",
-          "name": "variable.language.dotvvm"
-        },
-        {
-          "match": "(?<=(bind):).*$",
-          "name": "entity.name.type.dotvvm"
-        },
-        {
-          "match": "(?<=(class):).*$",
-          "name": "entity.other.attribute-name.class.dotvvm"
-        },
-        {
-          "match": "(?<=(style):).*$",
-          "name": "support.type.property-name.dotvvm"
-        },
-        {
-          "include": "#attributes-directives-types"
-        }
-      ]
-    },
-    "attributes-directives": {
-      "begin": "(?<!<)(on|use|bind|transition|in|out|animate|let|class|style)(:)(?:((?:--)?[_$[:alpha:]][_\\-$[:alnum:]]*(?=\\s*=))|((?:--)?[_$[:alpha:]][_\\-$[:alnum:]]*))((\\|\\w+)*)",
-      "beginCaptures": {
-        "1": {
-          "patterns": [
-            {
-              "include": "#attributes-directives-keywords"
-            }
-          ]
-        },
-        "2": {
-          "name": "punctuation.definition.keyword.dotvvm"
-        },
-        "3": {
-          "patterns": [
-            {
-              "include": "#attributes-directives-types-assigned"
-            }
-          ]
-        },
-        "4": {
-          "patterns": [
-            {
-              "include": "#attributes-directives-types"
-            }
-          ]
-        },
-        "5": {
-          "patterns": [
-            {
-              "match": "\\w+",
-              "name": "support.function.dotvvm"
-            },
-            {
-              "match": "\\|",
-              "name": "punctuation.separator.dotvvm"
-            }
-          ]
-        }
-      },
-      "end": "(?=\\s*+[^=\\s])",
-      "name": "meta.directive.$1.dotvvm",
-      "patterns": [
-        {
-          "begin": "=",
-          "beginCaptures": {
-            "0": {
-              "name": "punctuation.separator.key-value.dotvvm"
-            }
-          },
-          "end": "(?<=[^\\s=])(?!\\s*=)|(?=/?>)",
-          "patterns": [
-            {
-              "include": "#attributes-value"
-            }
-          ]
         }
       ]
     },

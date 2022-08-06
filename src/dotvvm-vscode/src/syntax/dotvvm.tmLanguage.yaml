@@ -52,8 +52,10 @@ repository:
     end: '\}\}'
     endCaptures: 
       0: { name: markup.bold.dotvvm.binding.end }
-    contentName: meta.dotvvm.content.binding.value
+    contentName: meta.dotvvm.content.binding.value meta.embedded.inline.cs
     name: meta.dotvvm.content.binding
+    patterns:
+    - include: "source.cs"
 
   # --- HTML support heavily inspired from https://github.com/sveltejs/language-tools/blob/master/packages/svelte-vscode/syntaxes/svelte.tmLanguage.src.yaml
   #  ATTRIBUTES
@@ -91,9 +93,10 @@ repository:
       end: '(\})'
       endCaptures: 
         1: { name: markup.bold.dotvvm.binding.end }
-      contentName: keyword.operator.dotvvm.binding meta.dotvvm.content.binding.value
+      contentName: keyword.operator.dotvvm.binding meta.dotvvm.content.binding.value meta.embedded.inline.cs
       name: meta.dotvvm.content.binding
-      patterns: [ ]
+      patterns:
+      - include: "source.cs"
     # Unquoted strings.
     - match: ([^\s"'=<>`/]|/(?!>))+
       name: string.unquoted.dotvvm
@@ -110,8 +113,9 @@ repository:
       endCaptures: 
         1: { name: markup.bold.dotvvm.binding.end meta.dotvvm.content.binding }
         2: { name: punctuation.definition.string.end.dotvvm }
-      contentName: keyword.operator.dotvvm.binding meta.dotvvm.content.binding meta.dotvvm.content.binding.value
-      patterns: [ ]
+      contentName: keyword.operator.dotvvm.binding meta.dotvvm.content.binding meta.dotvvm.content.binding.value meta.embedded.inline.cs
+      patterns: 
+      - include: "source.cs"
       
     # Quoted strings.
     - begin: (['"])
