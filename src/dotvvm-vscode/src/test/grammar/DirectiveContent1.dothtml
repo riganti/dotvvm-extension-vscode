@@ -1,0 +1,10 @@
+# SYNTAX TEST "source.dotvvm" "Directive and content sections"
+@viewModel MyAssembly.MyFolder.MyClass, MyAssembly
+# <- meta.dotvvm.directives
+
+@masterPage Views/Master.masterpage
+
+# <- meta.dotvvm.directives
+content
+# <- meta.dotvvm.content
+#     ^ meta.dotvvm.content

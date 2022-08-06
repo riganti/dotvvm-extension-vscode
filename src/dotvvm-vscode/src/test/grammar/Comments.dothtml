@@ -1,0 +1,15 @@
+# SYNTAX TEST "source.dotvvm" "Comments"
+@viewModel MyAssembly.MyFolder.MyClass, MyAssembly
+
+<div><%-- test --%></div>
+#    ^^^^^^^^^^^^^^ comment.block.dotvvm.server
+
+<%--<div>
+# <- comment.block.dotvvm.server
+#    ^^^ - meta.scope.tag.div.dotvvm
+
+some content <b>inside comments</b> {{value: Test}}
+#                                   ^^^^^^^^^^^^^^^ - meta.dotvvm.content.binding
+</div>--%> test
+#        ^ comment.block.dotvvm.server
+#         ^ - comment.block.dotvvm.server

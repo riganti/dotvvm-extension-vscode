@@ -1,0 +1,7 @@
+# SYNTAX TEST "source.dotvvm" "Directive parts"
+@viewModel MyAssembly.MyFolder.MyClass, MyAssembly
+# <-------------------------------------------------- meta.dotvvm.directives.directive
+# <~--------- meta.dotvvm.directives.directive.name
+#          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ meta.dotvvm.directives.directive.value
+# <- markup.bold.dotvvm.directive.at
+# <~--------- keyword.control.dotvvm.directive.name  

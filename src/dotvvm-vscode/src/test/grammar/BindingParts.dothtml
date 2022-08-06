@@ -1,0 +1,45 @@
+# SYNTAX TEST "source.dotvvm" "Binding parts"
+
+{{value: Test}}
+# <--------------- meta.dotvvm.content.binding
+# ^^^^^ meta.dotvvm.content.binding.name
+#        ^^^^ meta.dotvvm.content.binding.value
+# <-- markup.bold.dotvvm.binding.begin
+#      ^ punctuation.dotvvm.binding.colon
+#            ^^ markup.bold.dotvvm.binding.end
+
+<div class={value: Test}></div>
+#          ^^^^^^^^^^^^^ meta.dotvvm.content.binding
+#           ^^^^^ meta.dotvvm.content.binding.name
+#                  ^^^^ meta.dotvvm.content.binding.value
+#          ^ markup.bold.dotvvm.binding.begin
+#                ^ punctuation.dotvvm.binding.colon
+#                      ^ markup.bold.dotvvm.binding.end
+
+<div class="{value: Test}"></div>
+#           ^^^^^^^^^^^^^ meta.dotvvm.content.binding
+#            ^^^^^ meta.dotvvm.content.binding.name
+#                   ^^^^ meta.dotvvm.content.binding.value
+#           ^ markup.bold.dotvvm.binding.begin
+#                 ^ punctuation.dotvvm.binding.colon
+#                       ^ markup.bold.dotvvm.binding.end
+
+<div class='{value: Test}'></div>
+#           ^^^^^^^^^^^^^ meta.dotvvm.content.binding
+#            ^^^^^ meta.dotvvm.content.binding.name
+#                   ^^^^ meta.dotvvm.content.binding.value
+#           ^ markup.bold.dotvvm.binding.begin
+#                 ^ punctuation.dotvvm.binding.colon
+#                       ^ markup.bold.dotvvm.binding.end
+
+<div class=' {value: Test}'></div>
+#            ^^^^^^^^^^^^^ - meta.dotvvm.content.binding
+
+<div class="{value: Test} "></div>
+#           ^^^^^^^^^^^^^^^^^^^^^^ meta.dotvvm.content.binding
+
+<div class="{ value: Test }"></div>
+#           ^^^^^^^^^^^^^^^ meta.dotvvm.content.binding
+
+<div { value: Test } test=aaa></div>
+#    ^^^^^^^^^^^^^^^ - meta.dotvvm.content.binding

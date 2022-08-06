@@ -19,22 +19,8 @@
         },
         {
           "include": "#content"
-        },
-        {
-          "include": "#comments"
-        },
-        {
-          "include": "#literalBindings"
-        },
-        {
-          "include": "#tags"
         }
       ]
-    },
-    "comments": {
-      "begin": "<%--",
-      "end": "--%>",
-      "name": "comment.block.dotvvm.server"
     },
     "directives": {
       "begin": "\\A",
@@ -48,10 +34,12 @@
               "name": "markup.bold.dotvvm.directive.at"
             },
             "2": {
-              "name": "keyword.control.dotvvm.directive.type"
+              "name": "keyword.control.dotvvm.directive.name meta.dotvvm.directives.directive.name"
             }
           },
-          "end": "\\n"
+          "end": "\\n",
+          "name": "meta.dotvvm.directives.directive",
+          "contentName": "meta.dotvvm.directives.directive.value"
         }
       ]
     },
@@ -62,9 +50,21 @@
       "contentName": "meta.embedded.block.html",
       "patterns": [
         {
-          "include": "text.html.basic"
+          "include": "#comments"
+        },
+        {
+          "include": "#tags"
+        },
+        {
+          "include": "#literalBindings"
         }
       ]
+    },
+    "comments": {
+      "begin": "<%--",
+      "end": "--%>",
+      "name": "comment.block.dotvvm.server",
+      "patterns": []
     },
     "literalBindings": {
       "begin": "(\\{\\{)\\s*([a-zA-Z0-9]*)\\s*(:?)",
@@ -73,7 +73,7 @@
           "name": "markup.bold.dotvvm.binding.begin"
         },
         "2": {
-          "name": "keyword.control.dotvvm.binding.type"
+          "name": "keyword.control.dotvvm.binding.name meta.dotvvm.content.binding.name"
         },
         "3": {
           "name": "punctuation.dotvvm.binding.colon"
@@ -85,7 +85,8 @@
           "name": "markup.bold.dotvvm.binding.end"
         }
       },
-      "contentName": "keyword.operator.dotvvm.binding"
+      "contentName": "meta.dotvvm.content.binding.value",
+      "name": "meta.dotvvm.content.binding"
     },
     "attributes": {
       "patterns": [
@@ -131,25 +132,62 @@
     "attributes-value": {
       "patterns": [
         {
-          "match": "(?:(['\"])([0-9._]+[\\w%]{,4})(\\1))|(?:([0-9._]+[\\w%]{,4})(?=\\s|/?>))",
-          "captures": {
+          "begin": "(\\{)\\s*([a-zA-Z0-9]*)\\s*(:?)",
+          "beginCaptures": {
             "1": {
-              "name": "punctuation.definition.string.begin.dotvvm"
+              "name": "markup.bold.dotvvm.binding.begin"
             },
             "2": {
-              "name": "constant.numeric.decimal.dotvvm"
+              "name": "keyword.control.dotvvm.binding.name meta.dotvvm.content.binding.name"
             },
             "3": {
-              "name": "punctuation.definition.string.end.dotvvm"
-            },
-            "4": {
-              "name": "constant.numeric.decimal.dotvvm"
+              "name": "punctuation.dotvvm.binding.colon"
             }
-          }
+          },
+          "end": "(\\})",
+          "endCaptures": {
+            "1": {
+              "name": "markup.bold.dotvvm.binding.end"
+            }
+          },
+          "contentName": "keyword.operator.dotvvm.binding meta.dotvvm.content.binding.value",
+          "name": "meta.dotvvm.content.binding",
+          "patterns": []
         },
         {
           "match": "([^\\s\"'=<>`/]|/(?!>))+",
           "name": "string.unquoted.dotvvm",
+          "patterns": []
+        },
+        {
+          "begin": "(['\"])((\\{)\\s*([a-zA-Z0-9]*)\\s*(:?))",
+          "beginCaptures": {
+            "1": {
+              "name": "punctuation.definition.string.begin.dotvvm"
+            },
+            "2": {
+              "name": "meta.dotvvm.content.binding"
+            },
+            "3": {
+              "name": "markup.bold.dotvvm.binding.begin"
+            },
+            "4": {
+              "name": "keyword.control.dotvvm.binding.name meta.dotvvm.content.binding.name"
+            },
+            "5": {
+              "name": "punctuation.dotvvm.binding.colon"
+            }
+          },
+          "end": "(\\})(\\1)",
+          "endCaptures": {
+            "1": {
+              "name": "markup.bold.dotvvm.binding.end meta.dotvvm.content.binding"
+            },
+            "2": {
+              "name": "punctuation.definition.string.end.dotvvm"
+            }
+          },
+          "contentName": "keyword.operator.dotvvm.binding meta.dotvvm.content.binding meta.dotvvm.content.binding.value",
           "patterns": []
         },
         {
@@ -494,33 +532,6 @@
         }
       },
       "name": "meta.scope.tag.$2.dotvvm"
-    }
-  },
-  "injections": {
-    "L:meta.embedded.block.html meta.tag": {
-      "patterns": [
-        {
-          "begin": "(\\{)\\s*([a-zA-Z0-9]*)\\s*(:?)",
-          "beginCaptures": {
-            "1": {
-              "name": "markup.bold.dotvvm.binding.begin"
-            },
-            "2": {
-              "name": "keyword.control.dotvvm.binding.type"
-            },
-            "3": {
-              "name": "punctuation.dotvvm.binding.colon"
-            }
-          },
-          "end": "\\}",
-          "endCaptures": {
-            "0": {
-              "name": "markup.bold.dotvvm.binding.end"
-            }
-          },
-          "contentName\"": "keyword.operator.dotvvm.binding"
-        }
-      ]
     }
   }
 }

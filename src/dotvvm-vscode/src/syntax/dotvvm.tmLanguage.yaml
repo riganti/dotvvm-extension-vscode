@@ -13,12 +13,6 @@ repository:
     patterns:
     - include: '#directives'
     - include: '#content'
-    - include: '#comments'
-
-  comments:
-    begin: '<%--'
-    end: '--%>'
-    name: comment.block.dotvvm.server
 
   directives:
     begin: '\A'
@@ -27,9 +21,11 @@ repository:
     patterns:
     - begin: '^(@)(\w+)\s*'
       beginCaptures:
-        '1': { name: markup.bold.dotvvm.directive.at }
-        '2': { name: keyword.control.dotvvm.directive.type }
+        1: { name: markup.bold.dotvvm.directive.at }
+        2: { name: keyword.control.dotvvm.directive.name meta.dotvvm.directives.directive.name }
       end: '\n'
+      name: meta.dotvvm.directives.directive
+      contentName: meta.dotvvm.directives.directive.value
 
   content:
     begin: '(?m)^(?=\s*[^@\s])' # first non-empty row not starting with @
@@ -37,19 +33,27 @@ repository:
     name: meta.dotvvm.content
     contentName: meta.embedded.block.html
     patterns:
+    - include: '#comments'
     - include: '#tags'
     - include: '#literalBindings'
+
+  comments:
+    begin: '<%--'
+    end: '--%>'
+    name: comment.block.dotvvm.server
+    patterns: [ ]
 
   literalBindings:
     begin: '(\{\{)\s*([a-zA-Z0-9]*)\s*(:?)'
     beginCaptures:
       1: { name: markup.bold.dotvvm.binding.begin }
-      2: { name: keyword.control.dotvvm.binding.type }
+      2: { name: keyword.control.dotvvm.binding.name meta.dotvvm.content.binding.name }
       3: { name: punctuation.dotvvm.binding.colon }
     end: '\}\}'
-    endCaptures: { 0: { name: markup.bold.dotvvm.binding.end } }
-    contentName: keyword.operator.dotvvm.binding
-
+    endCaptures: 
+      0: { name: markup.bold.dotvvm.binding.end }
+    contentName: meta.dotvvm.content.binding.value
+    name: meta.dotvvm.content.binding
 
   # --- HTML stolen from https://github.com/sveltejs/language-tools/blob/master/packages/svelte-vscode/syntaxes/svelte.tmLanguage.src.yaml
   #  ATTRIBUTES
@@ -79,23 +83,44 @@ repository:
   # The value part of attribute keyvalues. e.g. `"my-class"` in `class="my-class"`
   attributes-value:
     patterns:
-    # TODO: bindings
-    # Units, meaning digit characters and an optional unit string. e.g. `15px`
-    - match: (?:(['"])([0-9._]+[\w%]{,4})(\1))|(?:([0-9._]+[\w%]{,4})(?=\s|/?>))
-      captures:
-        1: { name: punctuation.definition.string.begin.dotvvm }
-        2: { name: constant.numeric.decimal.dotvvm }
-        3: { name: punctuation.definition.string.end.dotvvm }
-        4: { name: constant.numeric.decimal.dotvvm }
+    # Bindings without quotes
+    - begin: '(\{)\s*([a-zA-Z0-9]*)\s*(:?)'
+      beginCaptures:
+        1: { name: markup.bold.dotvvm.binding.begin }
+        2: { name: keyword.control.dotvvm.binding.name meta.dotvvm.content.binding.name }
+        3: { name: punctuation.dotvvm.binding.colon }
+      end: '(\})'
+      endCaptures: 
+        1: { name: markup.bold.dotvvm.binding.end }
+      contentName: keyword.operator.dotvvm.binding meta.dotvvm.content.binding.value
+      name: meta.dotvvm.content.binding
+      patterns: [ ]
     # Unquoted strings.
     - match: ([^\s"'=<>`/]|/(?!>))+
       name: string.unquoted.dotvvm
       patterns: [ ]
+    # Quoted bindings
+    - begin: '([''"])((\{)\s*([a-zA-Z0-9]*)\s*(:?))'
+      beginCaptures:
+        1: { name: punctuation.definition.string.begin.dotvvm }
+        2: { name: meta.dotvvm.content.binding }
+        3: { name: markup.bold.dotvvm.binding.begin }
+        4: { name: keyword.control.dotvvm.binding.name meta.dotvvm.content.binding.name }
+        5: { name: punctuation.dotvvm.binding.colon }
+      end: '(\})(\1)'
+      endCaptures: 
+        1: { name: markup.bold.dotvvm.binding.end meta.dotvvm.content.binding }
+        2: { name: punctuation.definition.string.end.dotvvm }
+      contentName: keyword.operator.dotvvm.binding meta.dotvvm.content.binding meta.dotvvm.content.binding.value
+      patterns: [ ]
+      
     # Quoted strings.
     - begin: (['"])
       end: \1
-      beginCaptures: { 0: { name: punctuation.definition.string.begin.dotvvm } }
-      endCaptures:   { 0: { name: punctuation.definition.string.end.dotvvm } }
+      beginCaptures: 
+        0: { name: punctuation.definition.string.begin.dotvvm }
+      endCaptures: 
+        0: { name: punctuation.definition.string.end.dotvvm }
       name: string.quoted.dotvvm
       patterns: [ ]
 
