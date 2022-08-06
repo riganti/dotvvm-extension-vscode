@@ -38,8 +38,7 @@
     ]
   },
   "scripts": {
-    "build:grammar": "echo 1",
-    "build:grammar_": "npx js-yaml syntaxes/dotvvm.tmLanguage.yml > syntaxes/dotvvm.tmLanguage.json",
+    "build:grammar": "npx js-yaml src/syntax/dotvvm.tmLanguage.yaml > src/syntax/dotvvm.tmLanguage.json",
     "vscode:prepublish": "yarn run package",
     "compile": "webpack",
     "watch": "yarn run build:grammar && webpack --watch",

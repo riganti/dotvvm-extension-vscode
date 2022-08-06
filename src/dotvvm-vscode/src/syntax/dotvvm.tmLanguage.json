@@ -1,59 +1,58 @@
 {
-    "scopeName": "source.dotvvm",
-    "fileTypes": [
-        "dothtml",
-        "dotmaster",
-        "dotcontrol"
-    ],
-    "patterns": [
+  "scopeName": "source.dotvvm",
+  "fileTypes": [
+    "dothtml",
+    "dotmaster",
+    "dotcontrol"
+  ],
+  "patterns": [
+    {
+      "begin": "<%--",
+      "end": "--%>",
+      "name": "comment.block.dotvvm.server"
+    },
+    {
+      "begin": "\\A",
+      "end": "^(?=\\s*[^@\\s])",
+      "name": "meta.dotvvm.directives",
+      "patterns": [
         {
-            "begin": "<%--",
-            "end": "--%>",
-            "name": "comment.block.dotvvm.server"
-        },
-        {
-            "begin": "\\A",
-            "end": "^(?=\\s*[^@\\s])",
-            "name": "meta.dotvvm.directives",
-            "description": "first non-empty row not starting with @",
-            "patterns": [
-                {
-                    "begin": "^(@)(\\w+)\\s*",
-                    "beginCaptures": {
-                        "1": {
-                            "name": "markup.bold.dotvvm.directive.at"
-                        },
-                        "2": {
-                            "name": "keyword.control.dotvvm.directive.type"
-                        }
-                    },
-                    "end": "\\n"
-                }
-            ]
-        },
-        {
-            "begin": "(\\{\\{)\\s*([a-zA-Z0-9]*)\\s*(:?)",
-            "beginCaptures": {
-                "1": {
-                    "name": "markup.bold.dotvvm.binding.begin"
-                },
-                "2": {
-                    "name": "keyword.control.dotvvm.binding.type"
-                },
-                "3": {
-                    "name": "punctuation.dotvvm.binding.colon"
-                }
+          "begin": "^(@)(\\w+)\\s*",
+          "beginCaptures": {
+            "1": {
+              "name": "markup.bold.dotvvm.directive.at"
             },
-            "end": "\\}\\}",
-            "endCaptures": {
-                "0": {
-                    "name": "markup.bold.dotvvm.binding.end"
-                }
-            },
-            "contentName": "keyword.operator.dotvvm.binding"
-        },
-        {
-            "include": "text.html.basic"
+            "2": {
+              "name": "keyword.control.dotvvm.directive.type"
+            }
+          },
+          "end": "\\n"
         }
-    ]
+      ]
+    },
+    {
+      "begin": "(\\{\\{)\\s*([a-zA-Z0-9]*)\\s*(:?)",
+      "beginCaptures": {
+        "1": {
+          "name": "markup.bold.dotvvm.binding.begin"
+        },
+        "2": {
+          "name": "keyword.control.dotvvm.binding.type"
+        },
+        "3": {
+          "name": "punctuation.dotvvm.binding.colon"
+        }
+      },
+      "end": "\\}\\}",
+      "endCaptures": {
+        "0": {
+          "name": "markup.bold.dotvvm.binding.end"
+        }
+      },
+      "contentName": "keyword.operator.dotvvm.binding"
+    },
+    {
+      "include": "text.html.basic"
+    }
+  ]
 }
