@@ -30,10 +30,7 @@
       {
         "language": "dotvvm",
         "scopeName": "source.dotvvm",
-        "path": "./src/syntax/dotvvm.tmLanguage.json",
-        "embeddedLanguages": {
-          "text.html": "html"
-        }
+        "path": "./src/syntax/dotvvm.tmLanguage.json"
       }
     ]
   },

@@ -9,9 +9,6 @@
   "patterns": [
     {
       "include": "#scope"
-    },
-    {
-      "include": "text.html.basic"
     }
   ],
   "repository": {
@@ -19,6 +16,9 @@
       "patterns": [
         {
           "include": "#directives"
+        },
+        {
+          "include": "#content"
         },
         {
           "include": "#comments"
@@ -52,6 +52,17 @@
             }
           },
           "end": "\\n"
+        }
+      ]
+    },
+    "content": {
+      "begin": "(?m)^(?=\\s*[^@\\s])",
+      "end": "\\z",
+      "name": "meta.dotvvm.content",
+      "contentName": "meta.embedded.block.html",
+      "patterns": [
+        {
+          "include": "text.html.basic"
         }
       ]
     },
@@ -483,6 +494,33 @@
         }
       },
       "name": "meta.scope.tag.$2.dotvvm"
+    }
+  },
+  "injections": {
+    "L:meta.embedded.block.html meta.tag": {
+      "patterns": [
+        {
+          "begin": "(\\{)\\s*([a-zA-Z0-9]*)\\s*(:?)",
+          "beginCaptures": {
+            "1": {
+              "name": "markup.bold.dotvvm.binding.begin"
+            },
+            "2": {
+              "name": "keyword.control.dotvvm.binding.type"
+            },
+            "3": {
+              "name": "punctuation.dotvvm.binding.colon"
+            }
+          },
+          "end": "\\}",
+          "endCaptures": {
+            "0": {
+              "name": "markup.bold.dotvvm.binding.end"
+            }
+          },
+          "contentName\"": "keyword.operator.dotvvm.binding"
+        }
+      ]
     }
   }
 }

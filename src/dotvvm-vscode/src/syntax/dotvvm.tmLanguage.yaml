@@ -7,15 +7,13 @@ fileTypes:
 - dotlayout
 patterns:
 - include: '#scope'
-- include: text.html.basic
 
 repository:
   scope:
     patterns:
     - include: '#directives'
+    - include: '#content'
     - include: '#comments'
-    - include: '#literalBindings'
-    - include: '#tags'
 
   comments:
     begin: '<%--'
@@ -32,6 +30,15 @@ repository:
         '1': { name: markup.bold.dotvvm.directive.at }
         '2': { name: keyword.control.dotvvm.directive.type }
       end: '\n'
+
+  content:
+    begin: '(?m)^(?=\s*[^@\s])' # first non-empty row not starting with @
+    end: '\z'
+    name: meta.dotvvm.content
+    contentName: meta.embedded.block.html
+    patterns:
+    - include: '#tags'
+    - include: '#literalBindings'
 
   literalBindings:
     begin: '(\{\{)\s*([a-zA-Z0-9]*)\s*(:?)'
