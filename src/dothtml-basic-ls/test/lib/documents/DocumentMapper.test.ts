@@ -12,7 +12,7 @@ describe('DocumentMapper', () => {
                     endPos: positionAt(end, content),
                     content: content.substring(start, end)
                 },
-                'file:///hello.svelte'
+                'file:///hello.dothtml'
             );
         }
 

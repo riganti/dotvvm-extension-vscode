@@ -7,17 +7,6 @@ import { returnObjectIfHasKeys } from './utils';
  * Default config for the language server.
  */
 const defaultLSConfig: LSConfig = {
-    typescript: {
-        enable: true,
-        diagnostics: { enable: true },
-        hover: { enable: true },
-        completions: { enable: true },
-        documentSymbols: { enable: true },
-        codeActions: { enable: true },
-        selectionRange: { enable: true },
-        signatureHelp: { enable: true },
-        semanticTokens: { enable: true }
-    },
     css: {
         enable: true,
         globals: '',
@@ -37,70 +26,27 @@ const defaultLSConfig: LSConfig = {
         documentSymbols: { enable: true },
         linkedEditing: { enable: true }
     },
-    svelte: {
+    dotvvm: {
         enable: true,
-        useNewTransformation: false,
-        compilerWarnings: {},
-        diagnostics: { enable: true },
-        rename: { enable: true },
-        format: {
-            enable: true,
-            config: {
-                svelteSortOrder: 'options-scripts-markup-styles',
-                svelteStrictMode: false,
-                svelteAllowShorthand: true,
-                svelteBracketNewLine: true,
-                svelteIndentScriptAndStyle: true,
-                printWidth: 80,
-                singleQuote: false
-            }
-        },
-        completions: { enable: true },
-        hover: { enable: true },
         codeActions: { enable: true },
         selectionRange: { enable: true },
-        defaultScriptLanguage: 'none'
+        completions: { enable: true },
+        diagnostics: { enable: true },
+        hover: { enable: true },
     }
 };
 
 /**
  * Representation of the language server config.
- * Should be kept in sync with infos in `packages/svelte-vscode/package.json`.
+ * Should be kept in sync with infos in `packages/dotvvm-vscode/package.json`.
  */
 export interface LSConfig {
-    typescript: LSTypescriptConfig;
     css: LSCSSConfig;
     html: LSHTMLConfig;
-    svelte: LSSvelteConfig;
+    dotvvm: LSDotvvmConfig;
 }
 
-export interface LSTypescriptConfig {
-    enable: boolean;
-    diagnostics: {
-        enable: boolean;
-    };
-    hover: {
-        enable: boolean;
-    };
-    documentSymbols: {
-        enable: boolean;
-    };
-    completions: {
-        enable: boolean;
-    };
-    codeActions: {
-        enable: boolean;
-    };
-    selectionRange: {
-        enable: boolean;
-    };
-    signatureHelp: {
-        enable: boolean;
-    };
-    semanticTokens: {
-        enable: boolean;
-    };
-}
+type Switch = { enable: boolean }
 
 export interface LSCSSConfig {
     enable: boolean;
@@ -151,78 +97,14 @@ export interface LSHTMLConfig {
 
 export type CompilerWarningsSettings = Record<string, 'ignore' | 'error'>;
 
-export interface LSSvelteConfig {
-    enable: boolean;
-    useNewTransformation: boolean;
-    compilerWarnings: CompilerWarningsSettings;
-    diagnostics: {
-        enable: boolean;
-    };
-    format: {
-        enable: boolean;
-        config: {
-            svelteSortOrder: string;
-            svelteStrictMode: boolean;
-            svelteAllowShorthand: boolean;
-            svelteBracketNewLine: boolean;
-            svelteIndentScriptAndStyle: boolean;
-            printWidth: number;
-            singleQuote: boolean;
-        };
-    };
-    rename: {
-        enable: boolean;
-    };
-    completions: {
-        enable: boolean;
-    };
-    hover: {
-        enable: boolean;
-    };
-    codeActions: {
-        enable: boolean;
-    };
-    selectionRange: {
-        enable: boolean;
-    };
-    defaultScriptLanguage: 'none' | 'ts';
+export interface LSDotvvmConfig {
+    enable: boolean
+    diagnostics: Switch
+    completions: Switch
+    hover: Switch
+    codeActions: Switch
+    selectionRange: Switch
 }
-
-/**
- * A subset of the JS/TS VS Code settings which
- * are transformed to ts.UserPreferences.
- * It may not be available in other IDEs, that's why the keys are optional.
- */
-export interface TSUserConfig {
-    preferences?: TsUserPreferencesConfig;
-    suggest?: TSSuggestConfig;
-}
-
-/**
- * A subset of the JS/TS VS Code settings which
- * are transformed to ts.UserPreferences.
- */
-export interface TsUserPreferencesConfig {
-    importModuleSpecifier: UserPreferences['importModuleSpecifierPreference'];
-    importModuleSpecifierEnding: UserPreferences['importModuleSpecifierEnding'];
-    quoteStyle: UserPreferences['quotePreference'];
-    /**
-     * only in typescript config
-     */
-    includePackageJsonAutoImports?: UserPreferences['includePackageJsonAutoImports'];
-}
-
-/**
- * A subset of the JS/TS VS Code settings which
- * are transformed to ts.UserPreferences.
- */
-export interface TSSuggestConfig {
-    autoImports: UserPreferences['includeCompletionsForModuleExports'];
-    includeAutomaticOptionalChainCompletions: boolean | undefined;
-    includeCompletionsForImportStatements: boolean | undefined;
-}
-
-export type TsUserConfigLang = 'typescript' | 'javascript';
 
 /**
  * The config as the vscode-css-languageservice understands it
@@ -251,22 +133,14 @@ export class LSConfigManager {
      * Updates config.
      */
     update(config: DeepPartial<LSConfig>): void {
-        // Ideally we shouldn't need the merge here because all updates should be valid and complete configs.
-        // But since those configs come from the client they might be out of synch with the valid config:
-        // We might at some point in the future forget to synch config settings in all packages after updating the config.
         this.config = merge({}, defaultLSConfig, this.config, config);
-        // Merge will keep arrays/objects if the new one is empty/has less entries,
-        // therefore we need some extra checks if there are new settings
-        if (config.svelte?.compilerWarnings) {
-            this.config.svelte.compilerWarnings = config.svelte.compilerWarnings;
-        }
 
         this.listeners.forEach((listener) => listener(this));
     }
 
     /**
      * Whether or not specified config is enabled
-     * @param key a string which is a path. Example: 'svelte.diagnostics.enable'.
+     * @param key a string which is a path. Example: 'dotvvm.diagnostics.enable'.
      */
     enabled(key: string): boolean {
         return !!this.get(key);
@@ -274,7 +148,7 @@ export class LSConfigManager {
 
     /**
      * Get specific config
-     * @param key a string which is a path. Example: 'svelte.diagnostics.enable'.
+     * @param key a string which is a path. Example: 'dotvvm.diagnostics.enable'.
      */
     get<T>(key: string): T {
         return get(this.config, key);

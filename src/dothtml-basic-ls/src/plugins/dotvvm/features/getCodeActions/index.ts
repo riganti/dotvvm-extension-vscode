@@ -5,12 +5,12 @@ import {
     Range,
     WorkspaceEdit
 } from 'vscode-languageserver';
-import { SvelteDocument } from '../../SvelteDocument';
+import { DotvvmDocument } from '../../DotvvmDocument';
 import { getQuickfixActions } from './getQuickfixes';
 import { executeRefactoringCommand } from './getRefactorings';
 
 export async function getCodeActions(
-    svelteDoc: SvelteDocument,
+    svelteDoc: DotvvmDocument,
     range: Range,
     context: CodeActionContext
 ): Promise<CodeAction[]> {
@@ -26,7 +26,7 @@ export async function getCodeActions(
 }
 
 export async function executeCommand(
-    svelteDoc: SvelteDocument,
+    svelteDoc: DotvvmDocument,
     command: string,
     args?: any[]
 ): Promise<WorkspaceEdit | string | null> {

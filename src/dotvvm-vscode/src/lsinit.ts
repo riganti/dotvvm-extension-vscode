@@ -148,7 +148,7 @@ export function activateLanguageServer(context: ExtensionContext) {
         context.subscriptions.push(ls);
         await ls.start();
         if (showNotification) {
-            window.showInformationMessage('Svelte language server restarted.');
+            window.showInformationMessage('DotVVM language server restarted.');
         }
         restartingLs = false;
     }

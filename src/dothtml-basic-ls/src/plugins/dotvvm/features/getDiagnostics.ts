@@ -4,18 +4,16 @@ import {
 } from '../../../lib/documents';
 import { Logger } from '../../../logger';
 import { CompilerWarningsSettings } from '../../../ls-config';
-import { SvelteDocument } from '../SvelteDocument';
+import { DotvvmDocument } from '../DotvvmDocument';
 
 /**
  * Returns diagnostics from the svelte compiler.
  * Also tries to return errors at correct position if transpilation/preprocessing fails.
  */
 export async function getDiagnostics(
-    document: Document,
-    svelteDoc: SvelteDocument,
-    settings: CompilerWarningsSettings
+    doc: DotvvmDocument
 ): Promise<Diagnostic[]> {
-    // const config = await svelteDoc.config;
+    // const config = await doc.config;
     // if (config?.loadConfigError) {
     //     return getConfigLoadErrorDiagnostics(config.loadConfigError);
     // }
@@ -23,7 +21,7 @@ export async function getDiagnostics(
     try {
         return [] // await tryGetDiagnostics(document, svelteDoc, settings);
     } catch (error) {
-        return getPreprocessErrorDiagnostics(document, error);
+        return getPreprocessErrorDiagnostics(doc.parent, error);
     }
 }
 

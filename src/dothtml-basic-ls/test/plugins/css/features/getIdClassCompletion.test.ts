@@ -14,7 +14,7 @@ import { pathToUrl } from '../../../../src/utils';
 
 describe('getIdClassCompletion', () => {
     function createDocument(content: string) {
-        return new Document('file:///hello.svelte', content);
+        return new Document('file:///hello.dothtml', content);
     }
 
     function createCSSDocument(content: string) {

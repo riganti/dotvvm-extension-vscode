@@ -28,7 +28,7 @@ import {
     CSSPlugin,
     HTMLPlugin,
     PluginHost,
-    SveltePlugin,
+    DotvvmPlugin,
     OnWatchFileChangesPara,
 } from './plugins';
 import { debounceThrottle, isNotNullOrUndefined, normalizeUri, urlToPath } from './utils';
@@ -125,7 +125,7 @@ export function startServer(options?: LSOptions) {
             definitionLinkSupport: !!evt.capabilities.textDocument?.definition?.linkSupport
         });
         // Order of plugin registration matters for FirstNonNull, which affects for example hover info
-        pluginHost.register((new SveltePlugin(configManager)));
+        pluginHost.register((new DotvvmPlugin(configManager)));
         pluginHost.register(new HTMLPlugin(docManager, configManager));
 
         const cssLanguageServices = createLanguageServices({
@@ -239,7 +239,7 @@ export function startServer(options?: LSOptions) {
     connection.onPrepareRename((req) => pluginHost.prepareRename(req.textDocument, req.position));
 
     connection.onDidChangeConfiguration(({ settings }) => {
-        configManager.update(settings.svelte?.plugin);
+        configManager.update(settings.dotvvm);
         configManager.updateEmmetConfig(settings.emmet);
         configManager.updateCssConfig(settings.css);
     });
@@ -364,12 +364,6 @@ export function startServer(options?: LSOptions) {
     );
     docManager.on('documentClose', (document: Document) =>
         diagnosticsManager.removeDiagnostics(document)
-    );
-
-    // The language server protocol does not have a specific "did rename/move files" event,
-    // so we create our own in the extension client and handle it here
-    connection.onRequest('$/getEditsForFileRename', async (fileRename: RenameFile) =>
-        pluginHost.updateImports(fileRename)
     );
 
     connection.onRequest('$/getFileReferences', async (uri: string) => {

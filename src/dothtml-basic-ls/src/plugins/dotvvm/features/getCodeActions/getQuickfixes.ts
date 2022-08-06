@@ -2,13 +2,13 @@ import {
     CodeAction,
     Diagnostic,
 } from 'vscode-languageserver';
-import { SvelteDocument } from '../../SvelteDocument';
+import { DotvvmDocument } from '../../DotvvmDocument';
 
 /**
  * Get applicable quick fixes.
  */
 export async function getQuickfixActions(
-    svelteDoc: SvelteDocument,
+    svelteDoc: DotvvmDocument,
     svelteDiagnostics: Diagnostic[]
 ): Promise<CodeAction[]> {
 

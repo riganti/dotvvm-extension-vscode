@@ -1,5 +1,5 @@
 import { EOL } from 'os';
-import { SvelteDocument } from '../SvelteDocument';
+import { DotvvmDocument } from '../DotvvmDocument';
 import {
     Position,
     CompletionList,
@@ -30,17 +30,16 @@ const componentDocumentationCompletion: CompletionItem = {
 };
 
 export function getCompletions(
-    document: Document,
-    svelteDoc: SvelteDocument,
+    doc: DotvvmDocument,
     position: Position
 ): CompletionList | null {
-    const offset = svelteDoc.offsetAt(position);
+    const offset = doc.offsetAt(position);
 
     const isInStyleOrScript =
-        isInTag(position, svelteDoc.style) ||
-        isInTag(position, svelteDoc.script) ||
-        isInTag(position, svelteDoc.moduleScript);
-    const lastCharactersBeforePosition = svelteDoc
+        isInTag(position, doc.style) ||
+        isInTag(position, doc.script) ||
+        isInTag(position, doc.moduleScript);
+    const lastCharactersBeforePosition = doc
         .getText()
         // use last 10 characters, should cover 99% of all cases
         .substr(Math.max(offset - 10, 0), Math.min(offset, 10));
@@ -53,7 +52,7 @@ export function getCompletions(
         return getTagCompletionsWithinMoustache();
     }
 
-    const attributeContext = getAttributeContextAtPosition(document, position);
+    const attributeContext = getAttributeContextAtPosition(doc.parent, position);
 
     if (attributeContext) {
         return getEventModifierCompletion(attributeContext);
@@ -67,7 +66,7 @@ export function getCompletions(
     function getTagCompletionsWithinMoustache() {
         const triggerCharacter = getTriggerCharacter(lastCharactersBeforePosition);
         // return all, filtering with regards to user input will be done client side
-        return getCompletionsWithRegardToTriggerCharacter(triggerCharacter, svelteDoc, offset);
+        return getCompletionsWithRegardToTriggerCharacter(triggerCharacter, doc, offset);
     }
 
     function getComponentDocumentationCompletions() {
@@ -118,7 +117,7 @@ function getEventModifierCompletion(attributeContext: AttributeContext): Complet
  */
 function getCompletionsWithRegardToTriggerCharacter(
     triggerCharacter: string,
-    svelteDoc: SvelteDocument,
+    doc: DotvvmDocument,
     offset: number
 ) {
     if (triggerCharacter === '@') {
@@ -160,7 +159,7 @@ function getCompletionsWithRegardToTriggerCharacter(
                     { tag: 'if', label: 'else if' }
                 ])
             },
-            svelteDoc,
+            doc,
             offset
         );
     }
@@ -173,7 +172,7 @@ function getCompletionsWithRegardToTriggerCharacter(
                 ifOpen: createCompletionItems([{ tag: 'if', label: 'if' }]),
                 keyOpen: createCompletionItems([{ tag: 'key', label: 'key' }])
             },
-            svelteDoc,
+            doc,
             offset
         );
     }
@@ -208,10 +207,10 @@ function showCompletionWithRegardsToOpenedTags(
         awaitOpen: CompletionList;
         keyOpen?: CompletionList;
     },
-    svelteDoc: SvelteDocument,
+    doc: DotvvmDocument,
     offset: number
 ) {
-    switch (getLatestOpeningTag(svelteDoc, offset)) {
+    switch (getLatestOpeningTag(doc, offset)) {
         case 'each':
             return on.eachOpen;
         case 'if':

@@ -15,7 +15,7 @@ import {
 } from 'vscode-languageserver';
 import { Document } from '../../lib/documents';
 import { Logger } from '../../logger';
-import { LSConfigManager, LSSvelteConfig } from '../../ls-config';
+import { LSConfigManager, LSDotvvmConfig } from '../../ls-config';
 import {
     CodeActionsProvider,
     CompletionsProvider,
@@ -29,9 +29,9 @@ import { getCompletions } from './features/getCompletions';
 import { getDiagnostics } from './features/getDiagnostics';
 import { getHoverInfo } from './features/getHoverInfo';
 import { getSelectionRange } from './features/getSelectionRanges';
-import { SvelteCompileResult, SvelteDocument } from './SvelteDocument';
+import { DotvvmDocument } from './DotvvmDocument';
 
-export class SveltePlugin
+export class DotvvmPlugin
     implements
         DiagnosticsProvider,
         FormattingProvider,
@@ -40,8 +40,8 @@ export class SveltePlugin
         CodeActionsProvider,
         SelectionRangeProvider
 {
-    __name = 'svelte';
-    private docManager = new Map<Document, SvelteDocument>();
+    __name = 'dotvvm';
+    private docManager = new Map<Document, DotvvmDocument>();
 
     constructor(private configManager: LSConfigManager) {}
 
@@ -51,10 +51,7 @@ export class SveltePlugin
         }
 
         return getDiagnostics(
-            document,
-            await this.getSvelteDoc(document),
-            this.configManager.getConfig().svelte.compilerWarnings
-        );
+            await this.getDocument(document));
     }
 
     async formatDocument(document: Document, options: FormattingOptions): Promise<TextEdit[]> {
@@ -71,12 +68,12 @@ export class SveltePlugin
             return null;
         }
 
-        const svelteDoc = await this.getSvelteDoc(document);
+        const doc = await this.getDocument(document);
         if (cancellationToken?.isCancellationRequested) {
             return null;
         }
 
-        return getCompletions(document, svelteDoc, position);
+        return getCompletions(doc, position);
     }
 
     async doHover(document: Document, position: Position): Promise<Hover | null> {
@@ -84,7 +81,7 @@ export class SveltePlugin
             return null;
         }
 
-        return getHoverInfo(document, await this.getSvelteDoc(document), position);
+        return getHoverInfo(document, await this.getDocument(document), position);
     }
 
     async getCodeActions(
@@ -97,14 +94,14 @@ export class SveltePlugin
             return [];
         }
 
-        const svelteDoc = await this.getSvelteDoc(document);
+        const doc = await this.getDocument(document);
 
         if (cancellationToken?.isCancellationRequested) {
             return [];
         }
 
         try {
-            return getCodeActions(svelteDoc, range, context);
+            return getCodeActions(doc, range, context);
         } catch (error) {
             return [];
         }
@@ -119,9 +116,9 @@ export class SveltePlugin
             return null;
         }
 
-        const svelteDoc = await this.getSvelteDoc(document);
+        const doc = await this.getDocument(document);
         try {
-            return executeCommand(svelteDoc, command, args);
+            return executeCommand(doc, command, args);
         } catch (error) {
             return null;
         }
@@ -135,24 +132,24 @@ export class SveltePlugin
             return null;
         }
 
-        const svelteDoc = await this.getSvelteDoc(document);
+        const doc = await this.getDocument(document);
 
-        return getSelectionRange(svelteDoc, position);
+        return getSelectionRange(doc, position);
     }
 
-    private featureEnabled(feature: keyof LSSvelteConfig) {
+    private featureEnabled(feature: keyof LSDotvvmConfig) {
         return (
-            this.configManager.enabled('svelte.enable') &&
-            this.configManager.enabled(`svelte.${feature}.enable`)
+            this.configManager.enabled('dotvvm.enable') &&
+            this.configManager.enabled(`dotvvm.${feature}.enable`)
         );
     }
 
-    private async getSvelteDoc(document: Document) {
-        let svelteDoc = this.docManager.get(document);
-        if (!svelteDoc || svelteDoc.version !== document.version) {
-            svelteDoc = new SvelteDocument(document);
-            this.docManager.set(document, svelteDoc);
+    private async getDocument(document: Document) {
+        let doc = this.docManager.get(document);
+        if (!doc || doc.version !== document.version) {
+            doc = new DotvvmDocument(document);
+            this.docManager.set(document, doc);
         }
-        return svelteDoc;
+        return doc;
     }
 }

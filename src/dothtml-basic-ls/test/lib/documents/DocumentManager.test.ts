@@ -5,9 +5,9 @@ import { DocumentManager, Document } from '../../../src/lib/documents';
 
 describe('Document Manager', () => {
     const textDocument: TextDocumentItem = {
-        uri: 'file:///hello.svelte',
+        uri: 'file:///hello.dothtml',
         version: 0,
-        languageId: 'svelte',
+        languageId: 'dothtml',
         text: 'Hello, world!'
     };
 
@@ -46,7 +46,7 @@ describe('Document Manager', () => {
         manager.openDocument(textDocument);
         manager.updateDocument(textDocument, [
             {
-                text: 'svelte',
+                text: 'dothtml',
                 range: Range.create(0, 7, 0, 12),
                 rangeLength: 5
             },
@@ -58,7 +58,7 @@ describe('Document Manager', () => {
         ]);
 
         sinon.assert.calledTwice(update);
-        sinon.assert.calledWith(update.firstCall, 'svelte', 7, 12);
+        sinon.assert.calledWith(update.firstCall, 'dothtml', 7, 12);
         sinon.assert.calledWith(update.secondCall, 'Greetings', 0, 5);
     });
 

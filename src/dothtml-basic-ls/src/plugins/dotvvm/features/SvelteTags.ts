@@ -1,4 +1,4 @@
-import { SvelteDocument } from '../SvelteDocument';
+import { DotvvmDocument } from '../DotvvmDocument';
 
 /**
  * Special svelte syntax tags that do template logic.
@@ -90,7 +90,7 @@ TODO
  * Get the last tag that is opened but not closed.
  */
 export function getLatestOpeningTag(
-    svelteDoc: SvelteDocument,
+    svelteDoc: DotvvmDocument,
     offset: number
 ): SvelteLogicTag | null {
     // Only use content up to the position and strip out html comments

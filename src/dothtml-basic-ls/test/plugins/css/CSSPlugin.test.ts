@@ -19,7 +19,7 @@ import { FileType, LanguageServiceOptions } from 'vscode-css-languageservice';
 
 describe('CSS Plugin', () => {
     function setup(content: string, lsOptions?: LanguageServiceOptions) {
-        const document = new Document('file:///hello.svelte', content);
+        const document = new Document('file:///hello.dothtml', content);
         const docManager = new DocumentManager(() => document);
         const pluginManager = new LSConfigManager();
         const plugin = new CSSPlugin(
@@ -326,7 +326,7 @@ describe('CSS Plugin', () => {
                                 line: 0
                             }
                         },
-                        uri: 'file:///hello.svelte'
+                        uri: 'file:///hello.dothtml'
                     },
                     name: 'h1'
                 }

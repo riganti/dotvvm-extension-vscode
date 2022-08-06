@@ -1,5 +1,5 @@
 import { Hover, Position } from 'vscode-languageserver';
-import { SvelteDocument } from '../SvelteDocument';
+import { DotvvmDocument } from '../DotvvmDocument';
 import { documentation, SvelteTag, getLatestOpeningTag } from './SvelteTags';
 import { flatten } from '../../../utils';
 import { Document, isInTag } from '../../../lib/documents';
@@ -12,7 +12,7 @@ import { getModifierData } from './getModifierData';
  */
 export function getHoverInfo(
     document: Document,
-    svelteDoc: SvelteDocument,
+    svelteDoc: DotvvmDocument,
     position: Position
 ): Hover | null {
     const offset = svelteDoc.offsetAt(position);
@@ -49,7 +49,7 @@ export function getHoverInfo(
 }
 
 function getTagHoverInfoAtOffset(
-    svelteDoc: SvelteDocument,
+    svelteDoc: DotvvmDocument,
     charactersOffset: number,
     charactersAroundOffset: string,
     offset: number
@@ -66,7 +66,7 @@ function getTagHoverInfoAtOffset(
  * Get the tag that is at the offset.
  */
 function getTagAtOffset(
-    svelteDoc: SvelteDocument,
+    svelteDoc: DotvvmDocument,
     charactersOffset: number,
     charactersAroundOffset: string,
     offset: number

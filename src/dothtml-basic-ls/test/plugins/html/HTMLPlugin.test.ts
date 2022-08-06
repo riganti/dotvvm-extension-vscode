@@ -14,7 +14,7 @@ import { LSConfigManager } from '../../../src/ls-config';
 
 describe('HTML Plugin', () => {
     function setup(content: string) {
-        const document = new Document('file:///hello.svelte', content);
+        const document = new Document('file:///hello.dothtml', content);
         const docManager = new DocumentManager(() => document);
         const pluginManager = new LSConfigManager();
         const plugin = new HTMLPlugin(docManager, pluginManager);

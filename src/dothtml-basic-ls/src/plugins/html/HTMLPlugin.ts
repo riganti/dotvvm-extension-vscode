@@ -24,7 +24,7 @@ import {
     getNodeIfIsInComponentStartTag
 } from '../../lib/documents';
 import { LSConfigManager, LSHTMLConfig } from '../../ls-config';
-import { svelteHtmlDataProvider } from './dataProvider';
+import { dothtmlDataProvider } from './dataProvider';
 import {
     HoverProvider,
     CompletionsProvider,
@@ -40,7 +40,7 @@ export class HTMLPlugin
     __name = 'html';
     private configManager: LSConfigManager;
     private lang = getLanguageService({
-        customDataProviders: [svelteHtmlDataProvider],
+        customDataProviders: [dothtmlDataProvider],
         useDefaultDataProvider: false
     });
     private documents = new WeakMap<Document, HTMLDocument>();

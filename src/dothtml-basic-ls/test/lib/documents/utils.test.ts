@@ -345,9 +345,9 @@ describe('document/utils', () => {
             const newPath = updateRelativeImport(
                 'C:/absolute/path/oldPath',
                 'C:/absolute/newPath',
-                './Component.svelte'
+                './Component.dotcontrol'
             );
-            assert.deepStrictEqual(newPath, '../path/oldPath/Component.svelte');
+            assert.deepStrictEqual(newPath, '../path/oldPath/Component.dotcontrol');
         });
 
         it('should update path of file without ending', () => {

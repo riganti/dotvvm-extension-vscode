@@ -3,31 +3,9 @@ import {
     getSCSSLanguageService,
     getLESSLanguageService,
     LanguageService,
-    ICSSDataProvider,
     LanguageServiceOptions
 } from 'vscode-css-languageservice';
-import { pesudoClass } from './features/svelte-selectors';
 
-const customDataProvider: ICSSDataProvider = {
-    providePseudoClasses() {
-        return pesudoClass;
-    },
-    provideProperties() {
-        return [
-            {
-                name: 'vector-effect',
-                values: [{ name: 'non-scaling-stroke' }, { name: 'none' }],
-                status: 'experimental'
-            }
-        ];
-    },
-    provideAtDirectives() {
-        return [];
-    },
-    providePseudoElements() {
-        return [];
-    }
-};
 
 export function getLanguage(kind?: string) {
     switch (kind) {
@@ -58,7 +36,7 @@ export function createLanguageServices(options?: LanguageServiceOptions): CSSLan
         getSCSSLanguageService
     ].map((getService) =>
         getService({
-            customDataProviders: [customDataProvider],
+            customDataProviders: [],
             ...(options ?? {})
         })
     );

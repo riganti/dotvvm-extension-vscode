@@ -14,9 +14,9 @@ import assert from 'assert';
 
 describe('PluginHost', () => {
     const textDocument: TextDocumentItem = {
-        uri: 'file:///hello.svelte',
+        uri: 'file:///hello.dothtml',
         version: 0,
-        languageId: 'svelte',
+        languageId: 'dotvvm',
         text: 'Hello, world!'
     };
 

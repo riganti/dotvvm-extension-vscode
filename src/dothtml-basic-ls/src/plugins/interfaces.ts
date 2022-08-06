@@ -122,10 +122,6 @@ export interface FileRename {
     newUri: string;
 }
 
-export interface UpdateImportsProvider {
-    updateImports(fileRename: FileRename): Resolvable<WorkspaceEdit | null>;
-}
-
 export interface RenameProvider {
     rename(
         document: Document,
@@ -204,7 +200,6 @@ type ProviderBase = DiagnosticsProvider &
     DocumentColorsProvider &
     ColorPresentationsProvider &
     DocumentSymbolsProvider &
-    UpdateImportsProvider &
     CodeActionsProvider &
     FindReferencesProvider &
     FileReferencesProvider &

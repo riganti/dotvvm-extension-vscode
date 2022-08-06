@@ -10,7 +10,7 @@ import {
 } from 'vscode-languageserver';
 import { isRangeInTag, TagInformation, updateRelativeImport } from '../../../../lib/documents';
 import { pathToUrl } from '../../../../utils';
-import { SvelteDocument } from '../../SvelteDocument';
+import { DotvvmDocument } from '../../DotvvmDocument';
 
 export interface ExtractComponentArgs {
     uri: string;
@@ -21,7 +21,7 @@ export interface ExtractComponentArgs {
 export const extractComponentCommand = 'extract_to_svelte_component';
 
 export async function executeRefactoringCommand(
-    svelteDoc: SvelteDocument,
+    svelteDoc: DotvvmDocument,
     command: string,
     args?: any[]
 ): Promise<WorkspaceEdit | string | null> {
@@ -33,7 +33,7 @@ export async function executeRefactoringCommand(
 }
 
 async function executeExtractComponentCommand(
-    svelteDoc: SvelteDocument,
+    svelteDoc: DotvvmDocument,
     refactorArgs: ExtractComponentArgs
 ): Promise<WorkspaceEdit | string | null> {
     const { range } = refactorArgs;
@@ -143,7 +143,7 @@ const scriptRelativeImportRegex =
 const styleRelativeImportRege = /@import\s+['"`](((\.\/)|(\.\.\/)).*?)['"`]/g;
 
 function updateRelativeImports(
-    svelteDoc: SvelteDocument,
+    svelteDoc: DotvvmDocument,
     tagText: string,
     newComponentRelativePath: string,
     isStyleTag: boolean
