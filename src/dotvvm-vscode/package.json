@@ -11,14 +11,29 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:dotvvm-vscode.helloWorld"
+    "onLanguage:dotvvm"
   ],
   "main": "./dist/extension.js",
   "contributes": {
-    "commands": [
+    "languages": [
       {
-        "command": "dotvvm-vscode.helloWorld",
-        "title": "Hello World"
+        "id": "dotvvm",
+        "extensions": [
+          ".dothtml",
+          ".dotmaster",
+          ".dotcontrol"
+        ],
+        "configuration": "./src/language/language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "dotvvm",
+        "scopeName": "source.dotvvm",
+        "path": "./src/syntax/dotvvm.tmLanguage.json",
+        "embeddedLanguages": {
+          "text.html": "html"
+        }
       }
     ]
   },
