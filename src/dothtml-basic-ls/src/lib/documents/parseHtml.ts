@@ -7,7 +7,7 @@ import {
     Node,
     Position
 } from 'vscode-html-languageservice';
-import { Document } from './Document';
+import { DotvvmDocument } from './Document';
 import { isInsideMoustacheTag } from './utils';
 
 const parser = getLanguageService();
@@ -95,7 +95,7 @@ export interface AttributeContext {
 }
 
 export function getAttributeContextAtPosition(
-    document: Document,
+    document: DotvvmDocument,
     position: Position
 ): AttributeContext | null {
     const offset = document.offsetAt(position);

@@ -13,7 +13,7 @@ import {
     TextEdit,
     WorkspaceEdit
 } from 'vscode-languageserver';
-import { Document } from '../../lib/documents';
+import { DotvvmDocument } from '../../lib/documents';
 import { Logger } from '../../logger';
 import { LSConfigManager, LSDotvvmConfig } from '../../ls-config';
 import {
@@ -29,7 +29,6 @@ import { getCompletions } from './features/getCompletions';
 import { getDiagnostics } from './features/getDiagnostics';
 import { getHoverInfo } from './features/getHoverInfo';
 import { getSelectionRange } from './features/getSelectionRanges';
-import { DotvvmDocument } from './DotvvmDocument';
 
 export class DotvvmPlugin
     implements
@@ -41,25 +40,22 @@ export class DotvvmPlugin
         SelectionRangeProvider
 {
     __name = 'dotvvm';
-    private docManager = new Map<Document, DotvvmDocument>();
-
     constructor(private configManager: LSConfigManager) {}
 
-    async getDiagnostics(document: Document): Promise<Diagnostic[]> {
+    async getDiagnostics(document: DotvvmDocument): Promise<Diagnostic[]> {
         if (!this.featureEnabled('diagnostics') || !this.configManager.getIsTrusted()) {
             return [];
         }
 
-        return getDiagnostics(
-            await this.getDocument(document));
+        return getDiagnostics(document);
     }
 
-    async formatDocument(document: Document, options: FormattingOptions): Promise<TextEdit[]> {
+    async formatDocument(document: DotvvmDocument, options: FormattingOptions): Promise<TextEdit[]> {
         return [] // TODO
     }
 
     async getCompletions(
-        document: Document,
+        doc: DotvvmDocument,
         position: Position,
         _?: CompletionContext,
         cancellationToken?: CancellationToken
@@ -68,7 +64,6 @@ export class DotvvmPlugin
             return null;
         }
 
-        const doc = await this.getDocument(document);
         if (cancellationToken?.isCancellationRequested) {
             return null;
         }
@@ -76,16 +71,16 @@ export class DotvvmPlugin
         return getCompletions(doc, position);
     }
 
-    async doHover(document: Document, position: Position): Promise<Hover | null> {
+    async doHover(document: DotvvmDocument, position: Position): Promise<Hover | null> {
         if (!this.featureEnabled('hover')) {
             return null;
         }
 
-        return getHoverInfo(document, await this.getDocument(document), position);
+        return getHoverInfo(document, position);
     }
 
     async getCodeActions(
-        document: Document,
+        document: DotvvmDocument,
         range: Range,
         context: CodeActionContext,
         cancellationToken?: CancellationToken
@@ -94,21 +89,19 @@ export class DotvvmPlugin
             return [];
         }
 
-        const doc = await this.getDocument(document);
-
         if (cancellationToken?.isCancellationRequested) {
             return [];
         }
 
         try {
-            return getCodeActions(doc, range, context);
+            return getCodeActions(document, range, context);
         } catch (error) {
             return [];
         }
     }
 
     async executeCommand(
-        document: Document,
+        doc: DotvvmDocument,
         command: string,
         args?: any[]
     ): Promise<WorkspaceEdit | string | null> {
@@ -116,7 +109,6 @@ export class DotvvmPlugin
             return null;
         }
 
-        const doc = await this.getDocument(document);
         try {
             return executeCommand(doc, command, args);
         } catch (error) {
@@ -125,14 +117,12 @@ export class DotvvmPlugin
     }
 
     async getSelectionRange(
-        document: Document,
+        doc: DotvvmDocument,
         position: Position
     ): Promise<SelectionRange | null> {
         if (!this.featureEnabled('selectionRange')) {
             return null;
         }
-
-        const doc = await this.getDocument(document);
 
         return getSelectionRange(doc, position);
     }
@@ -144,12 +134,4 @@ export class DotvvmPlugin
         );
     }
 
-    private async getDocument(document: Document) {
-        let doc = this.docManager.get(document);
-        if (!doc || doc.version !== document.version) {
-            doc = new DotvvmDocument(document);
-            this.docManager.set(document, doc);
-        }
-        return doc;
-    }
 }

@@ -7,7 +7,7 @@ import {
     Range,
     TextDocumentItem
 } from 'vscode-languageserver-types';
-import { DocumentManager, Document } from '../../src/lib/documents';
+import { DocumentManager, DotvvmDocument } from '../../src/lib/documents';
 import { LSPProviderConfig, PluginHost } from '../../src/plugins';
 import { CompletionTriggerKind } from 'vscode-languageserver';
 import assert from 'assert';
@@ -28,7 +28,7 @@ describe('PluginHost', () => {
         }
     ) {
         const docManager = new DocumentManager(
-            (textDocument) => new Document(textDocument.uri, textDocument.text)
+            (textDocument) => new DotvvmDocument(textDocument.uri, textDocument.text)
         );
 
         const pluginHost = new PluginHost(docManager);

@@ -1,10 +1,16 @@
-import { Position, Range, TextDocument } from 'vscode-languageserver';
+import { TextDocumentContentChangeEvent } from 'vscode-languageserver';
+import { Position, Range, TextDocument } from 'vscode-languageserver-textdocument';
+import { getParser, ParsedTree } from '../parserutils';
 import { getLineOffsets, offsetAt, positionAt } from './utils';
+import type TreeSitter from 'tree-sitter';
 
 /**
  * Represents a textual document.
  */
 export abstract class ReadableDocument implements TextDocument {
+
+    constructor(public languageId: string) {
+    }
     /**
      * Get the text content of the document
      */
@@ -70,30 +76,83 @@ export abstract class ReadableDocument implements TextDocument {
     get lineCount(): number {
         return this.getText().split(/\r?\n/).length;
     }
-
-    abstract languageId: string;
 }
 
 /**
  * Represents a textual document that can be manipulated.
  */
 export abstract class WritableDocument extends ReadableDocument {
-    /**
-     * Set the text content of the document.
-     * Implementers should set `lineOffsets` to `undefined` here.
-     * @param text The new text content
-     */
-    abstract setText(text: string): void;
 
+    tree: ParsedTree | undefined;
+
+    constructor(
+        public content: string,
+        languageId: string
+    ) {
+        super(languageId);
+
+        const parser = getParser(languageId);
+        if (parser) {
+            this.tree = new ParsedTree(parser, this.content);
+        }
+    }
     /**
-     * Update the text between two positions.
-     * @param text The new text slice
-     * @param start Start offset of the new text
-     * @param end End offset of the new text
+     * Set text content and increase the document version
      */
-    update(text: string, start: number, end: number): void {
+    setText(text: string) {
+        this.content = text;
+        this.version++;
         this.lineOffsets = undefined;
-        const content = this.getText();
-        this.setText(content.slice(0, start) + text + content.slice(end));
+        this.tree?.reparse(text);
+    }
+
+    #update(text: string, start: number, end: number): void {
+        this.lineOffsets = undefined;
+        this.content = this.content.slice(0, start) + text + this.content.slice(end)
+    }
+
+    applyChanges(changes: TextDocumentContentChangeEvent[]): void {
+        const treeEdits: TreeSitter.Edit[] = []
+        let reparse = false
+        for (const change of changes) {
+            let start = 0;
+            let end = 0;
+            if ('range' in change) {
+                start = this.offsetAt(change.range.start);
+                end = this.offsetAt(change.range.end);
+
+                const newEnd = start + change.text.length
+                const changeLines = change.text.split(/\n/)
+                const newEndLine = change.range.start.line + changeLines.length
+                const newEndChar =
+                    changeLines.length > 1
+                        ? changeLines[changeLines.length - 1].length
+                        : change.range.start.character + change.text.length
+
+                treeEdits.push({
+                    startIndex: start,
+                    startPosition: { row: change.range.start.line, column: change.range.start.character },
+                    oldEndIndex: end,
+                    newEndIndex: newEnd,
+                    oldEndPosition: { row: change.range.end.line, column: change.range.end.character },
+                    newEndPosition: { row: newEndLine, column: newEndChar },
+                })
+
+            } else {
+                end = this.getTextLength();
+                reparse = true
+            }
+
+
+            this.#update(change.text, start, end);
+        }
+
+        if (reparse) {
+            this.tree?.reparse(this.content)
+        } else {
+            this.tree?.update(treeEdits, this.content)
+        }
+
+        this.version++
     }
 }

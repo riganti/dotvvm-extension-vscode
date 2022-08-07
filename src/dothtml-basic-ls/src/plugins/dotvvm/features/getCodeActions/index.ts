@@ -5,12 +5,12 @@ import {
     Range,
     WorkspaceEdit
 } from 'vscode-languageserver';
-import { DotvvmDocument } from '../../DotvvmDocument';
+import { DotvvmDocument } from '../../../../lib/documents';
 import { getQuickfixActions } from './getQuickfixes';
 import { executeRefactoringCommand } from './getRefactorings';
 
 export async function getCodeActions(
-    svelteDoc: DotvvmDocument,
+    doc: DotvvmDocument,
     range: Range,
     context: CodeActionContext
 ): Promise<CodeAction[]> {
@@ -19,16 +19,16 @@ export async function getCodeActions(
         svelteDiagnostics.length &&
         (!context.only || context.only.includes(CodeActionKind.QuickFix))
     ) {
-        return await getQuickfixActions(svelteDoc, svelteDiagnostics);
+        return await getQuickfixActions(doc, svelteDiagnostics);
     }
 
     return [];
 }
 
 export async function executeCommand(
-    svelteDoc: DotvvmDocument,
+    doc: DotvvmDocument,
     command: string,
     args?: any[]
 ): Promise<WorkspaceEdit | string | null> {
-    return await executeRefactoringCommand(svelteDoc, command, args);
+    return await executeRefactoringCommand(doc, command, args);
 }

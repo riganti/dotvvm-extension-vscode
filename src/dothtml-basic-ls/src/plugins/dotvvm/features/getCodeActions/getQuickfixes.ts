@@ -2,7 +2,7 @@ import {
     CodeAction,
     Diagnostic,
 } from 'vscode-languageserver';
-import { DotvvmDocument } from '../../DotvvmDocument';
+import { DotvvmDocument } from '../../../../lib/documents';
 
 /**
  * Get applicable quick fixes.

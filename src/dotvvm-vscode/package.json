@@ -42,6 +42,7 @@
     "vscode:prepublish": "yarn run package",
     "compile": "webpack",
     "watch": "yarn run build:grammar && webpack --watch",
+    "build": "yarn run build:grammar && webpack",
     "package": "webpack --mode production --devtool hidden-source-map",
     "compile-tests": "tsc -p . --outDir out",
     "watch-tests": "tsc -p . -w --outDir out",
@@ -68,7 +69,7 @@
     "webpack-cli": "^4.10.0"
   },
   "dependencies": {
-    "dothtml-basic-ls": "../dothtml-basic-ls",
+    "dothtml-basic-ls": "portal:../dothtml-basic-ls",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "vscode-languageclient": "^8.0.2"

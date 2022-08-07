@@ -9,13 +9,13 @@ import {
     InsertTextFormat
 } from 'vscode-languageserver';
 import { HTMLPlugin } from '../../../src/plugins';
-import { DocumentManager, Document } from '../../../src/lib/documents';
+import { DocumentManager, DotvvmDocument } from '../../../src/lib/documents';
 import { LSConfigManager } from '../../../src/ls-config';
 import { SerializedConfigSeeker } from '../../../src/lib/serializedConfigSeeker';
 
 describe('HTML Plugin', () => {
     function setup(content: string) {
-        const document = new Document('file:///hello.dothtml', content);
+        const document = new DotvvmDocument('file:///hello.dothtml', content);
         const docManager = new DocumentManager(() => document);
         const pluginManager = new LSConfigManager();
         const plugin = new HTMLPlugin(docManager, pluginManager, new SerializedConfigSeeker(["."]));

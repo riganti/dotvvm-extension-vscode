@@ -1,10 +1,9 @@
 import { Diagnostic, DiagnosticSeverity, Position, Range } from 'vscode-languageserver';
 import {
-    Document,
+    DotvvmDocument,
 } from '../../../lib/documents';
 import { Logger } from '../../../logger';
 import { CompilerWarningsSettings } from '../../../ls-config';
-import { DotvvmDocument } from '../DotvvmDocument';
 
 /**
  * Returns diagnostics from the svelte compiler.
@@ -21,14 +20,14 @@ export async function getDiagnostics(
     try {
         return [] // await tryGetDiagnostics(document, svelteDoc, settings);
     } catch (error) {
-        return getPreprocessErrorDiagnostics(doc.parent, error);
+        return getPreprocessErrorDiagnostics(doc, error);
     }
 }
 
 /**
  * Try to infer a nice diagnostic error message from the transpilation error.
  */
-function getPreprocessErrorDiagnostics(document: Document, error: any): Diagnostic[] {
+function getPreprocessErrorDiagnostics(document: DotvvmDocument, error: any): Diagnostic[] {
     Logger.error('Preprocessing failed');
     Logger.error(error);
     

@@ -19,7 +19,7 @@ import {
 } from 'vscode-languageserver';
 import { IPCMessageReader, IPCMessageWriter, createConnection } from 'vscode-languageserver/node';
 import { DiagnosticsManager } from './lib/DiagnosticsManager';
-import { Document, DocumentManager } from './lib/documents';
+import { DotvvmDocument, DocumentManager } from './lib/documents';
 import { getSemanticTokenLegends } from './lib/semanticToken/semanticTokenLegend';
 import { Logger } from './logger';
 import { LSConfigManager } from './ls-config';
@@ -81,7 +81,7 @@ export function startServer(options?: LSOptions) {
     }
 
     const docManager = new DocumentManager(
-        (textDocument) => new Document(textDocument.uri, textDocument.text)
+        (textDocument) => new DotvvmDocument(textDocument.uri, textDocument.text)
     );
     const configManager = new LSConfigManager();
     const pluginHost = new PluginHost(docManager);
@@ -95,14 +95,12 @@ export function startServer(options?: LSOptions) {
         }
         const workspacePaths = workspaceUris.map(urlToPath).filter(isNotNullOrUndefined);
         const configSeeker = new SerializedConfigSeeker(workspacePaths);
-        
 
         const isTrusted: boolean = evt.initializationOptions?.isTrusted ?? true;
         configManager.updateIsTrusted(isTrusted);
         if (!isTrusted) {
             Logger.log("Workspace is not trusted, we basically don't care.");
         }
-        
 
         // Backwards-compatible way of setting initialization options (first `||` is the old style)
         configManager.update(
@@ -343,9 +341,9 @@ export function startServer(options?: LSOptions) {
 
     docManager.on(
         'documentChange',
-        debounceThrottle(async (document: Document) => diagnosticsManager.update(document), 750)
+        debounceThrottle(async (document: DotvvmDocument) => diagnosticsManager.update(document), 750)
     );
-    docManager.on('documentClose', (document: Document) =>
+    docManager.on('documentClose', (document: DotvvmDocument) =>
         diagnosticsManager.removeDiagnostics(document)
     );
 

@@ -17,7 +17,7 @@ import {
     WorkspaceFolder
 } from 'vscode-languageserver';
 import {
-    Document,
+    DotvvmDocument,
     DocumentManager,
     mapColorPresentationToOriginal,
     mapCompletionItemToOriginal,
@@ -58,7 +58,7 @@ export class CSSPlugin
 {
     __name = 'css';
     private configManager: LSConfigManager;
-    private cssDocuments = new WeakMap<Document, CSSDocument>();
+    private cssDocuments = new WeakMap<DotvvmDocument, CSSDocument>();
     private cssLanguageServices: CSSLanguageServices;
     private workspaceFolders: WorkspaceFolder[];
     private triggerCharacters = ['.', ':', '-', '/'];
@@ -87,7 +87,7 @@ export class CSSPlugin
         docManager.on('documentClose', (document) => this.cssDocuments.delete(document));
     }
 
-    getSelectionRange(document: Document, position: Position): SelectionRange | null {
+    getSelectionRange(document: DotvvmDocument, position: Position): SelectionRange | null {
         if (!this.featureEnabled('selectionRange') || !isInTag(position, document.styleInfo)) {
             return null;
         }
@@ -106,7 +106,7 @@ export class CSSPlugin
         return mapSelectionRangeToParent(cssDocument, range);
     }
 
-    getDiagnostics(document: Document): Diagnostic[] {
+    getDiagnostics(document: DotvvmDocument): Diagnostic[] {
         if (!this.featureEnabled('diagnostics')) {
             return [];
         }
@@ -124,7 +124,7 @@ export class CSSPlugin
             .map((diagnostic) => mapObjWithRangeToOriginal(cssDocument, diagnostic));
     }
 
-    doHover(document: Document, position: Position): Hover | null {
+    doHover(document: DotvvmDocument, position: Position): Hover | null {
         if (!this.featureEnabled('hover')) {
             return null;
         }
@@ -160,7 +160,7 @@ export class CSSPlugin
     }
 
     async getCompletions(
-        document: Document,
+        document: DotvvmDocument,
         position: Position,
         completionContext?: CompletionContext
     ): Promise<CompletionList | null> {
@@ -215,7 +215,7 @@ export class CSSPlugin
     }
 
     private async getCompletionsInternal(
-        document: Document,
+        document: DotvvmDocument,
         position: Position,
         cssDocument: CSSDocumentBase
     ) {
@@ -305,7 +305,7 @@ export class CSSPlugin
         return [...items, ...additionalItems];
     }
 
-    getDocumentColors(document: Document): ColorInformation[] {
+    getDocumentColors(document: DotvvmDocument): ColorInformation[] {
         if (!this.featureEnabled('documentColors')) {
             return [];
         }
@@ -321,7 +321,7 @@ export class CSSPlugin
             .map((colorInfo) => mapObjWithRangeToOriginal(cssDocument, colorInfo));
     }
 
-    getColorPresentations(document: Document, range: Range, color: Color): ColorPresentation[] {
+    getColorPresentations(document: DotvvmDocument, range: Range, color: Color): ColorPresentation[] {
         if (!this.featureEnabled('colorPresentations')) {
             return [];
         }
@@ -344,7 +344,7 @@ export class CSSPlugin
             .map((colorPres) => mapColorPresentationToOriginal(cssDocument, colorPres));
     }
 
-    getDocumentSymbols(document: Document): SymbolInformation[] {
+    getDocumentSymbols(document: DotvvmDocument): SymbolInformation[] {
         if (!this.featureEnabled('documentColors')) {
             return [];
         }
@@ -371,7 +371,7 @@ export class CSSPlugin
             .map((symbol) => mapSymbolInformationToOriginal(cssDocument, symbol));
     }
 
-    private getCSSDoc(document: Document) {
+    private getCSSDoc(document: DotvvmDocument) {
         let cssDoc = this.cssDocuments.get(document);
         if (!cssDoc || cssDoc.version < document.version) {
             cssDoc = new CSSDocument(document, this.cssLanguageServices);

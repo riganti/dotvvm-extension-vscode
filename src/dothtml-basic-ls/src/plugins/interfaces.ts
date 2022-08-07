@@ -30,7 +30,7 @@ import {
     SelectionRange,
     SignatureHelp
 } from 'vscode-languageserver-types';
-import { Document } from '../lib/documents';
+import { DotvvmDocument } from '../lib/documents';
 
 export type Resolvable<T> = T | Promise<T>;
 
@@ -43,43 +43,43 @@ export interface AppCompletionList<T extends TextDocumentIdentifier = any> exten
 }
 
 export interface DiagnosticsProvider {
-    getDiagnostics(document: Document): Resolvable<Diagnostic[]>;
+    getDiagnostics(document: DotvvmDocument): Resolvable<Diagnostic[]>;
 }
 
 export interface HoverProvider {
-    doHover(document: Document, position: Position): Resolvable<Hover | null>;
+    doHover(document: DotvvmDocument, position: Position): Resolvable<Hover | null>;
 }
 
 export interface CompletionsProvider<T extends TextDocumentIdentifier = any> {
     getCompletions(
-        document: Document,
+        document: DotvvmDocument,
         position: Position,
         completionContext?: CompletionContext,
         cancellationToken?: CancellationToken
     ): Resolvable<AppCompletionList<T> | null>;
 
     resolveCompletion?(
-        document: Document,
+        document: DotvvmDocument,
         completionItem: AppCompletionItem<T>,
         cancellationToken?: CancellationToken
     ): Resolvable<AppCompletionItem<T>>;
 }
 
 export interface FormattingProvider {
-    formatDocument(document: Document, options: FormattingOptions): Resolvable<TextEdit[]>;
+    formatDocument(document: DotvvmDocument, options: FormattingOptions): Resolvable<TextEdit[]>;
 }
 
 export interface TagCompleteProvider {
-    doTagComplete(document: Document, position: Position): Resolvable<string | null>;
+    doTagComplete(document: DotvvmDocument, position: Position): Resolvable<string | null>;
 }
 
 export interface DocumentColorsProvider {
-    getDocumentColors(document: Document): Resolvable<ColorInformation[]>;
+    getDocumentColors(document: DotvvmDocument): Resolvable<ColorInformation[]>;
 }
 
 export interface ColorPresentationsProvider {
     getColorPresentations(
-        document: Document,
+        document: DotvvmDocument,
         range: Range,
         color: Color
     ): Resolvable<ColorPresentation[]>;
@@ -87,31 +87,31 @@ export interface ColorPresentationsProvider {
 
 export interface DocumentSymbolsProvider {
     getDocumentSymbols(
-        document: Document,
+        document: DotvvmDocument,
         cancellationToken?: CancellationToken
     ): Resolvable<SymbolInformation[]>;
 }
 
 export interface DefinitionsProvider {
-    getDefinitions(document: Document, position: Position): Resolvable<DefinitionLink[]>;
+    getDefinitions(document: DotvvmDocument, position: Position): Resolvable<DefinitionLink[]>;
 }
 
 export interface BackwardsCompatibleDefinitionsProvider {
     getDefinitions(
-        document: Document,
+        document: DotvvmDocument,
         position: Position
     ): Resolvable<DefinitionLink[] | Location[]>;
 }
 
 export interface CodeActionsProvider {
     getCodeActions(
-        document: Document,
+        document: DotvvmDocument,
         range: Range,
         context: CodeActionContext,
         cancellationToken?: CancellationToken
     ): Resolvable<CodeAction[]>;
     executeCommand?(
-        document: Document,
+        document: DotvvmDocument,
         command: string,
         args?: any[]
     ): Resolvable<WorkspaceEdit | string | null>;
@@ -124,16 +124,16 @@ export interface FileRename {
 
 export interface RenameProvider {
     rename(
-        document: Document,
+        document: DotvvmDocument,
         position: Position,
         newName: string
     ): Resolvable<WorkspaceEdit | null>;
-    prepareRename(document: Document, position: Position): Resolvable<Range | null>;
+    prepareRename(document: DotvvmDocument, position: Position): Resolvable<Range | null>;
 }
 
 export interface FindReferencesProvider {
     findReferences(
-        document: Document,
+        document: DotvvmDocument,
         position: Position,
         context: ReferenceContext
     ): Promise<Location[] | null>;
@@ -149,7 +149,7 @@ export interface FindComponentReferencesProvider {
 
 export interface SignatureHelpProvider {
     getSignatureHelp(
-        document: Document,
+        document: DotvvmDocument,
         position: Position,
         context: SignatureHelpContext | undefined,
         cancellationToken?: CancellationToken
@@ -157,26 +157,26 @@ export interface SignatureHelpProvider {
 }
 
 export interface SelectionRangeProvider {
-    getSelectionRange(document: Document, position: Position): Resolvable<SelectionRange | null>;
+    getSelectionRange(document: DotvvmDocument, position: Position): Resolvable<SelectionRange | null>;
 }
 
 export interface SemanticTokensProvider {
-    getSemanticTokens(textDocument: Document, range?: Range): Resolvable<SemanticTokens | null>;
+    getSemanticTokens(textDocument: DotvvmDocument, range?: Range): Resolvable<SemanticTokens | null>;
 }
 
 export interface LinkedEditingRangesProvider {
     getLinkedEditingRanges(
-        document: Document,
+        document: DotvvmDocument,
         position: Position
     ): Resolvable<LinkedEditingRanges | null>;
 }
 
 export interface ImplementationProvider {
-    getImplementation(document: Document, position: Position): Resolvable<Location[] | null>;
+    getImplementation(document: DotvvmDocument, position: Position): Resolvable<Location[] | null>;
 }
 
 export interface TypeDefinitionProvider {
-    getTypeDefinition(document: Document, position: Position): Resolvable<Location[] | null>;
+    getTypeDefinition(document: DotvvmDocument, position: Position): Resolvable<Location[] | null>;
 }
 
 export interface OnWatchFileChangesPara {

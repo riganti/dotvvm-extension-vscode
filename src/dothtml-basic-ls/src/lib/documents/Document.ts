@@ -8,8 +8,7 @@ import { Range } from 'vscode-languageserver';
 /**
  * Represents a text document contains a svelte component.
  */
-export class Document extends WritableDocument {
-    languageId = 'dotvvm';
+export class DotvvmDocument extends WritableDocument {
     scriptInfo: TagInformation | null = null;
     moduleScriptInfo: TagInformation | null = null;
     styleInfo: TagInformation | null = null;
@@ -21,8 +20,8 @@ export class Document extends WritableDocument {
      */
     private path = urlToPath(this.url);
 
-    constructor(public url: string, public content: string) {
-        super();
+    constructor(public url: string, content: string) {
+        super(content, "dotvvm");
         this.updateDocInfo();
     }
 
@@ -40,16 +39,6 @@ export class Document extends WritableDocument {
             return this.content.substring(this.offsetAt(range.start), this.offsetAt(range.end));
         }
         return this.content;
-    }
-
-    /**
-     * Set text content and increase the document version
-     */
-    setText(text: string) {
-        this.content = text;
-        this.version++;
-        this.lineOffsets = undefined;
-        this.updateDocInfo();
     }
 
     /**

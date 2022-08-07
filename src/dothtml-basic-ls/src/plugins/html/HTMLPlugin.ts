@@ -20,7 +20,7 @@ import {
 } from 'vscode-languageserver';
 import {
     DocumentManager,
-    Document,
+    DotvvmDocument,
     isInTag,
     getNodeIfIsInComponentStartTag
 } from '../../lib/documents';
@@ -41,7 +41,7 @@ export class HTMLPlugin
 {
     __name = 'html';
     private configManager: LSConfigManager;
-    private documents = new WeakMap<Document, HTMLDocument>();
+    private documents = new WeakMap<DotvvmDocument, HTMLDocument>();
     private styleScriptTemplate = new Set(['template', 'style', 'script']);
     dothtmlDataProvider: DothtmlDataProvider;
     private lang: LanguageService
@@ -62,7 +62,7 @@ export class HTMLPlugin
         });
     }
 
-    doHover(document: Document, position: Position): Hover | null {
+    doHover(document: DotvvmDocument, position: Position): Hover | null {
         if (!this.featureEnabled('hover')) {
             return null;
         }
@@ -80,7 +80,7 @@ export class HTMLPlugin
         return this.lang.doHover(document, position, html);
     }
 
-    getCompletions(document: Document, position: Position): CompletionList | null {
+    getCompletions(document: DotvvmDocument, position: Position): CompletionList | null {
         if (!this.featureEnabled('completions')) {
             return null;
         }
@@ -163,7 +163,7 @@ export class HTMLPlugin
         });
     }
 
-    private isInComponentTag(html: HTMLDocument, document: Document, position: Position) {
+    private isInComponentTag(html: HTMLDocument, document: DotvvmDocument, position: Position) {
         return !!getNodeIfIsInComponentStartTag(html, document.offsetAt(position));
     }
 
@@ -206,7 +206,7 @@ export class HTMLPlugin
         }
     }
 
-    doTagComplete(document: Document, position: Position): string | null {
+    doTagComplete(document: DotvvmDocument, position: Position): string | null {
         if (!this.featureEnabled('tagComplete')) {
             return null;
         }
@@ -223,13 +223,13 @@ export class HTMLPlugin
         return this.lang.doTagComplete(document, position, html);
     }
 
-    private isInsideMoustacheTag(html: HTMLDocument, document: Document, position: Position) {
+    private isInsideMoustacheTag(html: HTMLDocument, document: DotvvmDocument, position: Position) {
         const offset = document.offsetAt(position);
         const node = html.findNodeAt(offset);
         return isInsideMoustacheTag(document.getText(), node.start, offset);
     }
 
-    getDocumentSymbols(document: Document): SymbolInformation[] {
+    getDocumentSymbols(document: DotvvmDocument): SymbolInformation[] {
         if (!this.featureEnabled('documentSymbols')) {
             return [];
         }
@@ -242,7 +242,7 @@ export class HTMLPlugin
         return this.lang.findDocumentSymbols(document, html);
     }
 
-    rename(document: Document, position: Position, newName: string): WorkspaceEdit | null {
+    rename(document: DotvvmDocument, position: Position, newName: string): WorkspaceEdit | null {
         const html = this.documents.get(document);
         if (!html) {
             return null;
@@ -256,7 +256,7 @@ export class HTMLPlugin
         return this.lang.doRename(document, position, newName, html);
     }
 
-    prepareRename(document: Document, position: Position): Range | null {
+    prepareRename(document: DotvvmDocument, position: Position): Range | null {
         const html = this.documents.get(document);
         if (!html) {
             return null;
@@ -272,7 +272,7 @@ export class HTMLPlugin
         return toRange(document.getText(), tagNameStart, tagNameStart + node.tag.length);
     }
 
-    getLinkedEditingRanges(document: Document, position: Position): LinkedEditingRanges | null {
+    getLinkedEditingRanges(document: DotvvmDocument, position: Position): LinkedEditingRanges | null {
         if (!this.featureEnabled('linkedEditing')) {
             return null;
         }
