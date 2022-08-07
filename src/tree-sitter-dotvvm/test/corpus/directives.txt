@@ -1,0 +1,74 @@
+==================
+Basic @viewModel
+==================
+
+@viewModel   System.Object   
+something
+
+---
+
+(source_file
+      (directives
+        (directive_viewModel
+          (directive_assembly_qualified_name
+            (cs_type_name
+              (cs_namespace)
+              (cs_identifier)))))
+      (markup
+        (html_text)))
+
+
+
+==================
+Basic @baseType and @masterPage
+==================
+
+@baseType Somewhere.MyControl, TheAssembly
+@masterPage /Views/Layout.dothtml
+@customDirective something
+@anotherCustomDirective
+
+---
+(source_file
+    (directives
+    (directive_baseType
+        (directive_assembly_qualified_name
+        (cs_type_name
+            (cs_namespace)
+            (cs_identifier))))
+    (directive_masterPage (directive_general_value))
+    (directive_general (directive_name) (directive_general_value))
+    (directive_general (directive_name))))
+
+
+==================
+Basic @service and @import
+==================
+
+@import System.Collections.Generic
+@import StringLL = List<string[]>
+@service s = MyStaticCommandService
+
+
+---
+(source_file
+    (directives
+    (directive_import
+          (cs_namespace))
+    (directive_import
+        (directive_type_alias
+            (cs_identifier)
+            (directive_assembly_qualified_name
+              (cs_type_name
+                (cs_identifier)
+                (cs_type_argument_list
+                  (cs_array_type
+                    (cs_type_name
+                      (cs_identifier))))))))
+    (directive_service
+        (directive_type_alias
+        (cs_identifier)
+        (directive_assembly_qualified_name
+            (cs_type_name
+            (cs_identifier)))))
+))

@@ -1,0 +1,11 @@
+@viewModel   My.Generic.ViewModel<string[]>, MyAssembly
+@masterPage		/Pages/Layout.dotmaster
+@žluťoučký    kůň
+
+@test jednou @test znova
+
+<a href="{value: $"/x/{_this.Id}/edit"}"> <span class="edit-icon" /> Edit</a>
+
+<br>
+
+<p> Something </p>

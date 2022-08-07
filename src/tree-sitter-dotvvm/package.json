@@ -1,0 +1,16 @@
+{
+  "name": "tree-sitter-dotvvm",
+  "version": "0.1.0",
+  "description": "Tree-sitter based parser of DotVVM HTML-like markup",
+  "main": "bindings/node",
+  "license": "MIT",
+  "scripts": {
+    "build": "tree-sitter generate"
+  },
+  "dependencies": {
+    "nan": "^2.16.0"
+  },
+  "devDependencies": {
+    "tree-sitter-cli": "^0.20.6"
+  }
+}
