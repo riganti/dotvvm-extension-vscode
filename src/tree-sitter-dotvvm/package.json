@@ -5,12 +5,29 @@
   "main": "bindings/node",
   "license": "MIT",
   "scripts": {
-    "build": "tree-sitter generate"
+    "build": "tree-sitter generate && node-gyp build && yarn run build-types",
+    "test": "tree-sitter generate && tree-sitter test",
+    "build-types": "node ./node_modules/@asgerf/dts-tree-sitter/build/src/index.js ./src/node-types.json > src/node-types.d.ts"
   },
+  "typings": "./src/node-types.d.ts",
   "dependencies": {
-    "nan": "^2.16.0"
+    "nan": "^2.16.0",
+    "tree-sitter": "^0.20.0"
   },
   "devDependencies": {
+    "@asgerf/dts-tree-sitter": "^0.1.0",
+    "tree-sitter-javascript": "^0.19.0",
+    "node-gyp": "^9.1.0",
     "tree-sitter-cli": "^0.20.6"
+  },
+  "tree-sitter": {
+    "scope": "source.dotvvm",
+    "file-types": [
+      "dothtml",
+      "dotcontrol",
+      "dotmaster",
+      "dotlayout"
+    ],
+    "content-regex": "^@viewModel "
   }
 }

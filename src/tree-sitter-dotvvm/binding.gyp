@@ -1,7 +1,7 @@
 {
   "targets": [
     {
-      "target_name": "tree_sitter_DotVVM_binding",
+      "target_name": "tree_sitter_dotvvm_binding",
       "include_dirs": [
         "<!(node -e \"require('nan')\")",
         "src"

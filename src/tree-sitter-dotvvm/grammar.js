@@ -77,13 +77,13 @@ module.exports = grammar({
         ),
 
         directives: $ => repeat1(seq(choice($.directive_general, $.directive_masterPage, $.directive_viewModel, $.directive_baseType, $.directive_service, $.directive_import), "\n")),
-        directive_general: $ => seq("@", $.directive_name, optional($.directive_general_value)),
+        directive_general: $ => seq("@", field('name', $.directive_name), optional(field('value', $.directive_general_value))),
         directive_name: $ => $._identifier_token,
         directive_general_value: $ => /[^\r\n]+/,
         directive_viewModel: $ => seq("@", "viewModel", " ", $.directive_assembly_qualified_name),
         directive_baseType: $ => seq("@", "baseType", " ", $.directive_assembly_qualified_name),
-        directive_js: $ => seq("@", "js", " ", $.directive_general_value),
-        directive_masterPage: $ => seq("@", "masterPage", " ", $.directive_general_value),
+        directive_js: $ => seq("@", "js", " ", field('value', $.directive_general_value)),
+        directive_masterPage: $ => seq("@", "masterPage", " ", field('value', $.directive_general_value)),
         // TODO: directive_property!
         directive_service: $ => seq("@", "service", " ", $.directive_type_alias),
         directive_import: $ => seq("@", "import", " ", choice($.directive_type_alias, $.cs_namespace)),
@@ -142,7 +142,7 @@ module.exports = grammar({
     
         start_tag: $ => seq(
             '<',
-            alias($._start_tag_name, $.tag_name),
+            field('name', alias($._start_tag_name, $.tag_name)),
             repeat($.attribute),
             '>'
         ),
@@ -169,20 +169,20 @@ module.exports = grammar({
     
         self_closing_tag: $ => seq(
             '<',
-            alias($._start_tag_name, $.tag_name),
+            field('name', alias($._start_tag_name, $.tag_name)),
             repeat($.attribute),
             '/>'
         ),
     
         end_tag: $ => seq(
             '</',
-            alias($._end_tag_name, $.tag_name),
+            field('name', alias($._end_tag_name, $.tag_name)),
             '>'
         ),
     
         erroneous_end_tag: $ => seq(
             '</',
-            $.erroneous_end_tag_name,
+            field('name', $.erroneous_end_tag_name),
             '>'
         ),
 
@@ -193,7 +193,7 @@ module.exports = grammar({
             seq('"', optional(choice(field('binding', $.attribute_binding), field('value', alias(/[^"]+/, $.attribute_value)))), '"')
         ),
         attribute: $ => seq(
-            $.attribute_name,
+            field('name', $.attribute_name),
             optional(seq(
               '=',
               choice(
@@ -212,7 +212,11 @@ module.exports = grammar({
         // C# bindings and types
         // some stuff is from https://github.com/tree-sitter/tree-sitter-c-sharp/blob/master/grammar.js
         // Licensed under The MIT License (MIT), Copyright (c) 2014 Max Brunsfeld
-        cs_type_name: $ => seq(optional(seq(field('namespace', $.cs_namespace), '.')), field('type_name', $.cs_identifier), optional(field('type_args', $.cs_type_argument_list))),
+        cs_type_name: $ => seq(
+            optional(seq(field('namespace', $.cs_namespace), '.')),
+            field('type_name', $.cs_identifier),
+            optional(field('type_args', $.cs_type_argument_list))
+        ),
         _cs_type: $ => choice(
             $.cs_array_type,
             $.cs_type_name,

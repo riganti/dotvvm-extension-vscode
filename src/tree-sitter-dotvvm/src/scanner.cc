@@ -115,6 +115,7 @@ struct Scanner {
             lexer->mark_end(lexer);
             return true;
           }
+          // fall-though
         default:
           dashes = 0;
       }
@@ -153,6 +154,7 @@ struct Scanner {
             lexer->mark_end(lexer);
             return true;
           }
+          // fall-though
         default:
           dashes = 0;
           percent = false;
