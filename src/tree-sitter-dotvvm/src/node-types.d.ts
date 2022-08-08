@@ -221,6 +221,7 @@ export type SyntaxType =
   | "cs_await_expression"
   | "cs_binary_expression"
   | "cs_block_expression"
+  | "cs_block_variable_def"
   | "cs_boolean_literal"
   | "cs_conditional_expression"
   | "cs_element_access_expression"
@@ -349,6 +350,7 @@ export type UnnamedType =
   | "staticCommand"
   | "true"
   | "value"
+  | "var"
   | "viewModel"
   | "{"
   | "{{"
@@ -372,6 +374,7 @@ export type SyntaxNode =
   | CsAwaitExpressionNode
   | CsBinaryExpressionNode
   | CsBlockExpressionNode
+  | CsBlockVariableDefNode
   | CsBooleanLiteralNode
   | CsConditionalExpressionNode
   | CsElementAccessExpressionNode
@@ -498,6 +501,7 @@ export type SyntaxNode =
   | TagNameNode
   | UnnamedNode<"true">
   | UnnamedNode<"value">
+  | UnnamedNode<"var">
   | UnnamedNode<"viewModel">
   | UnnamedNode<"{">
   | UnnamedNode<"{{">
@@ -565,8 +569,14 @@ export interface CsBinaryExpressionNode extends NamedNodeBase {
 
 export interface CsBlockExpressionNode extends NamedNodeBase {
   type: "cs_block_expression";
-  bodyNodes: (CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode)[];
+  bodyNodes: (CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBlockVariableDefNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode)[];
   returnsNode: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+}
+
+export interface CsBlockVariableDefNode extends NamedNodeBase {
+  type: "cs_block_variable_def";
+  nameNode: CsIdentifierNode;
+  valueNode: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
 }
 
 export interface CsBooleanLiteralNode extends NamedNodeBase {

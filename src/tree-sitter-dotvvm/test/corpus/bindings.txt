@@ -122,3 +122,28 @@ Block command
                     body: (cs_integer_literal)
                     body: (cs_integer_literal)
                     returns: (cs_integer_literal)))))))))
+==================
+Block command with variable
+==================
+
+<dot:Button Click='{staticCommand: var a = 1; a + a }' />
+
+---
+
+(source_file
+    markup: (markup
+        content: (html_element
+          self_closing: (self_closing_tag
+            name: (tag_name)
+            attribute: (attribute
+              name: (attribute_name)
+              binding: (attribute_binding
+                name: (binding_name)
+                expr: (binding_expr
+                  expr: (cs_block_expression
+                    body: (cs_block_variable_def
+                      name: (cs_identifier)
+                      value: (cs_integer_literal))
+                    returns: (cs_binary_expression
+                      left: (cs_identifier)
+                      right: (cs_identifier))))))))))

@@ -273,10 +273,11 @@ module.exports = grammar({
 
         // non-standard C# syntax
         cs_arrayinit_expression: $ => seq('[', commaSep(field('element', $._cs_expression)), ']'),
+        cs_block_variable_def: $ => prec.left(seq("var", field('name', $.cs_identifier), "=", field('value', $._cs_expression))),
         cs_block_expression: $ =>
             prec.left(PREC.SEMICOLON, seq(
                 repeat1(seq(
-                    field('body', $._cs_expression),
+                    field('body', choice($._cs_expression, $.cs_block_variable_def)),
                     ';')),
                 field('returns', $._cs_expression)
             )),
