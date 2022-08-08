@@ -57,6 +57,11 @@ class Printer {
         }
         return this;
     }
+    printIf(str: string | null | undefined | false): this {
+        if (str)
+            console.log(this.indentation + str)
+        return this;
+    }
     forEachInRecord<U>(items: Record<string, U> | void, fn: (key: string, item: NonNullable<U>, printer: Printer) => void): this {
         if (items == null) return this;
         for (let key of Object.keys(items)) {
@@ -118,8 +123,9 @@ interface IndexedData {
 
 function generatePreamble(json: NodeTypeEntry[], printer: Printer) {
     printer.println(`
-interface NamedNodeBase extends SyntaxNodeBase {
+interface NamedNodeBase<TChild extends SyntaxNode = SyntaxNode> extends SyntaxNodeBase {
     isNamed: true;
+    namedChildren: TChild[];
 }
 
 /** An unnamed node with the given type string. */
@@ -218,8 +224,13 @@ function generateNamedDeclaration(entry: NodeTypeEntry, index: IndexedData, prin
 
 function generateInterfaceFromEntry(entry: NodeTypeEntry, index: IndexedData, printer: Printer) {
     let name = getTypeNameFromString(entry.type);
+    const childrenRequired = entry.children?.required ?? false
+    const childrenTypes = entry.children?.types.filter(t => t.named).map(t => t.type) ?? []
+
+    const childrenType = childrenTypes.length > 0 ? `${childrenTypes.map(getTypeNameFromString).join(' | ')}` : null
+    const baseType = childrenType != null ? `NamedNodeBase<${childrenType}>` : 'NamedNodeBase'
     printer
-        .println(`export interface ${name} extends NamedNodeBase {`)
+        .println(`export interface ${name} extends ${baseType} {`)
         .indent()
         .println(`type: ${JSON.stringify(entry.type)};`)
         .forEachInRecord(entry.fields, (field, children) => {
@@ -238,6 +249,8 @@ function generateInterfaceFromEntry(entry: NodeTypeEntry, index: IndexedData, pr
             let opt = (children.required || children.multiple) ? '' : '?';
             printer.println(`${fieldName}${opt}: ${type};`);
         })
+        .printIf(childrenRequired && "firstNamedChild: " + childrenType + ";")
+        .printIf(childrenRequired && "lastNamedChild: " + childrenType + ";")
         .deindent()
         .println('}')
         .println();
