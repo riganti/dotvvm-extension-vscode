@@ -1,6 +1,6 @@
 import { TextDocumentContentChangeEvent } from 'vscode-languageserver';
 import { Position, Range, TextDocument } from 'vscode-languageserver-textdocument';
-import { getParser, ParsedTree } from '../parserutils';
+import { getParser, OffsetRange, ParsedTree } from '../parserutils';
 import { getLineOffsets, offsetAt, positionAt } from './utils';
 import type TreeSitter from 'tree-sitter';
 

@@ -44,7 +44,8 @@ export class DocumentManager {
             }
         }
 
-        this.notify('documentChange', document);
+        if (document)
+            this.notify('documentChange', document);
 
         return document;
     }

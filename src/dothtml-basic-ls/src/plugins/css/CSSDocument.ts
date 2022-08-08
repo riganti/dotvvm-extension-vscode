@@ -10,15 +10,19 @@ export interface CSSDocumentBase extends DocumentMapper, TextDocument {
 
 export class CSSDocument extends ReadableDocument implements DocumentMapper {
     private styleInfo: Pick<TagInformation, 'attributes' | 'start' | 'end'>;
-    readonly version = this.parent.version;
+    readonly version: number;
 
     public stylesheet: Stylesheet;
 
     constructor(private parent: DotvvmDocument, languageServices: CSSLanguageServices) {
+        if (parent == null)
+            throw new Error("parent is null");
         const attrs = parent.styleInfo?.attributes
-
+        
+        
         super(attrs?.lang || attrs?.type || 'css');
-
+        
+        this.version = parent.version
         if (this.parent.styleInfo) {
             this.styleInfo = this.parent.styleInfo;
         } else {

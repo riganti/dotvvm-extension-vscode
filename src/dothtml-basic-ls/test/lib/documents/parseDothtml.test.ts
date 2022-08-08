@@ -31,7 +31,7 @@ describe('parseHtml', () => {
         assert.equal("My.Object, Assembly", typeAssembly?.text)
         let fullName = typeChild("cs_type_name", typeAssembly)
         assert.equal("My.Object", fullName?.text)
-        assert.equal("Object", fullName!.typeNameNode.text)
+        assert.equal("Object", fullName?.nameNodes?.at(-1)!.text)
     });
 
 });

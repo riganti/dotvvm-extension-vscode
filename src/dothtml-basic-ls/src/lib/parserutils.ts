@@ -1,6 +1,6 @@
 import { forEach } from 'lodash';
 import type { NodeOfType, PickType, SyntaxNode, SyntaxType, Tree } from 'tree-sitter-dotvvm';
-import { Position, TextDocumentContentChangeEvent } from 'vscode-languageserver';
+import { Position, TextDocumentContentChangeEvent, Range as VsCodeRange } from 'vscode-languageserver';
 import { WritableDocument } from './documents';
 import { log } from 'console';
 import type TreeSitter from 'tree-sitter'
@@ -77,6 +77,59 @@ export function typeChild<T extends SyntaxType>(type: T, node: SyntaxNode | unde
 		child = child.nextSibling
 	}
 }
+
+export function* nodeAncestors(node: SyntaxNode | undefined | null): Iterable<SyntaxNode> {
+	while (node != null) {
+		yield node
+		node = node.parent
+	}
+}
+
+export function typeAncestor<T extends SyntaxType>(type: T | T[], node: SyntaxNode | undefined | null): NodeOfType<T> | undefined {
+	if (node == null)
+		return
+
+	const set = new Set<string>(type instanceof Array ? type : [type])
+
+	let a: SyntaxNode | null = node
+	while (a != null) {
+		if (set.has(a.type))
+			return a as NodeOfType<T>
+		a = a.parent
+	}
+}
+
+export function containsPosition(position: Position | number, node: SyntaxNode | null | undefined): boolean {
+	if (node == null)
+		return false
+	if (typeof position == "number")
+		return node.startIndex <= position && node.endIndex >= position
+
+	throw "Not implemented"
+}
+
+export function nodeToVsRange(node: SyntaxNode): VsCodeRange
+export function nodeToVsRange(node: SyntaxNode | null | undefined): VsCodeRange | null
+export function nodeToVsRange(node: SyntaxNode | null | undefined): VsCodeRange | null {
+    if (node == null)
+        return null
+    return VsCodeRange.create(
+        node.startPosition.row,
+        node.startPosition.column,
+        node.endPosition.row,
+        node.endPosition.column
+    )
+}
+
+export type OffsetRange = { start: number, end: number }
+export function nodeToORange(node: SyntaxNode): OffsetRange
+export function nodeToORange(node: SyntaxNode | null | undefined): OffsetRange | null
+export function nodeToORange(node: SyntaxNode | null | undefined): OffsetRange | null {
+	if (node == null)
+		return null
+	return { start: node.startIndex, end: node.endIndex }
+}
+
 
 export class ParsedTree {
 	tree: Tree;

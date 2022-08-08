@@ -116,7 +116,7 @@ export class DothtmlDataProvider implements IHTMLDataProvider {
 						byNamespace[c.namespace]?.[0]?.tagPrefix
 					if (prefix == null)
 					{
-						console.log("Control has no registration?", c)
+						// console.log("Control has no registration?", c)
 						return null
 					}
 					return <ITagData>{
