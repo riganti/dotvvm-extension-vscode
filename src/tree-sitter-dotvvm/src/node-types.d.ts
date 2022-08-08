@@ -215,7 +215,10 @@ export type SyntaxType =
   | "attribute_binding"
   | "binding_name"
   | "cs_array_type"
+  | "cs_expr"
+  | "cs_expr_array_initializer"
   | "cs_identifier"
+  | "cs_literal"
   | "cs_namespace"
   | "cs_nullable_type"
   | "cs_tuple_element"
@@ -226,8 +229,12 @@ export type SyntaxType =
   | "directive_baseType"
   | "directive_general"
   | "directive_import"
+  | "directive_js"
   | "directive_masterPage"
   | "directive_name"
+  | "directive_property"
+  | "directive_property_attribute_assignment"
+  | "directive_property_value"
   | "directive_service"
   | "directive_type_alias"
   | "directive_viewModel"
@@ -245,6 +252,7 @@ export type SyntaxType =
   | "attribute_name"
   | "attribute_value"
   | "binding_expr"
+  | "cs_literal_number"
   | "directive_general_value"
   | "dotvvm_comment"
   | "erroneous_end_tag_name"
@@ -255,7 +263,6 @@ export type SyntaxType =
 
 export type UnnamedType =
   | "\n"
-  | " "
   | "\""
   | "'"
   | "("
@@ -281,6 +288,7 @@ export type UnnamedType =
   | "import"
   | "js"
   | "masterPage"
+  | "property"
   | "resource"
   | "service"
   | "staticCommand"
@@ -297,7 +305,10 @@ export type SyntaxNode =
   | AttributeBindingNode
   | BindingNameNode
   | CsArrayTypeNode
+  | CsExprNode
+  | CsExprArrayInitializerNode
   | CsIdentifierNode
+  | CsLiteralNode
   | CsNamespaceNode
   | CsNullableTypeNode
   | CsTupleElementNode
@@ -308,8 +319,12 @@ export type SyntaxNode =
   | DirectiveBaseTypeNode
   | DirectiveGeneralNode
   | DirectiveImportNode
+  | DirectiveJsNode
   | DirectiveMasterPageNode
   | DirectiveNameNode
+  | DirectivePropertyNode
+  | DirectivePropertyAttributeAssignmentNode
+  | DirectivePropertyValueNode
   | DirectiveServiceNode
   | DirectiveTypeAliasNode
   | DirectiveViewModelNode
@@ -325,7 +340,6 @@ export type SyntaxNode =
   | StartTagNode
   | StyleElementNode
   | UnnamedNode<"\n">
-  | UnnamedNode<" ">
   | UnnamedNode<"\"">
   | UnnamedNode<"'">
   | UnnamedNode<"(">
@@ -351,6 +365,7 @@ export type SyntaxNode =
   | UnnamedNode<"command">
   | UnnamedNode<"controlCommand">
   | UnnamedNode<"controlProperty">
+  | CsLiteralNumberNode
   | DirectiveGeneralValueNode
   | DotvvmCommentNode
   | ErroneousEndTagNameNode
@@ -359,6 +374,7 @@ export type SyntaxNode =
   | UnnamedNode<"import">
   | UnnamedNode<"js">
   | UnnamedNode<"masterPage">
+  | UnnamedNode<"property">
   | RawTextNode
   | UnnamedNode<"resource">
   | UnnamedNode<"service">
@@ -378,10 +394,10 @@ export interface AttributeNode extends NamedNodeBase {
   valueNode?: AttributeValueNode;
 }
 
-export interface AttributeBindingNode extends NamedNodeBase<BindingExprNode | BindingNameNode> {
+export interface AttributeBindingNode extends NamedNodeBase {
   type: "attribute_binding";
-  firstNamedChild: BindingExprNode | BindingNameNode;
-  lastNamedChild: BindingExprNode | BindingNameNode;
+  exprNode: BindingExprNode;
+  nameNode: BindingNameNode;
 }
 
 export interface BindingNameNode extends NamedNodeBase {
@@ -394,8 +410,25 @@ export interface CsArrayTypeNode extends NamedNodeBase {
   typeNode: CsArrayTypeNode | CsNullableTypeNode | CsTupleTypeNode | CsTypeNameNode;
 }
 
+export interface CsExprNode extends NamedNodeBase<CsExprArrayInitializerNode | CsIdentifierNode | CsLiteralNode> {
+  type: "cs_expr";
+  firstNamedChild: CsExprArrayInitializerNode | CsIdentifierNode | CsLiteralNode;
+  lastNamedChild: CsExprArrayInitializerNode | CsIdentifierNode | CsLiteralNode;
+}
+
+export interface CsExprArrayInitializerNode extends NamedNodeBase {
+  type: "cs_expr_array_initializer";
+  elementNodes: CsExprNode[];
+}
+
 export interface CsIdentifierNode extends NamedNodeBase {
   type: "cs_identifier";
+}
+
+export interface CsLiteralNode extends NamedNodeBase<CsLiteralNumberNode> {
+  type: "cs_literal";
+  firstNamedChild: CsLiteralNumberNode;
+  lastNamedChild: CsLiteralNumberNode;
 }
 
 export interface CsNamespaceNode extends NamedNodeBase {
@@ -425,9 +458,8 @@ export interface CsTypeArgumentListNode extends NamedNodeBase<CsArrayTypeNode | 
 
 export interface CsTypeNameNode extends NamedNodeBase {
   type: "cs_type_name";
-  namespaceNode?: CsNamespaceNode;
+  nameNodes: CsIdentifierNode[];
   typeArgsNode?: CsTypeArgumentListNode;
-  typeNameNode: CsIdentifierNode;
 }
 
 export interface DirectiveAssemblyQualifiedNameNode extends NamedNodeBase {
@@ -435,10 +467,10 @@ export interface DirectiveAssemblyQualifiedNameNode extends NamedNodeBase {
   typeNode: CsArrayTypeNode | CsNullableTypeNode | CsTupleTypeNode | CsTypeNameNode;
 }
 
-export interface DirectiveBaseTypeNode extends NamedNodeBase<DirectiveAssemblyQualifiedNameNode> {
+export interface DirectiveBaseTypeNode extends NamedNodeBase {
   type: "directive_baseType";
-  firstNamedChild: DirectiveAssemblyQualifiedNameNode;
-  lastNamedChild: DirectiveAssemblyQualifiedNameNode;
+  nameNode: UnnamedNode<"baseType">;
+  valueNode: DirectiveAssemblyQualifiedNameNode;
 }
 
 export interface DirectiveGeneralNode extends NamedNodeBase {
@@ -447,14 +479,21 @@ export interface DirectiveGeneralNode extends NamedNodeBase {
   valueNode?: DirectiveGeneralValueNode;
 }
 
-export interface DirectiveImportNode extends NamedNodeBase<CsNamespaceNode | DirectiveTypeAliasNode> {
+export interface DirectiveImportNode extends NamedNodeBase {
   type: "directive_import";
-  firstNamedChild: CsNamespaceNode | DirectiveTypeAliasNode;
-  lastNamedChild: CsNamespaceNode | DirectiveTypeAliasNode;
+  nameNode: UnnamedNode<"import">;
+  valueNode: CsNamespaceNode | DirectiveTypeAliasNode;
+}
+
+export interface DirectiveJsNode extends NamedNodeBase {
+  type: "directive_js";
+  nameNode: UnnamedNode<"js">;
+  valueNode: DirectiveGeneralValueNode;
 }
 
 export interface DirectiveMasterPageNode extends NamedNodeBase {
   type: "directive_masterPage";
+  nameNode: UnnamedNode<"masterPage">;
   valueNode: DirectiveGeneralValueNode;
 }
 
@@ -462,10 +501,31 @@ export interface DirectiveNameNode extends NamedNodeBase {
   type: "directive_name";
 }
 
-export interface DirectiveServiceNode extends NamedNodeBase<DirectiveTypeAliasNode> {
+export interface DirectivePropertyNode extends NamedNodeBase {
+  type: "directive_property";
+  nameNode: UnnamedNode<"property">;
+  valueNode: DirectivePropertyValueNode;
+}
+
+export interface DirectivePropertyAttributeAssignmentNode extends NamedNodeBase {
+  type: "directive_property_attribute_assignment";
+  fieldNameNode: CsIdentifierNode;
+  typeNode: CsTypeNameNode;
+  valueNode?: CsLiteralNode;
+}
+
+export interface DirectivePropertyValueNode extends NamedNodeBase {
+  type: "directive_property_value";
+  attributeNodes: DirectivePropertyAttributeAssignmentNode[];
+  initializerNode?: CsExprNode;
+  nameNode: CsIdentifierNode;
+  typeNode: CsTypeNameNode;
+}
+
+export interface DirectiveServiceNode extends NamedNodeBase {
   type: "directive_service";
-  firstNamedChild: DirectiveTypeAliasNode;
-  lastNamedChild: DirectiveTypeAliasNode;
+  nameNode: UnnamedNode<"service">;
+  valueNode: DirectiveTypeAliasNode;
 }
 
 export interface DirectiveTypeAliasNode extends NamedNodeBase<DirectiveAssemblyQualifiedNameNode> {
@@ -475,16 +535,22 @@ export interface DirectiveTypeAliasNode extends NamedNodeBase<DirectiveAssemblyQ
   lastNamedChild: DirectiveAssemblyQualifiedNameNode;
 }
 
-export interface DirectiveViewModelNode extends NamedNodeBase<DirectiveAssemblyQualifiedNameNode> {
+export interface DirectiveViewModelNode extends NamedNodeBase {
   type: "directive_viewModel";
-  firstNamedChild: DirectiveAssemblyQualifiedNameNode;
-  lastNamedChild: DirectiveAssemblyQualifiedNameNode;
+  nameNode: UnnamedNode<"viewModel">;
+  valueNode: DirectiveAssemblyQualifiedNameNode;
 }
 
-export interface DirectivesNode extends NamedNodeBase<DirectiveBaseTypeNode | DirectiveGeneralNode | DirectiveImportNode | DirectiveMasterPageNode | DirectiveServiceNode | DirectiveViewModelNode> {
+export interface DirectivesNode extends NamedNodeBase {
   type: "directives";
-  firstNamedChild: DirectiveBaseTypeNode | DirectiveGeneralNode | DirectiveImportNode | DirectiveMasterPageNode | DirectiveServiceNode | DirectiveViewModelNode;
-  lastNamedChild: DirectiveBaseTypeNode | DirectiveGeneralNode | DirectiveImportNode | DirectiveMasterPageNode | DirectiveServiceNode | DirectiveViewModelNode;
+  baseTypeNodes: DirectiveBaseTypeNode[];
+  generalDirectiveNodes: DirectiveGeneralNode[];
+  importNodes: DirectiveImportNode[];
+  jsNodes: DirectiveJsNode[];
+  masterPageNodes: DirectiveMasterPageNode[];
+  propertyNodes: DirectivePropertyNode[];
+  serviceNodes: DirectiveServiceNode[];
+  viewModelNodes: DirectiveViewModelNode[];
 }
 
 export interface DoctypeNode extends NamedNodeBase {
@@ -501,26 +567,29 @@ export interface ErroneousEndTagNode extends NamedNodeBase {
   nameNode: ErroneousEndTagNameNode;
 }
 
-export interface HtmlElementNode extends NamedNodeBase<DoctypeNode | DotvvmCommentNode | EndTagNode | ErroneousEndTagNode | HtmlCommentNode | HtmlElementNode | HtmlTextNode | ScriptElementNode | SelfClosingTagNode | StartTagNode | StyleElementNode> {
+export interface HtmlElementNode extends NamedNodeBase {
   type: "html_element";
-  firstNamedChild: DoctypeNode | DotvvmCommentNode | EndTagNode | ErroneousEndTagNode | HtmlCommentNode | HtmlElementNode | HtmlTextNode | ScriptElementNode | SelfClosingTagNode | StartTagNode | StyleElementNode;
-  lastNamedChild: DoctypeNode | DotvvmCommentNode | EndTagNode | ErroneousEndTagNode | HtmlCommentNode | HtmlElementNode | HtmlTextNode | ScriptElementNode | SelfClosingTagNode | StartTagNode | StyleElementNode;
+  contentNodes: (DoctypeNode | DotvvmCommentNode | ErroneousEndTagNode | HtmlCommentNode | HtmlElementNode | HtmlTextNode | ScriptElementNode | StyleElementNode)[];
+  endNode?: EndTagNode;
+  selfClosingNode?: SelfClosingTagNode;
+  startNode?: StartTagNode;
 }
 
-export interface MarkupNode extends NamedNodeBase<DoctypeNode | DotvvmCommentNode | ErroneousEndTagNode | HtmlCommentNode | HtmlElementNode | HtmlTextNode | ScriptElementNode | StyleElementNode> {
+export interface MarkupNode extends NamedNodeBase {
   type: "markup";
-  firstNamedChild: DoctypeNode | DotvvmCommentNode | ErroneousEndTagNode | HtmlCommentNode | HtmlElementNode | HtmlTextNode | ScriptElementNode | StyleElementNode;
-  lastNamedChild: DoctypeNode | DotvvmCommentNode | ErroneousEndTagNode | HtmlCommentNode | HtmlElementNode | HtmlTextNode | ScriptElementNode | StyleElementNode;
+  contentNodes: (DoctypeNode | DotvvmCommentNode | ErroneousEndTagNode | HtmlCommentNode | HtmlElementNode | HtmlTextNode | ScriptElementNode | StyleElementNode)[];
 }
 
-export interface ScriptElementNode extends NamedNodeBase<EndTagNode | RawTextNode | StartTagNode> {
+export interface ScriptElementNode extends NamedNodeBase {
   type: "script_element";
-  firstNamedChild: EndTagNode | RawTextNode | StartTagNode;
-  lastNamedChild: EndTagNode | RawTextNode | StartTagNode;
+  contentNode?: RawTextNode;
+  endNode: EndTagNode;
+  startNode: StartTagNode;
 }
 
-export interface SelfClosingTagNode extends NamedNodeBase<AttributeNode> {
+export interface SelfClosingTagNode extends NamedNodeBase {
   type: "self_closing_tag";
+  attributeNodes: AttributeNode[];
   nameNode: TagNameNode;
 }
 
@@ -528,15 +597,17 @@ export interface SourceFileNode extends NamedNodeBase<DirectivesNode | MarkupNod
   type: "source_file";
 }
 
-export interface StartTagNode extends NamedNodeBase<AttributeNode | TagNameNode> {
+export interface StartTagNode extends NamedNodeBase {
   type: "start_tag";
-  nameNode?: TagNameNode;
+  attributeNodes: AttributeNode[];
+  nameNode: TagNameNode;
 }
 
-export interface StyleElementNode extends NamedNodeBase<EndTagNode | RawTextNode | StartTagNode> {
+export interface StyleElementNode extends NamedNodeBase {
   type: "style_element";
-  firstNamedChild: EndTagNode | RawTextNode | StartTagNode;
-  lastNamedChild: EndTagNode | RawTextNode | StartTagNode;
+  contentNode?: RawTextNode;
+  endNode: EndTagNode;
+  startNode: StartTagNode;
 }
 
 export interface AttributeNameNode extends NamedNodeBase {
@@ -549,6 +620,10 @@ export interface AttributeValueNode extends NamedNodeBase {
 
 export interface BindingExprNode extends NamedNodeBase {
   type: "binding_expr";
+}
+
+export interface CsLiteralNumberNode extends NamedNodeBase {
+  type: "cs_literal_number";
 }
 
 export interface DirectiveGeneralValueNode extends NamedNodeBase {

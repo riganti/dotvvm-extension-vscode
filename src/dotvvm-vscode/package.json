@@ -35,6 +35,16 @@
           "meta.embedded.inline.cs": "csharp"
         }
       }
+    ],
+    "commands": [
+      {
+        "command": "dotvvm.debug.dump-tree",
+        "title": "DotVVM Debug: Dump tree-sitter AST"
+      },
+      {
+        "command": "dotvvm.debug.restartLS",
+        "title": "DotVVM Debug: Restart Language Server"
+      }
     ]
   },
   "scripts": {

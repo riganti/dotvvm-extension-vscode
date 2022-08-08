@@ -1,14 +1,45 @@
 import { forEach } from 'lodash';
-import TreeSitter from 'tree-sitter';
-import dotvvmLang, { Tree } from 'tree-sitter-dotvvm';
+import type { NodeOfType, PickType, SyntaxNode, SyntaxType, Tree } from 'tree-sitter-dotvvm';
 import { Position, TextDocumentContentChangeEvent } from 'vscode-languageserver';
-import {  } from 'superstring'
 import { WritableDocument } from './documents';
 import { log } from 'console';
+import type TreeSitter from 'tree-sitter'
+import type WebTreeSitter from 'web-tree-sitter'
 
+let parserLoadPromise: Promise<void> | null = null;
 
-const dotvvmParser = new TreeSitter()
-dotvvmParser.setLanguage(dotvvmLang)
+try {
+	var TreeSitterClass = require('tree-sitter');
+	var dotvvmLang: any = require('tree-sitter-dotvvm');
+
+	var dotvvmParser: (TreeSitter | WebTreeSitter) = new TreeSitterClass()
+	dotvvmParser.setLanguage(dotvvmLang)
+
+} catch(err) {
+	console.warn("Could not initialize tree-sitter:", err)
+	// console.warn("Will use the WASM version, if that works...");
+
+	// parserLoadPromise = (async() => {
+	// 	try {
+	// 		const Parser: typeof import("web-tree-sitter") = require('web-tree-sitter')
+	// 		await Parser.init()
+
+	// 		const l = dotvvmLang = await Parser.Language.load(require.resolve('tree-sitter-dotvvm/tree-sitter-dotvvm.wasm'))
+	// 		dotvvmParser = new Parser()
+	// 		dotvvmParser.setLanguage(l)
+	// 		console.log("Loaded WASM tree-sitter")
+	// 	}
+	// 	catch (e) {
+	// 		console.error("Could not initialize web-tree-sitter:", e)
+	// 	}
+	// })()
+}
+
+export async function init() {
+	await parserLoadPromise
+
+	console.log("Parser init complete.")
+}
 
 export function stopwatch() {
 	const start = process.hrtime()
@@ -26,7 +57,7 @@ export function stopwatch() {
 	}
 }
 
-export function getParser(id: string): TreeSitter | undefined {
+export function getParser(id: string): TreeSitter | WebTreeSitter | undefined {
 	switch (id) {
 		case 'dotvvm':
 			return dotvvmParser
@@ -35,20 +66,20 @@ export function getParser(id: string): TreeSitter | undefined {
 	}
 }
 
-export function typeChild(type: string, node: TreeSitter.SyntaxNode | undefined | null): TreeSitter.SyntaxNode | undefined {
+export function typeChild<T extends SyntaxType>(type: T, node: SyntaxNode | undefined | null): NodeOfType<T> | undefined {
 	if (node == null)
 		return
 
 	let child = node.firstChild
 	while (child != null) {
 		if (child.type == type)
-			return child
+			return child as NodeOfType<T>
 		child = child.nextSibling
 	}
 }
 
 export class ParsedTree {
-	tree: TreeSitter.Tree;
+	tree: Tree;
 	// get rootNode() { return this.tree.rootNode as dotvvmLang.SyntaxNode }
 	get rootNode() { return this.tree.rootNode }
 
@@ -61,16 +92,18 @@ export class ParsedTree {
 	}
 
 	constructor(
-		public parser: TreeSitter,
+		public parser: TreeSitter | WebTreeSitter,
 		public source: string) {
+		if (source == null)
+			throw new Error("source is null")
 		const sw = stopwatch()
-		this.tree = parser.parse(source)
+		this.tree = <Tree>parser.parse(source)
 		// sw.log("Initial parse")
 	}
 
 	reparse(newSource: string) {
 		const sw = stopwatch()
-		this.tree = this.parser.parse(newSource)
+		this.tree = <Tree>this.parser.parse(newSource)
 		this.source = newSource
 		// sw.log("re-parse")
 	}
@@ -81,7 +114,7 @@ export class ParsedTree {
 			this.tree.edit(e)
 		}
 		const oldTree = this.tree
-		this.tree = this.parser.parse(newSource, oldTree)
+		this.tree = <Tree>this.parser.parse(newSource, <any> oldTree)
 		// sw.log("edit-parse")
 	}
 }

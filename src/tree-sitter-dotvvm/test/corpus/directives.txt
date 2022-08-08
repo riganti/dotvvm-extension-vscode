@@ -12,7 +12,7 @@ something
         (directive_viewModel
           (directive_assembly_qualified_name
             (cs_type_name
-              (cs_namespace)
+              (cs_identifier)
               (cs_identifier)))))
       (markup
         (html_text)))
@@ -34,7 +34,7 @@ Basic @baseType and @masterPage
     (directive_baseType
         (directive_assembly_qualified_name
         (cs_type_name
-            (cs_namespace)
+            (cs_identifier)
             (cs_identifier))))
     (directive_masterPage (directive_general_value))
     (directive_general (directive_name) (directive_general_value))
@@ -72,3 +72,46 @@ Basic @service and @import
             (cs_type_name
             (cs_identifier)))))
 ))
+
+==================
+@property
+==================
+
+@property int Id = 0
+
+---
+
+
+(source_file
+    (directives
+      property: (directive_property
+          value: (directive_property_value
+            type: (cs_type_name
+              name: (cs_identifier))
+            name: (cs_identifier)
+            initializer: (cs_expr
+              (cs_literal
+                (cs_literal_number)))))))
+
+
+==================
+@property with attribute
+==================
+
+@property int Id, MarkupOptions.MappingMode = 0
+
+---
+
+(source_file
+    (directives
+      property: (directive_property
+          value: (directive_property_value
+            type: (cs_type_name
+              name: (cs_identifier))
+            name: (cs_identifier)
+            attribute: (directive_property_attribute_assignment
+              type: (cs_type_name
+                name: (cs_identifier))
+              field_name: (cs_identifier)
+              value: (cs_literal
+                  (cs_literal_number)))))))

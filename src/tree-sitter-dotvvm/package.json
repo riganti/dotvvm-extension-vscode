@@ -5,9 +5,9 @@
   "main": "bindings/node",
   "license": "MIT",
   "scripts": {
-    "build": "tree-sitter generate && tree-sitter build-wasm && node-gyp build && yarn run build-types",
-    "test": "tree-sitter generate && tree-sitter test",
-    "build-types": "tsc -p . && node ./build/src/build-typescript-nodes.js ./src > src/node-types.d.ts"
+    "build": "tree-sitter generate && tree-sitter build-wasm && tsc -p . && node-gyp build && yarn run build-types",
+    "test": "tree-sitter generate && yarn run build-types && tree-sitter test",
+    "build-types": "node ./build/src/build-typescript-nodes.js ./src > src/node-types.d.ts"
   },
   "typings": "./src/node-types.d.ts",
   "dependencies": {

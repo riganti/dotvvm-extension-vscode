@@ -17,7 +17,7 @@ import {
     DidChangeWatchedFilesParams,
     LinkedEditingRangeRequest
 } from 'vscode-languageserver';
-import { IPCMessageReader, IPCMessageWriter, createConnection } from 'vscode-languageserver/node';
+import { IPCMessageReader, IPCMessageWriter, createConnection, SocketMessageReader, SocketMessageWriter } from 'vscode-languageserver/node';
 import { DiagnosticsManager } from './lib/DiagnosticsManager';
 import { DotvvmDocument, DocumentManager } from './lib/documents';
 import { getSemanticTokenLegends } from './lib/semanticToken/semanticTokenLegend';
@@ -36,6 +36,8 @@ import { FallbackWatcher } from './lib/FallbackWatcher';
 import { createLanguageServices } from './plugins/css/service';
 import { FileSystemProvider } from './plugins/css/FileSystemProvider';
 import { SerializedConfigSeeker } from './lib/serializedConfigSeeker';
+import * as parserUtils from './lib/parserutils';
+import net from 'net'
 
 namespace TagCloseRequest {
     export const type: RequestType<TextDocumentPositionParams, string | null, any> =
@@ -60,7 +62,12 @@ export interface LSOptions {
  *
  * @param options Options to customize behavior
  */
-export function startServer(options?: LSOptions) {
+export async function startServer(options?: LSOptions) {
+    if (options?.logErrorsOnly !== undefined) {
+        Logger.setLogErrorsOnly(options.logErrorsOnly);
+    }
+    parserUtils.init()
+    console.log("argv:", process.argv)
     let connection = options?.connection;
     if (!connection) {
         if (process.argv.includes('--stdio')) {
@@ -68,16 +75,20 @@ export function startServer(options?: LSOptions) {
                 console.warn(...args);
             };
             connection = createConnection(process.stdin, process.stdout);
+        } else if (process.argv.some(o => o.startsWith("--pipe="))) {
+            const pipeName = process.argv.find(o => o.startsWith("--pipe="))!.split("=")[1];
+            const socket = net.connect(pipeName)
+            console.log("Connecting to pipe:", pipeName);
+            connection = createConnection(
+                new SocketMessageReader(socket),
+                new SocketMessageWriter(socket)
+            );
         } else {
             connection = createConnection(
                 new IPCMessageReader(process),
                 new IPCMessageWriter(process)
             );
         }
-    }
-
-    if (options?.logErrorsOnly !== undefined) {
-        Logger.setLogErrorsOnly(options.logErrorsOnly);
     }
 
     const docManager = new DocumentManager(
@@ -89,7 +100,7 @@ export function startServer(options?: LSOptions) {
 
     connection.onInitialize((evt) => {
         const workspaceUris = evt.workspaceFolders!.map((folder) => folder.uri.toString());
-        Logger.log('Initialize language server at ', workspaceUris.join(', '));
+        Logger.log('Initialize language server at ', workspaceUris.join(', '), "node version: ", process.version);
         if (workspaceUris.length === 0) {
             Logger.error('No workspace path set');
         }
@@ -199,7 +210,8 @@ export function startServer(options?: LSOptions) {
                 executeCommandProvider: clientSupportApplyEditCommand
                     ? {
                           commands: [
-                              'extract_to_dotvvm_component'
+                              'extract_to_dotvvm_component',
+                              'debug_log_tree'
                           ]
                       }
                     : undefined,

@@ -30,5 +30,11 @@ export async function executeCommand(
     command: string,
     args?: any[]
 ): Promise<WorkspaceEdit | string | null> {
-    return await executeRefactoringCommand(doc, command, args);
+    if (command == 'debug_log_tree') {
+        if (doc.tree == null)
+            return 'No tree available.'
+
+        console.log(doc.tree.rootNode.toString())
+    }
+    return await executeRefactoringCommand(doc, command, args)
 }

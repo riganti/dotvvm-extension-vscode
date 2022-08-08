@@ -1,4 +1,5 @@
 import assert from 'assert';
+import { NodeOfType, SyntaxNode } from 'tree-sitter-dotvvm';
 import { HTMLDocument } from 'vscode-html-languageservice';
 import { DotvvmDocument } from '../../../src/lib/documents';
 import { parseHtml } from '../../../src/lib/documents/parseHtml';
@@ -21,6 +22,8 @@ describe('parseHtml', () => {
         const node =doc.tree?.rootNode
         assert.notEqual(null, node)
 
+        const a: SyntaxNode & { type: "directive_general_value" } = null!
+
         const x = node!.descendantsOfType('directive_viewModel')
         console.log(x)
         assert.equal(1, x.length)
@@ -28,7 +31,7 @@ describe('parseHtml', () => {
         assert.equal("My.Object, Assembly", typeAssembly?.text)
         let fullName = typeChild("cs_type_name", typeAssembly)
         assert.equal("My.Object", fullName?.text)
-        assert.equal("Object", (fullName as any).typeNameNode.text)
+        assert.equal("Object", fullName!.typeNameNode.text)
     });
 
 });

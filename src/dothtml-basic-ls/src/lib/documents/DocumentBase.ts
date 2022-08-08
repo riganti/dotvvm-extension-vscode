@@ -93,7 +93,11 @@ export abstract class WritableDocument extends ReadableDocument {
 
         const parser = getParser(languageId);
         if (parser) {
-            this.tree = new ParsedTree(parser, this.content);
+            try {
+                this.tree = new ParsedTree(parser, this.content);
+            } catch (e) {
+                console.error("Tree-sitter init failed:", e)
+            }
         }
     }
     /**

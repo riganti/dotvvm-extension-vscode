@@ -6,6 +6,7 @@ import {
 } from 'vscode-languageserver';
 import { DotvvmDocument } from './Document';
 import { normalizeUri } from '../../utils';
+import * as parserutils from '../parserutils';
 
 export type DocumentEvent = 'documentOpen' | 'documentChange' | 'documentClose';
 
@@ -21,7 +22,8 @@ export class DocumentManager {
 
     constructor(
         private createDocument: (textDocument: Pick<TextDocumentItem, 'text' | 'uri'>) => DotvvmDocument
-    ) {}
+    ) {
+    }
 
     openDocument(textDocument: Pick<TextDocumentItem, 'text' | 'uri'>): DotvvmDocument {
         textDocument = { ...textDocument, uri: normalizeUri(textDocument.uri) };
@@ -31,9 +33,15 @@ export class DocumentManager {
             document = this.documents.get(textDocument.uri)!;
             document.setText(textDocument.text);
         } else {
-            document = this.createDocument(textDocument);
-            this.documents.set(textDocument.uri, document);
-            this.notify('documentOpen', document);
+            try {
+                document = this.createDocument(textDocument);
+                this.documents.set(textDocument.uri, document);
+                this.notify('documentOpen', document);
+            } catch (e) {
+                console.error("Error while opening document")
+                console.error(e);
+                throw e
+            }
         }
 
         this.notify('documentChange', document);

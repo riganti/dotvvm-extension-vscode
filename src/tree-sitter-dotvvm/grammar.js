@@ -42,10 +42,28 @@ const PREC = {
     SELECT: 0,
 };
 
+function directiveSyntax(name, value, opt ={} ) {
+    name = field('name', name)
+    if (value == null) {
+        return seq(
+            '@',
+            name
+        )
+    }
+    value = field('value', value)
+    if (opt.optional)
+        value = optional(value)
+    return seq(
+        '@',
+        name,
+        value
+    )
+}
+
 module.exports = grammar({
     name: 'dotvvm',
     conflicts: $ => [
-        [ $.cs_namespace ]
+        [ $.cs_type_name ]
     ],
     externals: $ => [
         $._start_tag_name,
@@ -64,7 +82,7 @@ module.exports = grammar({
         source_file: $ => seq(prec(10, optional($.directives)), optional($.markup)),
 
         markup: $ => seq(
-            choice(
+            field('content', choice(
                 $.doctype,
                 $.html_element,
                 $._comment,
@@ -72,23 +90,56 @@ module.exports = grammar({
                 $.style_element,
                 $.erroneous_end_tag,    
                 alias($.html_text_document_start, $.html_text)
-            ),
-            repeat($._node)
+            )),
+            repeat(field('content', $._node))
         ),
 
-        directives: $ => repeat1(seq(choice($.directive_general, $.directive_masterPage, $.directive_viewModel, $.directive_baseType, $.directive_service, $.directive_import), "\n")),
-        directive_general: $ => seq("@", field('name', $.directive_name), optional(field('value', $.directive_general_value))),
+        directives: $ => repeat1(seq(
+            choice(
+                field('general_directive', $.directive_general),
+                field('masterPage', $.directive_masterPage),
+                field('viewModel', $.directive_viewModel),
+                field('baseType', $.directive_baseType),
+                field('service', $.directive_service),
+                field('import', $.directive_import),
+                field('js', $.directive_js),
+                field('property', $.directive_property),
+                // $._comment
+            ),
+            "\n"
+        )),
+        directive_general: $ => directiveSyntax($.directive_name, $.directive_general_value, { optional: true }),
         directive_name: $ => $._identifier_token,
         directive_general_value: $ => /[^\r\n]+/,
-        directive_viewModel: $ => seq("@", "viewModel", " ", $.directive_assembly_qualified_name),
-        directive_baseType: $ => seq("@", "baseType", " ", $.directive_assembly_qualified_name),
-        directive_js: $ => seq("@", "js", " ", field('value', $.directive_general_value)),
-        directive_masterPage: $ => seq("@", "masterPage", " ", field('value', $.directive_general_value)),
-        // TODO: directive_property!
-        directive_service: $ => seq("@", "service", " ", $.directive_type_alias),
-        directive_import: $ => seq("@", "import", " ", choice($.directive_type_alias, $.cs_namespace)),
+        directive_viewModel: $ => directiveSyntax("viewModel", $.directive_assembly_qualified_name),
+        directive_baseType: $ => directiveSyntax("baseType", $.directive_assembly_qualified_name),
+        directive_js: $ => directiveSyntax("js", $.directive_general_value),
+        directive_masterPage: $ => directiveSyntax("masterPage", $.directive_general_value),
+        directive_property: $ => directiveSyntax("property", $.directive_property_value),
+        directive_service: $ => directiveSyntax("service", $.directive_type_alias),
+        directive_import: $ => directiveSyntax("import", choice($.directive_type_alias, $.cs_namespace)),
+
         directive_assembly_qualified_name: $ => seq(field('type', $._cs_type), optional(seq(", ", field('assembly', /[\w0-9.]+/)))),
         directive_type_alias: $ => seq(field('alias', $.cs_identifier), "=", $.directive_assembly_qualified_name),
+        directive_property_value: $ => seq(
+            field('type', $.cs_type_name),
+            field('name', $.cs_identifier),
+            optional(seq("=", field('initializer', $.cs_expr))),
+            repeat(seq(",", field('attribute', $.directive_property_attribute_assignment)))
+        ),
+        directive_property_attribute_assignment: $ => seq(
+            field('type', $.cs_type_name),
+            '.',
+            field('field_name', $.cs_identifier),
+            '=',
+            optional(seq(field('value', $.cs_literal)))
+        ),
+
+        // TODO:
+        cs_literal: $ => $.cs_literal_number,
+        cs_literal_number: $ => /\d+([uU]?[lL]?|[mMdDfF])?/,
+        cs_expr: $ => choice($.cs_identifier, $.cs_literal, $.cs_expr_array_initializer),
+        cs_expr_array_initializer: $ => seq('[', commaSep(field('element', $.cs_expr)), ']'),
 
         // HTML-like markup
         // taken from https://github.com/tree-sitter/tree-sitter-html/blob/master/grammar.js
@@ -101,11 +152,11 @@ module.exports = grammar({
         // server_comment: $ => seq("<%--", repeat(/[^-]+|\S+/), "--%>"),
         _comment: $ => choice($.html_comment, $.dotvvm_comment),
         _empty_element_tag_name: $ => choice(...EMPTY_ELEMENTS.map(caseInsensitive)),
-        tag_name: $ => /[\w\-_.:]+/,
+        // tag_name: $ => /[\w\-_.:]+/,
         doctype: $ => seq(
             '<!',
             caseInsensitive('DOCTYPE'),
-            /[^>]+/,
+            field('doctype', /[^>]+/),
             '>'
         ),
         _node: $ => choice(
@@ -120,30 +171,30 @@ module.exports = grammar({
       
         html_element: $ => choice(
             seq(
-                $.start_tag,
-                repeat($._node),
-                choice($.end_tag, $._implicit_end_tag)
+                field('start', $.start_tag),
+                field('content', repeat($._node)),
+                field('end', choice($.end_tag, $._implicit_end_tag))
             ),
             // $.empty_element_tag,
-            $.self_closing_tag,
+            field('self_closing', $.self_closing_tag)
         ),
     
         script_element: $ => seq(
-            alias($.script_start_tag, $.start_tag),
-            optional($.raw_text),
-            $.end_tag
+            field('start', alias($.script_start_tag, $.start_tag)),
+            optional(field('content', $.raw_text)),
+            field('end', $.end_tag)
         ),
     
         style_element: $ => seq(
-            alias($.style_start_tag, $.start_tag),
-            optional($.raw_text),
-            $.end_tag
+            field('start', alias($.style_start_tag, $.start_tag)),
+            optional(field('content', $.raw_text)),
+            field('end', $.end_tag)
         ),
     
         start_tag: $ => seq(
             '<',
             field('name', alias($._start_tag_name, $.tag_name)),
-            repeat($.attribute),
+            repeat(field('attribute', $.attribute)),
             '>'
         ),
         // empty_element_tag: $ => seq(
@@ -155,22 +206,22 @@ module.exports = grammar({
     
         script_start_tag: $ => seq(
             '<',
-            alias($._script_start_tag_name, $.tag_name),
-            repeat($.attribute),
+            field('name', alias($._script_start_tag_name, $.tag_name)),
+            repeat(field('attribute', $.attribute)),
             '>'
         ),
     
         style_start_tag: $ => seq(
             '<',
-            alias($._style_start_tag_name, $.tag_name),
-            repeat($.attribute),
+            field('name', alias($._style_start_tag_name, $.tag_name)),
+            repeat(field('attribute', $.attribute)),
             '>'
         ),
     
         self_closing_tag: $ => seq(
             '<',
             field('name', alias($._start_tag_name, $.tag_name)),
-            repeat($.attribute),
+            repeat(field('attribute', $.attribute)),
             '/>'
         ),
     
@@ -205,7 +256,7 @@ module.exports = grammar({
           ),
         attribute_name: $ => /[^<>"'/=\s]+/,
         attribute_value: $ => /[^<>"'=\s]+/,
-        attribute_binding: $ => seq("{", $.binding_name, ":", $.binding_expr, "}"),
+        attribute_binding: $ => seq("{", field('name', $.binding_name), ":", field('expr', $.binding_expr), "}"),
         binding_name: $ => choice("value", "command", "staticCommand", "resource", "controlCommand", "controlProperty", /\w+/),
         binding_expr: $ => /.*/, // TODO: expressions
 
@@ -213,8 +264,8 @@ module.exports = grammar({
         // some stuff is from https://github.com/tree-sitter/tree-sitter-c-sharp/blob/master/grammar.js
         // Licensed under The MIT License (MIT), Copyright (c) 2014 Max Brunsfeld
         cs_type_name: $ => seq(
-            optional(seq(field('namespace', $.cs_namespace), '.')),
-            field('type_name', $.cs_identifier),
+            repeat(seq(field('name', $.cs_identifier), '.')),
+            field('name', $.cs_identifier),
             optional(field('type_args', $.cs_type_argument_list))
         ),
         _cs_type: $ => choice(
