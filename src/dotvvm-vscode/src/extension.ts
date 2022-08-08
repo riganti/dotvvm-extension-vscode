@@ -6,6 +6,7 @@ import { activateLS } from './lsinit';
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
+	console.log("VS Code is running Node ", process.version)
 	activateLS(context);
 }
 

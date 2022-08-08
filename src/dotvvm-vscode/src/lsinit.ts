@@ -73,7 +73,9 @@ export function activateLanguageServer(context: ExtensionContext) {
 
     console.log("4")
 
-    const serverModule = eval("require.resolve(lsPath || 'dothtml-basic-ls/bin/server.js')");
+    // const serverModule = eval("require.resolve(lsPath || 'dothtml-basic-ls/bin/server.js')");
+    const platform = process.platform == "linux" ? "linux" : process.platform == "darwin" ? "macos" : "win.exe";
+    const serverModule = eval("require.resolve(lsPath || 'dothtml-basic-ls/dist/dotvvm-language-server-'+platform)");
     console.log('Loading server from ', serverModule);
 
     const runExecArgv: string[] = [];
@@ -84,15 +86,23 @@ export function activateLanguageServer(context: ExtensionContext) {
         console.log('setting port to', port);
         runExecArgv.push(`--inspect=${port}`);
     }
-    const debugOptions = { execArgv: ['--nolazy', `--inspect=${port}`] };
+    const debugArgs = ['--nolazy', `--inspect=${port}`]
 
     const serverOptions: ServerOptions = {
         run: {
-            module: serverModule,
-            transport: TransportKind.ipc,
-            options: { execArgv: runExecArgv }
+            command: serverModule,
+            // module: serverModule,
+            transport: TransportKind.pipe,
+            args: runExecArgv,
+            // options: { execArgv: runExecArgv }
         },
-        debug: { module: serverModule, transport: TransportKind.ipc, options: debugOptions }
+        debug: {
+            command: serverModule,
+            // module: serverModule,
+            transport: TransportKind.pipe,
+            args: debugArgs
+            // options: debugOptions
+        }
     };
 
     const clientOptions: LanguageClientOptions = {
@@ -131,7 +141,7 @@ export function activateLanguageServer(context: ExtensionContext) {
     });
 
     context.subscriptions.push(
-        commands.registerCommand('dotvvm.restartLanguageServer', async () => {
+        commands.registerCommand('dotvvm.debug.restartLS', async () => {
             await restartLS(true);
         })
     );
@@ -163,7 +173,10 @@ export function activateLanguageServer(context: ExtensionContext) {
 
     addExtracComponentCommand(getLS, context);
 
+    addDebugCommands(getLS, context);
+
     languages.setLanguageConfiguration('dotvvm', {
+        // This all is pretty much from https://github.com/sveltejs/language-tools/blob/master/packages/svelte-vscode/src/extension.ts
         indentationRules: {
             // Matches a valid opening tag that is:
             //  - Not a doctype
@@ -343,6 +356,21 @@ function addRenameFileListener(getLS: () => LanguageClient) {
     // });
 }
 
+function addDebugCommands(getLS: () => LanguageClient, context: ExtensionContext) {
+    const subs1 = commands.registerTextEditorCommand('dotvvm.debug.dump-tree', async (editor) => {
+        if (editor?.document?.languageId !== 'dotvvm') {
+            return
+        }
+
+        const uri = editor.document.uri.toString()
+        const range = editor.selection
+        getLS().sendRequest(ExecuteCommandRequest.type, {
+            command: 'debug_log_tree',
+            arguments: [uri, { uri, range }]
+        })
+    })
+    context.subscriptions.push(subs1)
+}
 function addExtracComponentCommand(getLS: () => LanguageClient, context: ExtensionContext) {
     context.subscriptions.push(
         commands.registerTextEditorCommand('dotvvm.extractComponent', async (editor) => {

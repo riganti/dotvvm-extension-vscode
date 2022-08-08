@@ -1,9 +1,12 @@
 export interface Parser {
-  parse(input: string | Input, previousTree?: Tree, options?: {bufferSize?: number, includedRanges?: Range[]}): Tree;
+  parse(input: string | Input | InputReader, oldTree?: Tree, options?: { bufferSize?: number, includedRanges?: Range[] }): Tree;
+  parseTextBuffer(buffer: TextBuffer, oldTree?: Tree, options?: { syncTimeoutMicros?: number, includedRanges?: Range[] }): Tree | Promise<Tree>;
+  parseTextBufferSync(buffer: TextBuffer, oldTree?: Tree, options?: { includedRanges?: Range[] }): Tree;
   getLanguage(): any;
   setLanguage(language: any): void;
   getLogger(): Logger;
   setLogger(logFunc: Logger): void;
+  printDotGraphs(enabled: boolean): void;
 }
 
 export type Point = {
@@ -33,6 +36,12 @@ export type Logger = (
   type: "parse" | "lex"
 ) => void;
 
+export type TextBuffer = Buffer;
+
+export interface InputReader {
+  (index: any, position: Point): string;
+}
+
 export interface Input {
   seek(index: number): void;
   read(): any;
@@ -41,6 +50,7 @@ export interface Input {
 interface SyntaxNodeBase {
   tree: Tree;
   type: string;
+  typeId: string;
   isNamed: boolean;
   text: string;
   startPosition: Point;
@@ -79,7 +89,7 @@ interface SyntaxNodeBase {
   namedDescendantForPosition(position: Point): SyntaxNode;
   namedDescendantForPosition(startPosition: Point, endPosition: Point): SyntaxNode;
   descendantsOfType<T extends TypeString>(types: T | readonly T[], startPosition?: Point, endPosition?: Point): NodeOfType<T>[];
-  
+
   closest<T extends SyntaxType>(types: T | readonly T[]): NamedNode<T> | null;
   walk(): TreeCursor;
 }
@@ -92,7 +102,8 @@ export interface TreeCursor {
   endPosition: Point;
   startIndex: number;
   endIndex: number;
-  readonly currentNode: SyntaxNode
+  readonly currentNode: SyntaxNode;
+  readonly currentFieldName: string;
 
   reset(node: SyntaxNode): void
   gotoParent(): boolean;
@@ -108,6 +119,33 @@ export interface Tree {
   walk(): TreeCursor;
   getChangedRanges(other: Tree): Range[];
   getEditedRange(other: Tree): Range;
+  printDotGraph(): void;
+}
+
+export interface QueryMatch {
+  pattern: number,
+  captures: QueryCapture[],
+}
+
+export interface QueryCapture {
+  name: string,
+  text?: string,
+  node: SyntaxNode,
+  setProperties?: {[prop: string]: string | null},
+  assertedProperties?: {[prop: string]: string | null},
+  refutedProperties?: {[prop: string]: string | null},
+}
+
+export interface Query {
+  readonly predicates: { [name: string]: Function }[];
+  readonly setProperties: any[];
+  readonly assertedProperties: any[];
+  readonly refutedProperties: any[];
+
+  constructor(language: any, source: string | Buffer);
+
+  matches(rootNode: SyntaxNode, startPosition?: Point, endPosition?: Point): QueryMatch[];
+  captures(rootNode: SyntaxNode, startPosition?: Point, endPosition?: Point): QueryCapture[];
 }
 
 interface NamedNodeBase extends SyntaxNodeBase {
@@ -166,54 +204,53 @@ type TreeCursorRecord = { [K in TypeString]: TreeCursorOfType<K, NodeOfType<K>> 
 export type TypedTreeCursor = TreeCursorRecord[keyof TreeCursorRecord];
 
 export interface ErrorNode extends NamedNodeBase {
-    type: SyntaxType.ERROR;
+    type: "ERROR";
     hasError(): true;
 }
 
-export const enum SyntaxType {
-  ERROR = "ERROR",
-  Attribute = "attribute",
-  AttributeBinding = "attribute_binding",
-  BindingName = "binding_name",
-  CsArrayType = "cs_array_type",
-  CsIdentifier = "cs_identifier",
-  CsNamespace = "cs_namespace",
-  CsNullableType = "cs_nullable_type",
-  CsTupleElement = "cs_tuple_element",
-  CsTupleType = "cs_tuple_type",
-  CsTypeArgumentList = "cs_type_argument_list",
-  CsTypeName = "cs_type_name",
-  DirectiveAssemblyQualifiedName = "directive_assembly_qualified_name",
-  DirectiveBaseType = "directive_baseType",
-  DirectiveGeneral = "directive_general",
-  DirectiveImport = "directive_import",
-  DirectiveMasterPage = "directive_masterPage",
-  DirectiveName = "directive_name",
-  DirectiveService = "directive_service",
-  DirectiveTypeAlias = "directive_type_alias",
-  DirectiveViewModel = "directive_viewModel",
-  Directives = "directives",
-  Doctype = "doctype",
-  EndTag = "end_tag",
-  ErroneousEndTag = "erroneous_end_tag",
-  HtmlElement = "html_element",
-  Markup = "markup",
-  ScriptElement = "script_element",
-  SelfClosingTag = "self_closing_tag",
-  SourceFile = "source_file",
-  StartTag = "start_tag",
-  StyleElement = "style_element",
-  AttributeName = "attribute_name",
-  AttributeValue = "attribute_value",
-  BindingExpr = "binding_expr",
-  DirectiveGeneralValue = "directive_general_value",
-  DotvvmComment = "dotvvm_comment",
-  ErroneousEndTagName = "erroneous_end_tag_name",
-  HtmlComment = "html_comment",
-  HtmlText = "html_text",
-  RawText = "raw_text",
-  TagName = "tag_name",
-}
+export type SyntaxType = 
+  | "ERROR"
+  | "attribute"
+  | "attribute_binding"
+  | "binding_name"
+  | "cs_array_type"
+  | "cs_identifier"
+  | "cs_namespace"
+  | "cs_nullable_type"
+  | "cs_tuple_element"
+  | "cs_tuple_type"
+  | "cs_type_argument_list"
+  | "cs_type_name"
+  | "directive_assembly_qualified_name"
+  | "directive_baseType"
+  | "directive_general"
+  | "directive_import"
+  | "directive_masterPage"
+  | "directive_name"
+  | "directive_service"
+  | "directive_type_alias"
+  | "directive_viewModel"
+  | "directives"
+  | "doctype"
+  | "end_tag"
+  | "erroneous_end_tag"
+  | "html_element"
+  | "markup"
+  | "script_element"
+  | "self_closing_tag"
+  | "source_file"
+  | "start_tag"
+  | "style_element"
+  | "attribute_name"
+  | "attribute_value"
+  | "binding_expr"
+  | "directive_general_value"
+  | "dotvvm_comment"
+  | "erroneous_end_tag_name"
+  | "html_comment"
+  | "html_text"
+  | "raw_text"
+  | "tag_name"
 
 export type UnnamedType =
   | "\n"
@@ -252,7 +289,7 @@ export type UnnamedType =
   | "}"
   ;
 
-export type TypeString = `${SyntaxType}` | UnnamedType;
+export type TypeString = SyntaxType | UnnamedType;
 
 export type SyntaxNode = 
   | AttributeNode
@@ -334,183 +371,186 @@ export type SyntaxNode =
   ;
 
 export interface AttributeNode extends NamedNodeBase {
-  type: SyntaxType.Attribute;
+  type: "attribute";
   bindingNode?: AttributeBindingNode;
   nameNode: AttributeNameNode;
   valueNode?: AttributeValueNode;
 }
 
 export interface AttributeBindingNode extends NamedNodeBase {
-  type: SyntaxType.AttributeBinding;
+  type: "attribute_binding";
 }
 
 export interface BindingNameNode extends NamedNodeBase {
-  type: SyntaxType.BindingName;
+  type: "binding_name";
 }
 
 export interface CsArrayTypeNode extends NamedNodeBase {
-  type: SyntaxType.CsArrayType;
+  type: "cs_array_type";
   rankNodes: UnnamedNode<",">[];
   typeNode: CsArrayTypeNode | CsNullableTypeNode | CsTupleTypeNode | CsTypeNameNode;
 }
 
 export interface CsIdentifierNode extends NamedNodeBase {
-  type: SyntaxType.CsIdentifier;
+  type: "cs_identifier";
 }
 
 export interface CsNamespaceNode extends NamedNodeBase {
-  type: SyntaxType.CsNamespace;
+  type: "cs_namespace";
 }
 
 export interface CsNullableTypeNode extends NamedNodeBase {
-  type: SyntaxType.CsNullableType;
+  type: "cs_nullable_type";
   typeNode: CsArrayTypeNode | CsNullableTypeNode | CsTupleTypeNode | CsTypeNameNode;
 }
 
 export interface CsTupleElementNode extends NamedNodeBase {
-  type: SyntaxType.CsTupleElement;
+  type: "cs_tuple_element";
   nameNode?: CsIdentifierNode;
   typeNode: CsArrayTypeNode | CsNullableTypeNode | CsTupleTypeNode | CsTypeNameNode;
 }
 
 export interface CsTupleTypeNode extends NamedNodeBase {
-  type: SyntaxType.CsTupleType;
+  type: "cs_tuple_type";
 }
 
 export interface CsTypeArgumentListNode extends NamedNodeBase {
-  type: SyntaxType.CsTypeArgumentList;
+  type: "cs_type_argument_list";
 }
 
 export interface CsTypeNameNode extends NamedNodeBase {
-  type: SyntaxType.CsTypeName;
+  type: "cs_type_name";
   namespaceNode?: CsNamespaceNode;
-  type_argsNode?: CsTypeArgumentListNode;
-  type_nameNode: CsIdentifierNode;
+  typeArgsNode?: CsTypeArgumentListNode;
+  typeNameNode: CsIdentifierNode;
 }
 
 export interface DirectiveAssemblyQualifiedNameNode extends NamedNodeBase {
-  type: SyntaxType.DirectiveAssemblyQualifiedName;
+  type: "directive_assembly_qualified_name";
   typeNode: CsArrayTypeNode | CsNullableTypeNode | CsTupleTypeNode | CsTypeNameNode;
 }
 
 export interface DirectiveBaseTypeNode extends NamedNodeBase {
-  type: SyntaxType.DirectiveBaseType;
+  type: "directive_baseType";
 }
 
 export interface DirectiveGeneralNode extends NamedNodeBase {
-  type: SyntaxType.DirectiveGeneral;
+  type: "directive_general";
+  nameNode: DirectiveNameNode;
+  valueNode?: DirectiveGeneralValueNode;
 }
 
 export interface DirectiveImportNode extends NamedNodeBase {
-  type: SyntaxType.DirectiveImport;
+  type: "directive_import";
 }
 
 export interface DirectiveMasterPageNode extends NamedNodeBase {
-  type: SyntaxType.DirectiveMasterPage;
+  type: "directive_masterPage";
+  valueNode: DirectiveGeneralValueNode;
 }
 
 export interface DirectiveNameNode extends NamedNodeBase {
-  type: SyntaxType.DirectiveName;
+  type: "directive_name";
 }
 
 export interface DirectiveServiceNode extends NamedNodeBase {
-  type: SyntaxType.DirectiveService;
+  type: "directive_service";
 }
 
 export interface DirectiveTypeAliasNode extends NamedNodeBase {
-  type: SyntaxType.DirectiveTypeAlias;
+  type: "directive_type_alias";
   aliasNode: CsIdentifierNode;
 }
 
 export interface DirectiveViewModelNode extends NamedNodeBase {
-  type: SyntaxType.DirectiveViewModel;
+  type: "directive_viewModel";
 }
 
 export interface DirectivesNode extends NamedNodeBase {
-  type: SyntaxType.Directives;
+  type: "directives";
 }
 
 export interface DoctypeNode extends NamedNodeBase {
-  type: SyntaxType.Doctype;
+  type: "doctype";
 }
 
 export interface EndTagNode extends NamedNodeBase {
-  type: SyntaxType.EndTag;
+  type: "end_tag";
   nameNode: TagNameNode;
 }
 
 export interface ErroneousEndTagNode extends NamedNodeBase {
-  type: SyntaxType.ErroneousEndTag;
+  type: "erroneous_end_tag";
   nameNode: ErroneousEndTagNameNode;
 }
 
 export interface HtmlElementNode extends NamedNodeBase {
-  type: SyntaxType.HtmlElement;
+  type: "html_element";
 }
 
 export interface MarkupNode extends NamedNodeBase {
-  type: SyntaxType.Markup;
+  type: "markup";
 }
 
 export interface ScriptElementNode extends NamedNodeBase {
-  type: SyntaxType.ScriptElement;
+  type: "script_element";
 }
 
 export interface SelfClosingTagNode extends NamedNodeBase {
-  type: SyntaxType.SelfClosingTag;
+  type: "self_closing_tag";
   nameNode: TagNameNode;
 }
 
 export interface SourceFileNode extends NamedNodeBase {
-  type: SyntaxType.SourceFile;
+  type: "source_file";
 }
 
 export interface StartTagNode extends NamedNodeBase {
-  type: SyntaxType.StartTag;
+  type: "start_tag";
   nameNode?: TagNameNode;
 }
 
 export interface StyleElementNode extends NamedNodeBase {
-  type: SyntaxType.StyleElement;
+  type: "style_element";
 }
 
 export interface AttributeNameNode extends NamedNodeBase {
-  type: SyntaxType.AttributeName;
+  type: "attribute_name";
 }
 
 export interface AttributeValueNode extends NamedNodeBase {
-  type: SyntaxType.AttributeValue;
+  type: "attribute_value";
 }
 
 export interface BindingExprNode extends NamedNodeBase {
-  type: SyntaxType.BindingExpr;
+  type: "binding_expr";
 }
 
 export interface DirectiveGeneralValueNode extends NamedNodeBase {
-  type: SyntaxType.DirectiveGeneralValue;
+  type: "directive_general_value";
 }
 
 export interface DotvvmCommentNode extends NamedNodeBase {
-  type: SyntaxType.DotvvmComment;
+  type: "dotvvm_comment";
 }
 
 export interface ErroneousEndTagNameNode extends NamedNodeBase {
-  type: SyntaxType.ErroneousEndTagName;
+  type: "erroneous_end_tag_name";
 }
 
 export interface HtmlCommentNode extends NamedNodeBase {
-  type: SyntaxType.HtmlComment;
+  type: "html_comment";
 }
 
 export interface HtmlTextNode extends NamedNodeBase {
-  type: SyntaxType.HtmlText;
+  type: "html_text";
 }
 
 export interface RawTextNode extends NamedNodeBase {
-  type: SyntaxType.RawText;
+  type: "raw_text";
 }
 
 export interface TagNameNode extends NamedNodeBase {
-  type: SyntaxType.TagName;
+  type: "tag_name";
 }
 

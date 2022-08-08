@@ -1,0 +1,12 @@
+{
+    "extends": "@tsconfig/node16/tsconfig.json",
+     "compilerOptions": {
+        "strict": true,
+        "outDir": "build/src",
+        "target": "ES2022",
+        "lib": []
+    },
+    "files": [
+        "dts-tree-sitter/build-typescript-nodes.ts"
+    ]
+}
