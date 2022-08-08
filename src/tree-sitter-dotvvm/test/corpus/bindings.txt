@@ -1,0 +1,124 @@
+==================
+Basic _this
+==================
+
+ahoj = {{value: _this}}
+
+---
+(source_file
+    (markup
+      (html_text)
+      (literal_binding
+        (binding_name)
+        (binding_expr
+          (dotvvm_keyword_expression)))))
+
+
+==================
+Basic member
+==================
+
+{{value: _this.MyProperty}}
+
+---
+(source_file
+    (markup
+      (literal_binding
+        (binding_name)
+        (binding_expr
+          (cs_member_access_expression
+              (dotvvm_keyword_expression)
+              (cs_identifier))))))
+
+==================
+Basic binary
+==================
+
+{{value: _this.MyProperty * 10 + 12}}
+
+---
+(source_file
+    (markup
+      (literal_binding
+        (binding_name)
+        (binding_expr
+            (cs_binary_expression
+              (cs_binary_expression
+                (cs_member_access_expression
+                  (dotvvm_keyword_expression)
+                  (cs_identifier))
+                (cs_integer_literal))
+              (cs_integer_literal))))))
+
+==================
+Basic string
+==================
+
+{{value: "{{  \n xx"}}
+
+---
+
+(source_file
+      markup: (markup
+        content: (literal_binding
+          name: (binding_name)
+          expr: (binding_expr
+            expr: (cs_string_literal
+              body: (cs_string_quote_body))))))
+
+
+==================
+Basic command
+==================
+
+<dot:Button Click='{command: _parent.Save(_this, context: "trollololo" + _root.X) }' />
+
+---
+
+(source_file
+  markup: (markup
+        content: (html_element
+          self_closing: (self_closing_tag
+            name: (tag_name)
+            attribute: (attribute
+              name: (attribute_name)
+              binding: (attribute_binding
+                name: (binding_name)
+                expr: (binding_expr
+                  expr: (cs_invocation_expression
+                    function: (cs_member_access_expression
+                      expression: (dotvvm_keyword_expression)
+                      name: (cs_identifier))
+                    argument: (cs_argument
+                      expression: (dotvvm_keyword_expression))
+                    argument: (cs_argument
+                      name: (cs_identifier)
+                      expression: (cs_binary_expression
+                        left: (cs_string_literal
+                          body: (cs_string_quote_body))
+                        right: (cs_member_access_expression
+                          expression: (dotvvm_keyword_expression)
+                          name: (cs_identifier))))))))))))
+
+==================
+Block command
+==================
+
+<dot:Button Click='{staticCommand: 1; 2; 3 }' />
+
+---
+
+(source_file
+      markup: (markup
+        content: (html_element
+          self_closing: (self_closing_tag
+            name: (tag_name)
+            attribute: (attribute
+              name: (attribute_name)
+              binding: (attribute_binding
+                name: (binding_name)
+                expr: (binding_expr
+                  expr: (cs_block_expression
+                    body: (cs_integer_literal)
+                    body: (cs_integer_literal)
+                    returns: (cs_integer_literal)))))))))

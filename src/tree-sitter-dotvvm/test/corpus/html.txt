@@ -109,3 +109,37 @@ simple script tag
             (attribute
               (attribute_name)
               (attribute_value))))))
+
+==================
+less than somewhere
+==================
+
+<div>  a < b </div>
+
+---
+
+(source_file
+    (markup
+        (html_element
+          (start_tag
+            (tag_name))
+          (html_text)
+          (end_tag
+            (tag_name)))))
+
+==================
+curly braces somewhere
+==================
+
+<div>  a { b } </div>
+
+---
+
+(source_file
+    (markup
+        (html_element
+          (start_tag
+            (tag_name))
+          (html_text)
+          (end_tag
+            (tag_name)))))

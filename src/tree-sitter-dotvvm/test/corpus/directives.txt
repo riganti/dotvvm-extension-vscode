@@ -83,15 +83,13 @@ Basic @service and @import
 
 
 (source_file
-    (directives
+    directives: (directives
       property: (directive_property
           value: (directive_property_value
             type: (cs_type_name
               name: (cs_identifier))
             name: (cs_identifier)
-            initializer: (cs_expr
-              (cs_literal
-                (cs_literal_number)))))))
+            initializer: (cs_integer_literal)))))
 
 
 ==================
@@ -103,7 +101,7 @@ Basic @service and @import
 ---
 
 (source_file
-    (directives
+    directives: (directives
       property: (directive_property
           value: (directive_property_value
             type: (cs_type_name
@@ -113,5 +111,4 @@ Basic @service and @import
               type: (cs_type_name
                 name: (cs_identifier))
               field_name: (cs_identifier)
-              value: (cs_literal
-                  (cs_literal_number)))))))
+              value: (cs_integer_literal))))))

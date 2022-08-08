@@ -213,14 +213,29 @@ export type SyntaxType =
   | "ERROR"
   | "attribute"
   | "attribute_binding"
+  | "binding_expr"
   | "binding_name"
+  | "cs_argument"
   | "cs_array_type"
-  | "cs_expr"
-  | "cs_expr_array_initializer"
+  | "cs_assignment_expression"
+  | "cs_await_expression"
+  | "cs_binary_expression"
+  | "cs_block_expression"
+  | "cs_boolean_literal"
+  | "cs_conditional_expression"
+  | "cs_element_access_expression"
   | "cs_identifier"
-  | "cs_literal"
+  | "cs_interpolated_string_expression"
+  | "cs_interpolated_string_text"
+  | "cs_interpolation"
+  | "cs_invocation_expression"
+  | "cs_member_access_expression"
   | "cs_namespace"
   | "cs_nullable_type"
+  | "cs_parenthesized_expression"
+  | "cs_string_apos_body"
+  | "cs_string_literal"
+  | "cs_string_quote_body"
   | "cs_tuple_element"
   | "cs_tuple_type"
   | "cs_type_argument_list"
@@ -240,9 +255,12 @@ export type SyntaxType =
   | "directive_viewModel"
   | "directives"
   | "doctype"
+  | "dotvvm_keyword_expression"
   | "end_tag"
   | "erroneous_end_tag"
   | "html_element"
+  | "html_text"
+  | "literal_binding"
   | "markup"
   | "script_element"
   | "self_closing_tag"
@@ -251,40 +269,77 @@ export type SyntaxType =
   | "style_element"
   | "attribute_name"
   | "attribute_value"
-  | "binding_expr"
-  | "cs_literal_number"
+  | "cs_integer_literal"
+  | "cs_null_literal"
+  | "cs_real_literal"
   | "directive_general_value"
   | "dotvvm_comment"
   | "erroneous_end_tag_name"
   | "html_comment"
-  | "html_text"
   | "raw_text"
   | "tag_name"
 
 export type UnnamedType =
   | "\n"
+  | "!="
   | "\""
+  | "$\""
+  | "%"
+  | "%="
+  | "&"
+  | "&&"
+  | "&="
   | "'"
   | "("
   | ")"
+  | "*"
+  | "*="
+  | "+"
+  | "+="
   | ","
   | ", "
+  | "-"
+  | "-="
   | "."
+  | "/"
+  | "/="
   | "/>"
   | ":"
+  | ";"
   | "<"
   | "<!"
   | "</"
+  | "<<"
+  | "<<="
+  | "<="
   | "="
+  | "=="
   | ">"
+  | ">="
+  | ">>"
+  | ">>="
   | "?"
+  | "?."
+  | "??"
+  | "??="
   | "@"
   | "["
   | "]"
+  | "^"
+  | "^="
+  | "_collection"
+  | "_control"
+  | "_index"
+  | "_page"
+  | "_parent"
+  | "_root"
+  | "_this"
+  | "await"
   | "baseType"
   | "command"
   | "controlCommand"
   | "controlProperty"
+  | "false"
   | "import"
   | "js"
   | "masterPage"
@@ -292,10 +347,16 @@ export type UnnamedType =
   | "resource"
   | "service"
   | "staticCommand"
+  | "true"
   | "value"
   | "viewModel"
   | "{"
+  | "{{"
+  | "|"
+  | "|="
+  | "||"
   | "}"
+  | "}}"
   ;
 
 export type TypeString = SyntaxType | UnnamedType;
@@ -303,14 +364,29 @@ export type TypeString = SyntaxType | UnnamedType;
 export type SyntaxNode = 
   | AttributeNode
   | AttributeBindingNode
+  | BindingExprNode
   | BindingNameNode
+  | CsArgumentNode
   | CsArrayTypeNode
-  | CsExprNode
-  | CsExprArrayInitializerNode
+  | CsAssignmentExpressionNode
+  | CsAwaitExpressionNode
+  | CsBinaryExpressionNode
+  | CsBlockExpressionNode
+  | CsBooleanLiteralNode
+  | CsConditionalExpressionNode
+  | CsElementAccessExpressionNode
   | CsIdentifierNode
-  | CsLiteralNode
+  | CsInterpolatedStringExpressionNode
+  | CsInterpolatedStringTextNode
+  | CsInterpolationNode
+  | CsInvocationExpressionNode
+  | CsMemberAccessExpressionNode
   | CsNamespaceNode
   | CsNullableTypeNode
+  | CsParenthesizedExpressionNode
+  | CsStringAposBodyNode
+  | CsStringLiteralNode
+  | CsStringQuoteBodyNode
   | CsTupleElementNode
   | CsTupleTypeNode
   | CsTypeArgumentListNode
@@ -330,9 +406,12 @@ export type SyntaxNode =
   | DirectiveViewModelNode
   | DirectivesNode
   | DoctypeNode
+  | DotvvmKeywordExpressionNode
   | EndTagNode
   | ErroneousEndTagNode
   | HtmlElementNode
+  | HtmlTextNode
+  | LiteralBindingNode
   | MarkupNode
   | ScriptElementNode
   | SelfClosingTagNode
@@ -340,37 +419,74 @@ export type SyntaxNode =
   | StartTagNode
   | StyleElementNode
   | UnnamedNode<"\n">
+  | UnnamedNode<"!=">
   | UnnamedNode<"\"">
+  | UnnamedNode<"$\"">
+  | UnnamedNode<"%">
+  | UnnamedNode<"%=">
+  | UnnamedNode<"&">
+  | UnnamedNode<"&&">
+  | UnnamedNode<"&=">
   | UnnamedNode<"'">
   | UnnamedNode<"(">
   | UnnamedNode<")">
+  | UnnamedNode<"*">
+  | UnnamedNode<"*=">
+  | UnnamedNode<"+">
+  | UnnamedNode<"+=">
   | UnnamedNode<",">
   | UnnamedNode<", ">
+  | UnnamedNode<"-">
+  | UnnamedNode<"-=">
   | UnnamedNode<".">
+  | UnnamedNode<"/">
+  | UnnamedNode<"/=">
   | UnnamedNode<"/>">
   | UnnamedNode<":">
+  | UnnamedNode<";">
   | UnnamedNode<"<">
   | UnnamedNode<"<!">
   | UnnamedNode<"</">
+  | UnnamedNode<"<<">
+  | UnnamedNode<"<<=">
+  | UnnamedNode<"<=">
   | UnnamedNode<"=">
+  | UnnamedNode<"==">
   | UnnamedNode<">">
+  | UnnamedNode<">=">
+  | UnnamedNode<">>">
+  | UnnamedNode<">>=">
   | UnnamedNode<"?">
+  | UnnamedNode<"?.">
+  | UnnamedNode<"??">
+  | UnnamedNode<"??=">
   | UnnamedNode<"@">
   | UnnamedNode<"[">
   | UnnamedNode<"]">
+  | UnnamedNode<"^">
+  | UnnamedNode<"^=">
+  | UnnamedNode<"_collection">
+  | UnnamedNode<"_control">
+  | UnnamedNode<"_index">
+  | UnnamedNode<"_page">
+  | UnnamedNode<"_parent">
+  | UnnamedNode<"_root">
+  | UnnamedNode<"_this">
   | AttributeNameNode
   | AttributeValueNode
+  | UnnamedNode<"await">
   | UnnamedNode<"baseType">
-  | BindingExprNode
   | UnnamedNode<"command">
   | UnnamedNode<"controlCommand">
   | UnnamedNode<"controlProperty">
-  | CsLiteralNumberNode
+  | CsIntegerLiteralNode
+  | CsNullLiteralNode
+  | CsRealLiteralNode
   | DirectiveGeneralValueNode
   | DotvvmCommentNode
   | ErroneousEndTagNameNode
+  | UnnamedNode<"false">
   | HtmlCommentNode
-  | HtmlTextNode
   | UnnamedNode<"import">
   | UnnamedNode<"js">
   | UnnamedNode<"masterPage">
@@ -380,10 +496,16 @@ export type SyntaxNode =
   | UnnamedNode<"service">
   | UnnamedNode<"staticCommand">
   | TagNameNode
+  | UnnamedNode<"true">
   | UnnamedNode<"value">
   | UnnamedNode<"viewModel">
   | UnnamedNode<"{">
+  | UnnamedNode<"{{">
+  | UnnamedNode<"|">
+  | UnnamedNode<"|=">
+  | UnnamedNode<"||">
   | UnnamedNode<"}">
+  | UnnamedNode<"}}">
   | ErrorNode
   ;
 
@@ -396,12 +518,23 @@ export interface AttributeNode extends NamedNodeBase {
 
 export interface AttributeBindingNode extends NamedNodeBase {
   type: "attribute_binding";
-  exprNode: BindingExprNode;
+  exprNode?: BindingExprNode;
   nameNode: BindingNameNode;
+}
+
+export interface BindingExprNode extends NamedNodeBase {
+  type: "binding_expr";
+  exprNode: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
 }
 
 export interface BindingNameNode extends NamedNodeBase {
   type: "binding_name";
+}
+
+export interface CsArgumentNode extends NamedNodeBase {
+  type: "cs_argument";
+  expressionNode: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+  nameNode?: CsIdentifierNode;
 }
 
 export interface CsArrayTypeNode extends NamedNodeBase {
@@ -410,25 +543,77 @@ export interface CsArrayTypeNode extends NamedNodeBase {
   typeNode: CsArrayTypeNode | CsNullableTypeNode | CsTupleTypeNode | CsTypeNameNode;
 }
 
-export interface CsExprNode extends NamedNodeBase<CsExprArrayInitializerNode | CsIdentifierNode | CsLiteralNode> {
-  type: "cs_expr";
-  firstNamedChild: CsExprArrayInitializerNode | CsIdentifierNode | CsLiteralNode;
-  lastNamedChild: CsExprArrayInitializerNode | CsIdentifierNode | CsLiteralNode;
+export interface CsAssignmentExpressionNode extends NamedNodeBase {
+  type: "cs_assignment_expression";
+  leftNode: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+  operatorNode: UnnamedNode<"%="> | UnnamedNode<"&="> | UnnamedNode<"*="> | UnnamedNode<"+="> | UnnamedNode<"-="> | UnnamedNode<"/="> | UnnamedNode<"<<="> | UnnamedNode<"="> | UnnamedNode<">>="> | UnnamedNode<"??="> | UnnamedNode<"^="> | UnnamedNode<"|=">;
+  rightNode: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
 }
 
-export interface CsExprArrayInitializerNode extends NamedNodeBase {
-  type: "cs_expr_array_initializer";
-  elementNodes: CsExprNode[];
+export interface CsAwaitExpressionNode extends NamedNodeBase<CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode> {
+  type: "cs_await_expression";
+  firstNamedChild: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+  lastNamedChild: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+}
+
+export interface CsBinaryExpressionNode extends NamedNodeBase {
+  type: "cs_binary_expression";
+  leftNode: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+  operatorNode: UnnamedNode<"!="> | UnnamedNode<"%"> | UnnamedNode<"&"> | UnnamedNode<"&&"> | UnnamedNode<"*"> | UnnamedNode<"+"> | UnnamedNode<"-"> | UnnamedNode<"/"> | UnnamedNode<"<"> | UnnamedNode<"<<"> | UnnamedNode<"<="> | UnnamedNode<"=="> | UnnamedNode<">"> | UnnamedNode<">="> | UnnamedNode<">>"> | UnnamedNode<"??"> | UnnamedNode<"^"> | UnnamedNode<"|"> | UnnamedNode<"||">;
+  rightNode: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+}
+
+export interface CsBlockExpressionNode extends NamedNodeBase {
+  type: "cs_block_expression";
+  bodyNodes: (CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode)[];
+  returnsNode: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+}
+
+export interface CsBooleanLiteralNode extends NamedNodeBase {
+  type: "cs_boolean_literal";
+}
+
+export interface CsConditionalExpressionNode extends NamedNodeBase {
+  type: "cs_conditional_expression";
+  alternativeNode: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+  conditionNode: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+  consequenceNode: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+}
+
+export interface CsElementAccessExpressionNode extends NamedNodeBase {
+  type: "cs_element_access_expression";
+  expressionNode: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+  subscriptNodes: (CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode)[];
 }
 
 export interface CsIdentifierNode extends NamedNodeBase {
   type: "cs_identifier";
 }
 
-export interface CsLiteralNode extends NamedNodeBase<CsLiteralNumberNode> {
-  type: "cs_literal";
-  firstNamedChild: CsLiteralNumberNode;
-  lastNamedChild: CsLiteralNumberNode;
+export interface CsInterpolatedStringExpressionNode extends NamedNodeBase<CsInterpolatedStringTextNode | CsInterpolationNode> {
+  type: "cs_interpolated_string_expression";
+}
+
+export interface CsInterpolatedStringTextNode extends NamedNodeBase {
+  type: "cs_interpolated_string_text";
+}
+
+export interface CsInterpolationNode extends NamedNodeBase {
+  type: "cs_interpolation";
+  alignmentClauseNode?: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+  expressionNode: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+}
+
+export interface CsInvocationExpressionNode extends NamedNodeBase {
+  type: "cs_invocation_expression";
+  argumentNodes: CsArgumentNode[];
+  functionNode: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+}
+
+export interface CsMemberAccessExpressionNode extends NamedNodeBase {
+  type: "cs_member_access_expression";
+  expressionNode: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+  nameNode: CsIdentifierNode;
 }
 
 export interface CsNamespaceNode extends NamedNodeBase {
@@ -438,6 +623,25 @@ export interface CsNamespaceNode extends NamedNodeBase {
 export interface CsNullableTypeNode extends NamedNodeBase {
   type: "cs_nullable_type";
   typeNode: CsArrayTypeNode | CsNullableTypeNode | CsTupleTypeNode | CsTypeNameNode;
+}
+
+export interface CsParenthesizedExpressionNode extends NamedNodeBase<CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode> {
+  type: "cs_parenthesized_expression";
+  firstNamedChild: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+  lastNamedChild: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
+}
+
+export interface CsStringAposBodyNode extends NamedNodeBase {
+  type: "cs_string_apos_body";
+}
+
+export interface CsStringLiteralNode extends NamedNodeBase {
+  type: "cs_string_literal";
+  bodyNode?: CsStringAposBodyNode | CsStringQuoteBodyNode;
+}
+
+export interface CsStringQuoteBodyNode extends NamedNodeBase {
+  type: "cs_string_quote_body";
 }
 
 export interface CsTupleElementNode extends NamedNodeBase {
@@ -511,13 +715,13 @@ export interface DirectivePropertyAttributeAssignmentNode extends NamedNodeBase 
   type: "directive_property_attribute_assignment";
   fieldNameNode: CsIdentifierNode;
   typeNode: CsTypeNameNode;
-  valueNode?: CsLiteralNode;
+  valueNode?: CsBooleanLiteralNode | CsIntegerLiteralNode | CsNullLiteralNode | CsRealLiteralNode | CsStringLiteralNode;
 }
 
 export interface DirectivePropertyValueNode extends NamedNodeBase {
   type: "directive_property_value";
   attributeNodes: DirectivePropertyAttributeAssignmentNode[];
-  initializerNode?: CsExprNode;
+  initializerNode?: CsAssignmentExpressionNode | CsAwaitExpressionNode | CsBinaryExpressionNode | CsBlockExpressionNode | CsBooleanLiteralNode | CsConditionalExpressionNode | CsElementAccessExpressionNode | CsIdentifierNode | CsIntegerLiteralNode | CsInterpolatedStringExpressionNode | CsInvocationExpressionNode | CsMemberAccessExpressionNode | CsNullLiteralNode | CsParenthesizedExpressionNode | CsRealLiteralNode | CsStringLiteralNode | DotvvmKeywordExpressionNode;
   nameNode: CsIdentifierNode;
   typeNode: CsTypeNameNode;
 }
@@ -557,6 +761,10 @@ export interface DoctypeNode extends NamedNodeBase {
   type: "doctype";
 }
 
+export interface DotvvmKeywordExpressionNode extends NamedNodeBase {
+  type: "dotvvm_keyword_expression";
+}
+
 export interface EndTagNode extends NamedNodeBase {
   type: "end_tag";
   nameNode: TagNameNode;
@@ -569,15 +777,25 @@ export interface ErroneousEndTagNode extends NamedNodeBase {
 
 export interface HtmlElementNode extends NamedNodeBase {
   type: "html_element";
-  contentNodes: (DoctypeNode | DotvvmCommentNode | ErroneousEndTagNode | HtmlCommentNode | HtmlElementNode | HtmlTextNode | ScriptElementNode | StyleElementNode)[];
+  contentNodes: (DoctypeNode | DotvvmCommentNode | ErroneousEndTagNode | HtmlCommentNode | HtmlElementNode | HtmlTextNode | LiteralBindingNode | ScriptElementNode | StyleElementNode)[];
   endNode?: EndTagNode;
   selfClosingNode?: SelfClosingTagNode;
   startNode?: StartTagNode;
 }
 
+export interface HtmlTextNode extends NamedNodeBase {
+  type: "html_text";
+}
+
+export interface LiteralBindingNode extends NamedNodeBase {
+  type: "literal_binding";
+  exprNode: BindingExprNode;
+  nameNode: BindingNameNode;
+}
+
 export interface MarkupNode extends NamedNodeBase {
   type: "markup";
-  contentNodes: (DoctypeNode | DotvvmCommentNode | ErroneousEndTagNode | HtmlCommentNode | HtmlElementNode | HtmlTextNode | ScriptElementNode | StyleElementNode)[];
+  contentNodes: (DoctypeNode | DotvvmCommentNode | ErroneousEndTagNode | HtmlCommentNode | HtmlElementNode | HtmlTextNode | LiteralBindingNode | ScriptElementNode | StyleElementNode)[];
 }
 
 export interface ScriptElementNode extends NamedNodeBase {
@@ -593,8 +811,10 @@ export interface SelfClosingTagNode extends NamedNodeBase {
   nameNode: TagNameNode;
 }
 
-export interface SourceFileNode extends NamedNodeBase<DirectivesNode | MarkupNode> {
+export interface SourceFileNode extends NamedNodeBase {
   type: "source_file";
+  directivesNode?: DirectivesNode;
+  markupNode?: MarkupNode;
 }
 
 export interface StartTagNode extends NamedNodeBase {
@@ -618,12 +838,16 @@ export interface AttributeValueNode extends NamedNodeBase {
   type: "attribute_value";
 }
 
-export interface BindingExprNode extends NamedNodeBase {
-  type: "binding_expr";
+export interface CsIntegerLiteralNode extends NamedNodeBase {
+  type: "cs_integer_literal";
 }
 
-export interface CsLiteralNumberNode extends NamedNodeBase {
-  type: "cs_literal_number";
+export interface CsNullLiteralNode extends NamedNodeBase {
+  type: "cs_null_literal";
+}
+
+export interface CsRealLiteralNode extends NamedNodeBase {
+  type: "cs_real_literal";
 }
 
 export interface DirectiveGeneralValueNode extends NamedNodeBase {
@@ -640,10 +864,6 @@ export interface ErroneousEndTagNameNode extends NamedNodeBase {
 
 export interface HtmlCommentNode extends NamedNodeBase {
   type: "html_comment";
-}
-
-export interface HtmlTextNode extends NamedNodeBase {
-  type: "html_text";
 }
 
 export interface RawTextNode extends NamedNodeBase {
