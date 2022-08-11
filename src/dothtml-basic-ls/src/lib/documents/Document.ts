@@ -3,16 +3,19 @@ import { WritableDocument } from './DocumentBase';
 import { extractScriptTags, extractStyleTag, extractTemplateTag, TagInformation } from './utils';
 import { parseHtml } from './parseHtml';
 import { HTMLDocument } from 'vscode-html-languageservice';
-import { Range } from 'vscode-languageserver';
+import { Position, Range } from 'vscode-languageserver';
+import { AttributeNode, HtmlElementNode, ScriptElementNode, StyleElementNode, SyntaxNode } from 'tree-sitter-dotvvm';
+import { typeAncestor } from '../parserutils';
+
+export type DothtmlSublanguage =
+    | { lang: 'html' }
+    | { lang: 'dotvvm-specific' }
+    | { lang: 'css' | 'js', range: [ number, number ], element: HtmlElementNode | ScriptElementNode | StyleElementNode | null, attribute?: AttributeNode | null }
 
 /**
  * Represents a text document contains a svelte component.
  */
 export class DotvvmDocument extends WritableDocument {
-    scriptInfo: TagInformation | null = null;
-    moduleScriptInfo: TagInformation | null = null;
-    styleInfo: TagInformation | null = null;
-    templateInfo: TagInformation | null = null;
     html!: HTMLDocument;
     /**
      * Compute and cache directly because of performance reasons
@@ -28,6 +31,64 @@ export class DotvvmDocument extends WritableDocument {
 
     private updateDocInfo() {
         this.html = parseHtml(this.content);
+    }
+
+    determineSublanguage(position: Position | number): DothtmlSublanguage {
+        position = this.offsetAt(position)
+        let node = this.tree?.nodeAt(position) ?? null;
+
+        while (true) {
+            if (!node || node.type === "html_element") {
+                return { lang: 'html' };
+            }
+
+            if (node.type == "attribute_binding" || node.type == "literal_binding" || node.type.startsWith("cs_")) {
+                return { lang: 'dotvvm-specific' };
+            }
+
+            if (node.type == 'attribute') {
+                const name = node.nameNode.text.toLowerCase()
+                let range: [number, number]
+                if (node.valueNode) {
+                    range = [node.valueNode.startIndex, node.valueNode.endIndex]
+                } else {
+                    if (node.text.endsWith("'") || node.text.endsWith('"')) {
+                        range = [node.endIndex - 1, node.endIndex - 1]
+                    } else if (node.text.endsWith('=')) {
+                        range = [node.endIndex, node.endIndex]
+                    } else {
+                        return { lang: 'html' };
+                    }
+                }
+
+                if (name == 'style' || name.startsWith('on')) {
+                    return { lang: name == 'style' ? 'css' : 'js', range, element: typeAncestor("html_element", node)!, attribute: node };
+                }
+            }
+
+            if (node.type == 'style_element' || node.type == 'script_element') {
+                if (position >= node.startNode.endIndex && position <= node.endNode.startIndex) {
+                    return {
+                        lang: node.type == 'script_element' ? 'js' : 'css',
+                        range: [node.startNode.endIndex, node.endNode.startIndex],
+                        element: node.parent as any
+                    }
+                }
+            }
+
+            node = node.parent
+        }
+    }
+
+    findStyleRanges(): (DothtmlSublanguage & { lang: 'css' })[] {
+        if (!this.tree) {
+            return []
+        }
+        const nodes = this.tree.findStyleNodes()
+        return nodes.map(n => {
+            const attribute = n.parent?.type == "attribute" ? n.parent : null
+            return { lang: 'css', range: [n.startIndex, n.endIndex], element: typeAncestor(["html_element", "style_element"], n)!, attribute }
+        })
     }
 
     /**
@@ -54,31 +115,5 @@ export class DotvvmDocument extends WritableDocument {
      */
     getURL() {
         return this.url;
-    }
-
-    /**
-     * Returns the language associated to script, style or template.
-     * Returns an empty string if there's nothing set.
-     */
-    getLanguageAttribute(tag: 'script' | 'style' | 'template'): string {
-        const attrs =
-            (tag === 'style'
-                ? this.styleInfo?.attributes
-                : tag === 'script'
-                ? this.scriptInfo?.attributes || this.moduleScriptInfo?.attributes
-                : this.templateInfo?.attributes) || {};
-        const lang = attrs.lang || attrs.type || '';
-        return lang.replace(/^text\//, '');
-    }
-
-    /**
-     * Returns true if there's `lang="X"` on script or style or template.
-     */
-    hasLanguageAttribute(): boolean {
-        return (
-            !!this.getLanguageAttribute('script') ||
-            !!this.getLanguageAttribute('style') ||
-            !!this.getLanguageAttribute('template')
-        );
     }
 }

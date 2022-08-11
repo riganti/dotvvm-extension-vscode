@@ -11,7 +11,7 @@ One self-closing element
           (self_closing_tag
             (tag_name)
             (attribute
-              (attribute_name)
+              (attribute_name_html)
               (attribute_value))))))
 
 
@@ -28,7 +28,7 @@ One self-closing element
           (start_tag
             (tag_name)
             (attribute
-              (attribute_name)
+              (attribute_name_html)
               (attribute_value)))
           (html_text)
           (end_tag
@@ -98,7 +98,7 @@ simple script tag
           (start_tag
             (tag_name)
             (attribute
-              (attribute_name)
+              (attribute_name_html)
               (attribute_value)))
           (raw_text)
           (end_tag
@@ -107,7 +107,7 @@ simple script tag
           (self_closing_tag
             (tag_name)
             (attribute
-              (attribute_name)
+              (attribute_name_html)
               (attribute_value))))))
 
 ==================
@@ -141,5 +141,26 @@ curly braces somewhere
           (start_tag
             (tag_name))
           (html_text)
+          (end_tag
+            (tag_name)))))
+
+
+
+==================
+js event
+==================
+
+<a onclick="alert(1)"> </a>
+
+---
+
+(source_file
+      (markup
+        (html_element
+          (start_tag
+            (tag_name)
+            (attribute
+              (attribute_name_js_event)
+              (attribute_value)))
           (end_tag
             (tag_name)))))

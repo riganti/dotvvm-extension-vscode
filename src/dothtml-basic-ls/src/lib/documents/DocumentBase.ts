@@ -51,11 +51,21 @@ export abstract class ReadableDocument implements TextDocument {
         return positionAt(offset, this.getText(), this.getLineOffsets());
     }
 
+    rangeWithLen(start: number, length: number): Range {
+        return {
+            start: this.positionAt(start),
+            end: this.positionAt(start + length)
+        };
+    }
+
     /**
      * Get the index of the line and character position
      * @param position Line and character position
      */
-    offsetAt(position: Position): number {
+    offsetAt(position: Position | number): number {
+        if (typeof position == "number")
+            return position
+
         return offsetAt(position, this.getText(), this.getLineOffsets());
     }
 

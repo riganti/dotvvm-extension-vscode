@@ -16,6 +16,11 @@ const EMPTY_ELEMENTS = [
     'track',
     'wbr'
 ];
+const predefinedAttributes = [
+    // this is just to make easier to use tree-sitter queries
+    // maybe it also makes the parsing faster
+    "style", "class", "id", "name", "for", "data-bind"
+]
 const PREC = {
     DOT: 18,
     INVOCATION: 18,
@@ -62,6 +67,9 @@ function directiveSyntax(name, value, opt ={} ) {
 }
 
 const decimalDigitSequence = /([0-9][0-9_]*[0-9]|[0-9])/
+const csharpIdentifierFirstLetter = /[\p{L}\p{Nl}_]/
+const csharpIdentifierRest = /[\p{L}\p{Nl}\p{Nd}\p{Pc}\p{Cf}\p{Mn}\p{Mc}]*/
+const csharpIdentifier = new RegExp(csharpIdentifierFirstLetter.source + csharpIdentifierRest.source)
 
 module.exports = grammar({
     name: 'dotvvm',
@@ -80,6 +88,8 @@ module.exports = grammar({
         $.html_comment,
         $.dotvvm_comment,
     ],
+
+    supertypes: $ => [ $._attribute_name, $._cs_expression, $._comment, $._html_node ],
   
     rules: {
         source_file: $ => seq(prec(10,
@@ -97,7 +107,7 @@ module.exports = grammar({
                 $.literal_binding, 
                 alias($.html_text_document_start, $.html_text)
             )),
-            repeat(field('content', $._node))
+            repeat(field('content', $._html_node))
         ),
 
         directives: $ => repeat1(seq(
@@ -115,7 +125,7 @@ module.exports = grammar({
             "\n"
         )),
         directive_general: $ => directiveSyntax($.directive_name, $.directive_general_value, { optional: true }),
-        directive_name: $ => $._identifier_token,
+        directive_name: $ => csharpIdentifier,
         directive_general_value: $ => /[^\r\n]+/,
         directive_viewModel: $ => directiveSyntax("viewModel", $.directive_assembly_qualified_name),
         directive_baseType: $ => directiveSyntax("baseType", $.directive_assembly_qualified_name),
@@ -159,7 +169,7 @@ module.exports = grammar({
             field('doctype', /[^>]+/),
             '>'
         ),
-        _node: $ => choice(
+        _html_node: $ => choice(
             $.doctype,
             $._comment,
             $.html_text,
@@ -173,7 +183,7 @@ module.exports = grammar({
         html_element: $ => choice(
             seq(
                 field('start', $.start_tag),
-                field('content', repeat($._node)),
+                field('content', repeat($._html_node)),
                 field('end', choice($.end_tag, $._implicit_end_tag))
             ),
             // $.empty_element_tag,
@@ -254,17 +264,25 @@ module.exports = grammar({
             seq('"', optional(choice(field('binding', $.attribute_binding), field('value', alias(/[^"{][^"]*/, $.attribute_value)))), '"')
         ),
         attribute: $ => seq(
-            field('name', $.attribute_name),
+            field('name', $._attribute_name),
             optional(seq(
-              '=',
+              token.immediate('='),
               choice(
                 field('value', $.attribute_value),
                 field('binding', $.attribute_binding),
                 $._quoted_attribute_value
               )
             ))
-          ),
-        attribute_name: $ => /[^<>}{"'/=\s]+/,
+        ),
+        attribute_name_js_event: $ => /on[a-zA-Z]+/,
+        attribute_name_attached_property: $ => seq(
+            field('class', new RegExp('\\p{Lu}' + csharpIdentifierRest.source)),
+            ".",
+            field('property', csharpIdentifier)
+        ),
+        attribute_name_property: $ => new RegExp('\\p{Lu}' + csharpIdentifierRest.source), // probably DotVVM property: starts with uppercase letter
+        attribute_name_html: $ => choice(...predefinedAttributes, /[^A-Z.<>}{"'/=\s][^<>}{"'./=\s]+/), // probably html: doesn't start with uppercase letter
+        _attribute_name: $ => choice($.attribute_name_js_event, $.attribute_name_property, $.attribute_name_attached_property, $.attribute_name_html),
         attribute_value: $ => /[^<>"'=\s{][^<>"'=\s]+/,
         attribute_binding: $ => seq(choice("{", "{{"), field('name', $.binding_name), ":", field('expr', optional($.binding_expr)), choice("}", "}}")),
         literal_binding: $ => prec(100, seq("{{", field('name', $.binding_name), ":", field('expr', $.binding_expr), "}}")),
@@ -320,7 +338,7 @@ module.exports = grammar({
         )),
 
         // Unicode categories: L = Letter, Nl Letter_Number, = Nd = Decimal_Number, Pc = Connector_Punctuation, Cf = Format, Mn = Nonspacing_Mark, Mc = Spacing_Mark
-        _identifier_token: $ => token(seq(optional('@'), /[\p{L}\p{Nl}_][\p{L}\p{Nl}\p{Nd}\p{Pc}\p{Cf}\p{Mn}\p{Mc}]*/)),
+        _identifier_token: $ => token(seq(optional('@'), csharpIdentifier)),
         cs_type_argument_list: $ => seq(
             '<',
             choice(

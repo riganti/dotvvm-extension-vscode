@@ -32,7 +32,6 @@ import {
     RenameProvider,
     LinkedEditingRangesProvider
 } from '../interfaces';
-import { isInsideMoustacheTag, toRange } from '../../lib/documents/utils';
 import { possiblyComponent } from '../../utils';
 import { SerializedConfigSeeker } from '../../lib/serializedConfigSeeker';
 
@@ -85,16 +84,13 @@ export class HTMLPlugin
             return null;
         }
 
-        const html = this.documents.get(document);
-        if (!html) {
+        const lang = document.determineSublanguage(position)
+        if (lang.lang != 'html') {
             return null;
         }
 
-        if (
-            this.isInsideMoustacheTag(html, document, position) ||
-            isInTag(position, document.scriptInfo) ||
-            isInTag(position, document.moduleScriptInfo)
-        ) {
+        const html = this.documents.get(document);
+        if (!html) {
             return null;
         }
 
@@ -139,7 +135,6 @@ export class HTMLPlugin
         return CompletionList.create(
             [
                 ...this.toCompletionItems(items),
-                ...this.getLangCompletions(items),
                 ...emmetResults.items
             ],
             // Emmet completions change on every keystroke, so they are never complete
@@ -167,66 +162,19 @@ export class HTMLPlugin
         return !!getNodeIfIsInComponentStartTag(html, document.offsetAt(position));
     }
 
-    private getLangCompletions(completions: CompletionItem[]): CompletionItem[] {
-        const styleScriptTemplateCompletions = completions.filter(
-            (completion) =>
-                completion.kind === CompletionItemKind.Property &&
-                this.styleScriptTemplate.has(completion.label)
-        );
-        const langCompletions: CompletionItem[] = [];
-        addLangCompletion('script', ['ts']);
-        addLangCompletion('style', ['less', 'scss']);
-        addLangCompletion('template', ['pug']);
-        return langCompletions;
-
-        function addLangCompletion(tag: string, languages: string[]) {
-            const existingCompletion = styleScriptTemplateCompletions.find(
-                (completion) => completion.label === tag
-            );
-            if (!existingCompletion) {
-                return;
-            }
-
-            languages.forEach((lang) =>
-                langCompletions.push({
-                    ...existingCompletion,
-                    label: `${tag} (lang="${lang}")`,
-                    insertText:
-                        existingCompletion.insertText &&
-                        `${existingCompletion.insertText} lang="${lang}"`,
-                    textEdit:
-                        existingCompletion.textEdit && TextEdit.is(existingCompletion.textEdit)
-                            ? {
-                                  range: existingCompletion.textEdit.range,
-                                  newText: `${existingCompletion.textEdit.newText} lang="${lang}"`
-                              }
-                            : undefined
-                })
-            );
-        }
-    }
-
     doTagComplete(document: DotvvmDocument, position: Position): string | null {
         if (!this.featureEnabled('tagComplete')) {
             return null;
         }
-
+        if (document.determineSublanguage(position).lang != 'html') {
+            return null;
+        }
         const html = this.documents.get(document);
         if (!html) {
             return null;
         }
 
-        if (this.isInsideMoustacheTag(html, document, position)) {
-            return null;
-        }
-
         return this.lang.doTagComplete(document, position, html);
-    }
-
-    private isInsideMoustacheTag(html: HTMLDocument, document: DotvvmDocument, position: Position) {
-        const offset = document.offsetAt(position);
-        const node = html.findNodeAt(offset);
-        return isInsideMoustacheTag(document.getText(), node.start, offset);
     }
 
     getDocumentSymbols(document: DotvvmDocument): SymbolInformation[] {
@@ -269,7 +217,7 @@ export class HTMLPlugin
         }
         const tagNameStart = node.start + '<'.length;
 
-        return toRange(document.getText(), tagNameStart, tagNameStart + node.tag.length);
+        return document.rangeWithLen(tagNameStart, node.tag.length);
     }
 
     getLinkedEditingRanges(document: DotvvmDocument, position: Position): LinkedEditingRanges | null {

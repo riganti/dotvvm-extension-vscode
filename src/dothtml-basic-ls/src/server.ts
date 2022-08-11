@@ -33,11 +33,11 @@ import {
 } from './plugins';
 import { debounceThrottle, isNotNullOrUndefined, normalizeUri, urlToPath } from './utils';
 import { FallbackWatcher } from './lib/FallbackWatcher';
-import { createLanguageServices } from './plugins/css/service';
 import { FileSystemProvider } from './plugins/css/FileSystemProvider';
 import { SerializedConfigSeeker } from './lib/serializedConfigSeeker';
 import * as parserUtils from './lib/parserutils';
 import net from 'net'
+import { getCSSLanguageService } from 'vscode-css-languageservice';
 
 namespace TagCloseRequest {
     export const type: RequestType<TextDocumentPositionParams, string | null, any> =
@@ -136,13 +136,13 @@ export async function startServer(options?: LSOptions) {
         pluginHost.register(new DotvvmPlugin(configManager));
         pluginHost.register(new HTMLPlugin(docManager, configManager, configSeeker));
 
-        const cssLanguageServices = createLanguageServices({
+        const cssLanguage = getCSSLanguageService({
             clientCapabilities: evt.capabilities,
             fileSystemProvider: new FileSystemProvider()
         });
         const workspaceFolders = evt.workspaceFolders ?? [{ name: '', uri: evt.rootUri ?? '' }];
         pluginHost.register(
-            new CSSPlugin(docManager, configManager, workspaceFolders, cssLanguageServices)
+            new CSSPlugin(docManager, configManager, workspaceFolders, cssLanguage)
         );
 
 

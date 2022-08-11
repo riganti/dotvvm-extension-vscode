@@ -9,7 +9,6 @@ import {
     NodeType,
     CSSNode
 } from '../../../../src/plugins/css/features/getIdClassCompletion';
-import { createLanguageServices } from '../../../../src/plugins/css/service';
 import { pathToUrl } from '../../../../src/utils';
 
 describe('getIdClassCompletion', () => {

@@ -1,7 +1,6 @@
-import { Stylesheet, TextDocument } from 'vscode-css-languageservice';
+import { LanguageService, Stylesheet, TextDocument } from 'vscode-css-languageservice';
 import { Position } from 'vscode-languageserver';
 import { DotvvmDocument, DocumentMapper, ReadableDocument, TagInformation } from '../../lib/documents';
-import { CSSLanguageServices, getLanguageService } from './service';
 
 export interface CSSDocumentBase extends DocumentMapper, TextDocument {
     languageId: string;
@@ -9,31 +8,23 @@ export interface CSSDocumentBase extends DocumentMapper, TextDocument {
 }
 
 export class CSSDocument extends ReadableDocument implements DocumentMapper {
-    private styleInfo: Pick<TagInformation, 'attributes' | 'start' | 'end'>;
     readonly version: number;
 
     public stylesheet: Stylesheet;
 
-    constructor(private parent: DotvvmDocument, languageServices: CSSLanguageServices) {
+    constructor(
+        private parent: DotvvmDocument,
+        cssLanguage: LanguageService,
+        private range: [ number, number ]
+    ) {
         if (parent == null)
             throw new Error("parent is null");
-        const attrs = parent.styleInfo?.attributes
         
-        
-        super(attrs?.lang || attrs?.type || 'css');
+        super('css');
         
         this.version = parent.version
-        if (this.parent.styleInfo) {
-            this.styleInfo = this.parent.styleInfo;
-        } else {
-            this.styleInfo = {
-                attributes: {},
-                start: -1,
-                end: -1
-            };
-        }
 
-        this.stylesheet = getLanguageService(languageServices, this.languageId).parseStylesheet(
+        this.stylesheet = cssLanguage.parseStylesheet(
             this
         );
     }
@@ -43,7 +34,7 @@ export class CSSDocument extends ReadableDocument implements DocumentMapper {
      * @param pos Position in fragment
      */
     getOriginalPosition(pos: Position): Position {
-        const parentOffset = this.styleInfo.start + this.offsetAt(pos);
+        const parentOffset = this.range[0] + this.offsetAt(pos);
         return this.parent.positionAt(parentOffset);
     }
 
@@ -52,7 +43,7 @@ export class CSSDocument extends ReadableDocument implements DocumentMapper {
      * @param pos Position in parent
      */
     getGeneratedPosition(pos: Position): Position {
-        const fragmentOffset = this.parent.offsetAt(pos) - this.styleInfo.start;
+        const fragmentOffset = this.parent.offsetAt(pos) - this.range[0];
         return this.positionAt(fragmentOffset);
     }
 
@@ -61,22 +52,23 @@ export class CSSDocument extends ReadableDocument implements DocumentMapper {
      * @param pos Position in parent
      */
     isInGenerated(pos: Position): boolean {
+        const [start, end] = this.range
         const offset = this.parent.offsetAt(pos);
-        return offset >= this.styleInfo.start && offset <= this.styleInfo.end;
+        return offset >= start && offset <= end;
     }
 
     /**
      * Get the fragment text from the parent
      */
     getText(): string {
-        return this.parent.getText().slice(this.styleInfo.start, this.styleInfo.end);
+        return this.parent.getText().slice(...this.range);
     }
 
     /**
      * Returns the length of the fragment as calculated from the start and end positon
      */
     getTextLength(): number {
-        return this.styleInfo.end - this.styleInfo.start;
+        return this.range[1] - this.range[0];
     }
 
     /**
@@ -88,9 +80,5 @@ export class CSSDocument extends ReadableDocument implements DocumentMapper {
 
     getURL() {
         return this.parent.getURL();
-    }
-
-    getAttributes() {
-        return this.styleInfo.attributes;
     }
 }

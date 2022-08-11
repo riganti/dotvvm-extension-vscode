@@ -12,14 +12,9 @@ export function getHoverInfo(
     document: DotvvmDocument,
     position: Position
 ): Hover | null {
-    const offset = document.offsetAt(position);
+    const sublang = document.determineSublanguage(position)
 
-    const isInStyleOrScript =
-        isInTag(position, document.styleInfo) ||
-        isInTag(position, document.scriptInfo) ||
-        isInTag(position, document.moduleScriptInfo);
-
-    if (isInStyleOrScript) {
+    if (sublang.lang != "html") {
         return null;
     }
     return { contents: "Some test hover" };

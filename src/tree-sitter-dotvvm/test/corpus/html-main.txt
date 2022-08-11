@@ -21,13 +21,13 @@ Tags with attributes
     (start_tag
       (tag_name)
       (attribute
-        (attribute_name)
+        (attribute_name_html)
         (attribute_value))
       (attribute
-        (attribute_name)
+        (attribute_name_html)
         (attribute_value))
       (attribute
-        (attribute_name)))
+        (attribute_name_html)))
     (end_tag (tag_name)))))
 
 ===================================
@@ -69,13 +69,13 @@ Void tags
     (html_element
       (start_tag
         (tag_name)
-        (attribute (attribute_name) (attribute_value))))
+        (attribute (attribute_name_html) (attribute_value))))
     (html_element (start_tag (tag_name)))
     (html_element
       (self_closing_tag
         (tag_name)
-        (attribute (attribute_name) (attribute_value))
-        (attribute (attribute_name) (attribute_value))))
+        (attribute (attribute_name_html) (attribute_value))
+        (attribute (attribute_name_html) (attribute_value))))
     (end_tag (tag_name)))))
 
 ==================================
@@ -88,7 +88,7 @@ Void tags at EOF
   (html_element
     (start_tag
       (tag_name)
-      (attribute (attribute_name) (attribute_value))))))
+      (attribute (attribute_name_html) (attribute_value))))))
 
 ==================================
 Custom tags
@@ -104,7 +104,7 @@ Custom tags
   (html_element
     (start_tag (tag_name))
     (html_element
-      (start_tag (tag_name) (attribute (attribute_name)))
+      (start_tag (tag_name) (attribute (attribute_name_html)))
       (html_text)
       (end_tag (tag_name)))
     (end_tag (tag_name)))))
@@ -273,10 +273,10 @@ COLGROUP elements without end tags
       (start_tag (tag_name))
       (html_element (start_tag
         (tag_name)
-        (attribute (attribute_name) (attribute_value))))
+        (attribute (attribute_name_html) (attribute_value))))
       (html_element (start_tag
         (tag_name)
-        (attribute (attribute_name) (attribute_value)))))
+        (attribute (attribute_name_html) (attribute_value)))))
     (html_element
       (start_tag (tag_name))
       (html_element (start_tag (tag_name)) (html_text) (end_tag (tag_name)))

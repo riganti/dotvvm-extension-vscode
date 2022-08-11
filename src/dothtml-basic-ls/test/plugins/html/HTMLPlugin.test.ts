@@ -65,8 +65,8 @@ describe('HTML Plugin', () => {
         });
     });
 
-    it('does not provide completions inside of moustache tag', async () => {
-        const { plugin, document } = setup('<div on:click={() =>');
+    it('does not provide completions inside of Binding', async () => {
+        const { plugin, document } = setup('<div Content={value:   }');
 
         const completions = plugin.getCompletions(document, Position.create(0, 20));
         assert.strictEqual(completions, null);
@@ -101,14 +101,6 @@ describe('HTML Plugin', () => {
 
         const tagCompletion = plugin.doTagComplete(document, Position.create(0, 21));
         assert.strictEqual(tagCompletion, '$0</div>');
-    });
-
-    it('does provide lang in completions', async () => {
-        const { plugin, document } = setup('<sty');
-
-        const completions = plugin.getCompletions(document, Position.create(0, 4));
-        assert.ok(Array.isArray(completions && completions.items));
-        assert.ok(completions!.items.find((item) => item.label === 'style (lang="less")'));
     });
 
     it('does not provide lang in completions for attributes', async () => {

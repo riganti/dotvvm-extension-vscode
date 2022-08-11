@@ -3,7 +3,7 @@ import type { NodeOfType, PickType, SyntaxNode, SyntaxType, Tree } from 'tree-si
 import { Position, TextDocumentContentChangeEvent, Range as VsCodeRange } from 'vscode-languageserver';
 import { WritableDocument } from './documents';
 import { log } from 'console';
-import type TreeSitter from 'tree-sitter'
+import TreeSitter from 'tree-sitter'
 import type WebTreeSitter from 'web-tree-sitter'
 
 let parserLoadPromise: Promise<void> | null = null;
@@ -34,6 +34,15 @@ try {
 	// 	}
 	// })()
 }
+
+// https://tree-sitter.github.io/tree-sitter/using-parsers#query-syntax
+// See ^ if you are wondering what the hell is this :)
+const styleNodeQuery =
+	!dotvvmLang ? null :
+	new TreeSitter.Query(dotvvmLang, `[
+		(style_element content: (_) @content)
+		(attribute name: (attribute_name_html "style") value: (_) @content)
+	]`)
 
 export async function init() {
 	await parserLoadPromise
@@ -140,8 +149,21 @@ export class ParsedTree {
 		if (typeof position === 'number') {
 			return this.rootNode.descendantForIndex(position)
 		} else {
-			return this.rootNode.descendantForPosition({ row: position.line, column: position.character })
+			const point = { row: position.line, column: position.character }
+			return this.rootNode.descendantForPosition(point, { row: position.line, column: position.character })
 		}
+	}
+
+	query(query: TreeSitter.Query) {
+		return query.matches(this.rootNode as any)
+	}
+
+	findStyleNodes(): SyntaxNode[] {
+		if (styleNodeQuery == null)
+			return []
+		return this.query(styleNodeQuery)
+			.map(m => m.captures.find(c => c.name == 'content')?.node)
+			.filter(n => n != null) as SyntaxNode[]
 	}
 
 	constructor(

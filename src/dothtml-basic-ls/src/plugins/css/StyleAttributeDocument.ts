@@ -1,10 +1,9 @@
-import { Stylesheet } from 'vscode-css-languageservice';
+import { LanguageService, Stylesheet } from 'vscode-css-languageservice';
 import { Position } from 'vscode-languageserver';
-import { CSSLanguageServices, getLanguageService } from './service';
 import { DotvvmDocument, DocumentMapper, ReadableDocument } from '../../lib/documents';
 
-const PREFIX = '__ {';
-const SUFFIX = '}';
+const PREFIX = '__ { ';
+const SUFFIX = ' ;}';
 
 export class StyleAttributeDocument extends ReadableDocument implements DocumentMapper {
     readonly version : number;
@@ -14,12 +13,12 @@ export class StyleAttributeDocument extends ReadableDocument implements Document
         private readonly parent: DotvvmDocument,
         private readonly attrStart: number,
         private readonly attrEnd: number,
-        languageServices: CSSLanguageServices
+        cssLanguage: LanguageService
     ) {
         super('css');
 
         this.version = parent.version;
-        this.stylesheet = getLanguageService(languageServices).parseStylesheet(this);
+        this.stylesheet = cssLanguage.parseStylesheet(this);
     }
 
     /**

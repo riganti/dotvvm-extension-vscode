@@ -401,29 +401,11 @@ export function toRange(str: string, start: number, end: number): Range {
 }
 
 /**
- * Returns the language from the given tags, return the first from which a language is found.
- * Searches inside lang and type and removes leading 'text/'
- */
-export function getLangAttribute(...tags: Array<TagInformation | null>): string | null {
-    const tag = tags.find((tag) => tag?.attributes.lang || tag?.attributes.type);
-    if (!tag) {
-        return null;
-    }
-
-    const attribute = tag.attributes.lang || tag.attributes.type;
-    if (!attribute) {
-        return null;
-    }
-
-    return attribute.replace(/^text\//, '');
-}
-
-/**
  * Checks whether given position is inside a moustache tag (which includes control flow tags)
  * using a simple bracket matching heuristic which might fail under conditions like
  * `{#if {a: true}.a}`
  */
-export function isInsideMoustacheTag(html: string, tagStart: number | null, position: number) {
+ export function isInsideMoustacheTag(html: string, tagStart: number | null, position: number) {
     if (tagStart === null) {
         // Not inside <tag ... >
         const charactersBeforePosition = html.substring(0, position);

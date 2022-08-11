@@ -26,7 +26,8 @@ import {
     mapObjWithRangeToOriginal,
     mapHoverToParent,
     mapSelectionRangeToParent,
-    isInTag
+    isInTag,
+    DothtmlSublanguage
 } from '../../lib/documents';
 import { LSConfigManager, LSCSSConfig } from '../../ls-config';
 import {
@@ -39,12 +40,12 @@ import {
     SelectionRangeProvider
 } from '../interfaces';
 import { CSSDocument, CSSDocumentBase } from './CSSDocument';
-import { CSSLanguageServices, getLanguage, getLanguageService } from './service';
 import { GlobalVars } from './global-vars';
 import { getIdClassCompletion } from './features/getIdClassCompletion';
 import { AttributeContext, getAttributeContextAtPosition } from '../../lib/documents/parseHtml';
 import { StyleAttributeDocument } from './StyleAttributeDocument';
 import { getDocumentContext } from '../documentContext';
+import { LanguageService, newCSSDataProvider } from 'vscode-css-languageservice';
 
 export class CSSPlugin
     implements
@@ -58,8 +59,6 @@ export class CSSPlugin
 {
     __name = 'css';
     private configManager: LSConfigManager;
-    private cssDocuments = new WeakMap<DotvvmDocument, CSSDocument>();
-    private cssLanguageServices: CSSLanguageServices;
     private workspaceFolders: WorkspaceFolder[];
     private triggerCharacters = ['.', ':', '-', '/'];
     private globalVars = new GlobalVars();
@@ -68,9 +67,8 @@ export class CSSPlugin
         docManager: DocumentManager,
         configManager: LSConfigManager,
         workspaceFolders: WorkspaceFolder[],
-        cssLanguageServices: CSSLanguageServices
+        private cssLanguage: LanguageService
     ) {
-        this.cssLanguageServices = cssLanguageServices;
         this.workspaceFolders = workspaceFolders;
         this.configManager = configManager;
         this.updateConfigs();
@@ -80,20 +78,33 @@ export class CSSPlugin
             this.globalVars.watchFiles(config.get('css.globals'));
             this.updateConfigs();
         });
-
-        docManager.on('documentChange', (document) =>
-            this.cssDocuments.set(document, new CSSDocument(document, this.cssLanguageServices))
-        );
-        docManager.on('documentClose', (document) => this.cssDocuments.delete(document));
     }
 
-    getSelectionRange(document: DotvvmDocument, position: Position): SelectionRange | null {
-        if (!this.featureEnabled('selectionRange') || !isInTag(position, document.styleInfo)) {
-            return null;
+    private getCSSDoc(document: DotvvmDocument, position: Position | number): CSSDocument | StyleAttributeDocument | null {
+        const langInfo = document.determineSublanguage(position);
+        if (langInfo.lang != 'css') {
+            return null
+        }
+        return this.createCSSDoc(document, langInfo);
+    }
+
+    private createCSSDoc(document: DotvvmDocument, langInfo: DothtmlSublanguage & { lang: "css" | "js" }) {
+        if (langInfo.attribute) {
+            return new StyleAttributeDocument(document, ...langInfo.range, this.cssLanguage);
         }
 
-        const cssDocument = this.getCSSDoc(document);
-        const [range] = this.getLanguageService(extractLanguage(cssDocument)).getSelectionRanges(
+        return new CSSDocument(document, this.cssLanguage, langInfo.range);
+    }
+
+
+    getSelectionRange(document: DotvvmDocument, position: Position): SelectionRange | null {
+        if (!this.featureEnabled('selectionRange')) {
+            return null;
+        }
+        const cssDocument = this.getCSSDoc(document, position);
+        if (!cssDocument) { return null }
+
+        const [range] = this.cssLanguage.getSelectionRanges(
             cssDocument,
             [cssDocument.getGeneratedPosition(position)],
             cssDocument.stylesheet
@@ -111,17 +122,14 @@ export class CSSPlugin
             return [];
         }
 
-        const cssDocument = this.getCSSDoc(document);
-        const kind = extractLanguage(cssDocument);
+        // validate all <style> and style="" attributes
 
-        if (shouldExcludeValidation(kind)) {
-            return [];
-        }
+        return this.collectFromAllCssDocuments(document, cssDocument => {
+            return this.cssLanguage
+                .doValidation(cssDocument, cssDocument.stylesheet)
+                .map((diagnostic) => mapObjWithRangeToOriginal(cssDocument, diagnostic));
 
-        return this.getLanguageService(kind)
-            .doValidation(cssDocument, cssDocument.stylesheet)
-            .map((diagnostic) => ({ ...diagnostic, source: getLanguage(kind) }))
-            .map((diagnostic) => mapObjWithRangeToOriginal(cssDocument, diagnostic));
+        })
     }
 
     doHover(document: DotvvmDocument, position: Position): Hover | null {
@@ -129,29 +137,13 @@ export class CSSPlugin
             return null;
         }
 
-        const cssDocument = this.getCSSDoc(document);
-        if (shouldExcludeHover(cssDocument)) {
-            return null;
-        }
-        if (cssDocument.isInGenerated(position)) {
-            return this.doHoverInternal(cssDocument, position);
-        }
-        const attributeContext = getAttributeContextAtPosition(document, position);
-        if (
-            attributeContext &&
-            this.inStyleAttributeWithoutInterpolation(attributeContext, document.getText())
-        ) {
-            const [start, end] = attributeContext.valueRange;
-            return this.doHoverInternal(
-                new StyleAttributeDocument(document, start, end, this.cssLanguageServices),
-                position
-            );
-        }
+        const cssDocument = this.getCSSDoc(document, position);
+        if (!cssDocument || !cssDocument.isInGenerated(position)) { return null }
 
-        return null;
+        return this.doHoverInternal(cssDocument, position);
     }
     private doHoverInternal(cssDocument: CSSDocumentBase, position: Position) {
-        const hoverInfo = this.getLanguageService(extractLanguage(cssDocument)).doHover(
+        const hoverInfo = this.cssLanguage.doHover(
             cssDocument,
             cssDocument.getGeneratedPosition(position),
             cssDocument.stylesheet
@@ -180,38 +172,15 @@ export class CSSPlugin
             return null;
         }
 
-        const cssDocument = this.getCSSDoc(document);
+        const cssDocument = this.getCSSDoc(document, position);
 
-        if (cssDocument.isInGenerated(position)) {
-            return this.getCompletionsInternal(document, position, cssDocument) as any;
+        if (!cssDocument || !cssDocument.isInGenerated(position)) {
+            return null
         }
+        return this.getCompletionsInternal(document, position, cssDocument) as any;
 
-        const attributeContext = getAttributeContextAtPosition(document, position);
-        if (!attributeContext) {
-            return null;
-        }
-
-        if (this.inStyleAttributeWithoutInterpolation(attributeContext, document.getText())) {
-            const [start, end] = attributeContext.valueRange;
-            return this.getCompletionsInternal(
-                document,
-                position,
-                new StyleAttributeDocument(document, start, end, this.cssLanguageServices)
-            ) as any;
-        } else {
-            return getIdClassCompletion(cssDocument, attributeContext);
-        }
-    }
-
-    private inStyleAttributeWithoutInterpolation(
-        attrContext: AttributeContext,
-        text: string
-    ): attrContext is Required<AttributeContext> {
-        return (
-            attrContext.name === 'style' &&
-            !!attrContext.valueRange &&
-            !text.substring(attrContext.valueRange[0], attrContext.valueRange[1]).includes('{')
-        );
+        // TODO: completion for id, class
+        // return getIdClassCompletion(cssDocument, attributeContext);
     }
 
     private async getCompletionsInternal(
@@ -219,21 +188,7 @@ export class CSSPlugin
         position: Position,
         cssDocument: CSSDocumentBase
     ) {
-        if (isSASS(cssDocument)) {
-            // the css language service does not support sass, still we can use
-            // the emmet helper directly to at least get emmet completions
-            return (
-                doEmmetComplete(document, position, 'sass', this.configManager.getEmmetConfig()) ||
-                null
-            );
-        }
-
-        const type = extractLanguage(cssDocument);
-        if (shouldExcludeCompletion(type)) {
-            return null;
-        }
-
-        const lang = this.getLanguageService(type);
+        const lang = this.cssLanguage;
         let emmetResults: CompletionList = {
             isIncomplete: false,
             items: []
@@ -250,7 +205,7 @@ export class CSSPlugin
                                 <CompletionList>doEmmetComplete(
                                     cssDocument,
                                     cssDocument.getGeneratedPosition(position),
-                                    getLanguage(type),
+                                    'css',
                                     this.configManager.getEmmetConfig()
                                 ) || emmetResults;
                         }
@@ -261,11 +216,11 @@ export class CSSPlugin
                                 <CompletionList>doEmmetComplete(
                                     cssDocument,
                                     cssDocument.getGeneratedPosition(position),
-                                    getLanguage(type),
+                                    'css',
                                     this.configManager.getEmmetConfig()
                                 ) || emmetResults;
                         }
-                    }
+                    },
                 }
             ]);
         }
@@ -310,15 +265,12 @@ export class CSSPlugin
             return [];
         }
 
-        const cssDocument = this.getCSSDoc(document);
+        return this.collectFromAllCssDocuments(document, cssDocument => {
+            return this.cssLanguage
+                .findDocumentColors(cssDocument, cssDocument.stylesheet)
+                .map((colorInfo) => mapObjWithRangeToOriginal(cssDocument, colorInfo));
 
-        if (shouldExcludeColor(cssDocument)) {
-            return [];
-        }
-
-        return this.getLanguageService(extractLanguage(cssDocument))
-            .findDocumentColors(cssDocument, cssDocument.stylesheet)
-            .map((colorInfo) => mapObjWithRangeToOriginal(cssDocument, colorInfo));
+        })
     }
 
     getColorPresentations(document: DotvvmDocument, range: Range, color: Color): ColorPresentation[] {
@@ -326,15 +278,15 @@ export class CSSPlugin
             return [];
         }
 
-        const cssDocument = this.getCSSDoc(document);
+        const cssDocument = this.getCSSDoc(document, range.start);
         if (
-            (!cssDocument.isInGenerated(range.start) && !cssDocument.isInGenerated(range.end)) ||
-            shouldExcludeColor(cssDocument)
+            !cssDocument ||
+            (!cssDocument.isInGenerated(range.start) && !cssDocument.isInGenerated(range.end))
         ) {
             return [];
         }
 
-        return this.getLanguageService(extractLanguage(cssDocument))
+        return this.cssLanguage
             .getColorPresentations(
                 cssDocument,
                 cssDocument.stylesheet,
@@ -349,39 +301,34 @@ export class CSSPlugin
             return [];
         }
 
-        const cssDocument = this.getCSSDoc(document);
+        return this.collectFromAllCssDocuments(document, cssDoc => {
+            return this.cssLanguage
+                .findDocumentSymbols(cssDoc, cssDoc.stylesheet)
+                .map((symbol) => {
+                    if (!symbol.containerName) {
+                        return {
+                            ...symbol,
+                            containerName: 'style'
+                        };
+                    }
 
-        if (shouldExcludeDocumentSymbols(cssDocument)) {
-            return [];
-        }
+                    return symbol;
+                })
+                .map((symbol) => mapSymbolInformationToOriginal(cssDoc, symbol));
 
-        return this.getLanguageService(extractLanguage(cssDocument))
-            .findDocumentSymbols(cssDocument, cssDocument.stylesheet)
-            .map((symbol) => {
-                if (!symbol.containerName) {
-                    return {
-                        ...symbol,
-                        // TODO: this could contain other things, e.g. style.myclass
-                        containerName: 'style'
-                    };
-                }
-
-                return symbol;
-            })
-            .map((symbol) => mapSymbolInformationToOriginal(cssDocument, symbol));
+        })
     }
 
-    private getCSSDoc(document: DotvvmDocument) {
-        let cssDoc = this.cssDocuments.get(document);
-        if (!cssDoc || cssDoc.version < document.version) {
-            cssDoc = new CSSDocument(document, this.cssLanguageServices);
-            this.cssDocuments.set(document, cssDoc);
-        }
-        return cssDoc;
+    private collectFromAllCssDocuments<T>(document: DotvvmDocument, f: (d: CSSDocument | StyleAttributeDocument) => T[]): T[] {
+        const styleRanges = document.findStyleRanges();
+        return styleRanges.flatMap(r => {
+            const cssDocument = this.createCSSDoc(document, r);
+            return f(cssDocument);
+        })
     }
 
     private updateConfigs() {
-        this.getLanguageService('css')?.configure(this.configManager.getCssConfig());
+        this.cssLanguage.configure(this.configManager.getCssConfig());
     }
 
     private featureEnabled(feature: keyof LSCSSConfig) {
@@ -390,77 +337,4 @@ export class CSSPlugin
             this.configManager.enabled(`css.${feature}.enable`)
         );
     }
-
-    private getLanguageService(kind: string) {
-        return getLanguageService(this.cssLanguageServices, kind);
-    }
-}
-
-function shouldExcludeValidation(kind?: string) {
-    switch (kind) {
-        case 'postcss':
-        case 'sass':
-        case 'stylus':
-        case 'styl':
-            return true;
-        default:
-            return false;
-    }
-}
-
-function shouldExcludeCompletion(kind?: string) {
-    switch (kind) {
-        case 'stylus':
-        case 'styl':
-            return true;
-        default:
-            return false;
-    }
-}
-
-function shouldExcludeDocumentSymbols(document: CSSDocument) {
-    switch (extractLanguage(document)) {
-        case 'sass':
-        case 'stylus':
-        case 'styl':
-            return true;
-        default:
-            return false;
-    }
-}
-
-function shouldExcludeHover(document: CSSDocument) {
-    switch (extractLanguage(document)) {
-        case 'sass':
-        case 'stylus':
-        case 'styl':
-            return true;
-        default:
-            return false;
-    }
-}
-
-function shouldExcludeColor(document: CSSDocument) {
-    switch (extractLanguage(document)) {
-        case 'sass':
-        case 'stylus':
-        case 'styl':
-            return true;
-        default:
-            return false;
-    }
-}
-
-function isSASS(document: CSSDocumentBase) {
-    switch (extractLanguage(document)) {
-        case 'sass':
-            return true;
-        default:
-            return false;
-    }
-}
-
-function extractLanguage(document: CSSDocumentBase): string {
-    const lang = document.languageId;
-    return lang.replace(/^text\//, '');
 }

@@ -13,9 +13,8 @@ import {
 import { DocumentManager, DotvvmDocument } from '../../../src/lib/documents';
 import { CSSPlugin } from '../../../src/plugins';
 import { LSConfigManager } from '../../../src/ls-config';
-import { createLanguageServices } from '../../../src/plugins/css/service';
 import { pathToUrl } from '../../../src/utils';
-import { FileType, LanguageServiceOptions } from 'vscode-css-languageservice';
+import { FileType, getCSSLanguageService, LanguageServiceOptions } from 'vscode-css-languageservice';
 
 describe('CSS Plugin', () => {
     function setup(content: string, lsOptions?: LanguageServiceOptions) {
@@ -31,26 +30,26 @@ describe('CSS Plugin', () => {
                     uri: pathToUrl(process.cwd())
                 }
             ],
-            createLanguageServices(lsOptions)
+            getCSSLanguageService(lsOptions)
         );
         docManager.openDocument(<any>'some doc');
         return { plugin, document };
     }
 
     describe('provides hover info', () => {
-        // it('for normal css', () => {
-        //     const { plugin, document } = setup('<style>h1 {}</style>');
+        it('for normal css', () => {
+            const { plugin, document } = setup('<style>h1 {}</style>');
 
-        //     assert.deepStrictEqual(plugin.doHover(document, Position.create(0, 8)), <Hover>{
-        //         contents: [
-        //             { language: 'html', value: '<h1>' },
-        //             '[Selector Specificity](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity): (0, 0, 1)'
-        //         ],
-        //         range: Range.create(0, 7, 0, 9)
-        //     });
+            assert.deepStrictEqual(plugin.doHover(document, Position.create(0, 8)), <Hover>{
+                contents: [
+                    { language: 'html', value: '<h1>' },
+                    '[Selector Specificity](https://developer.mozilla.org/en-US/docs/Web/CSS/Specificity): (0, 0, 1)'
+                ],
+                range: Range.create(0, 7, 0, 9)
+            });
 
-        //     assert.strictEqual(plugin.doHover(document, Position.create(0, 10)), null);
-        // });
+            assert.strictEqual(plugin.doHover(document, Position.create(0, 10)), null);
+        });
 
         it('for style attribute', () => {
             const { plugin, document } = setup('<div style="height: auto;"></div>');
@@ -68,36 +67,37 @@ describe('CSS Plugin', () => {
             });
         });
 
-        it('not for style attribute with interpolation', () => {
-            const { plugin, document } = setup('<div style="height: {}"></div>');
+        it('not for style attribute with binding', () => {
+            const { plugin, document } = setup('<div style="{value:        }"></div>');
             assert.deepStrictEqual(plugin.doHover(document, Position.create(0, 13)), null);
         });
     });
 
     describe('provides completions', () => {
-        // it('for normal css', async () => {
-        //     const { plugin, document } = setup('<style></style>');
+        it('for normal css', async () => {
+            const { plugin, document } = setup('<style></style>');
 
-        //     const completions = await plugin.getCompletions(document, Position.create(0, 7), {
-        //         triggerCharacter: '.'
-        //     } as CompletionContext);
-        //     assert.ok(
-        //         Array.isArray(completions && completions.items),
-        //         'Expected completion items to be an array'
-        //     );
-        //     assert.ok(completions!.items.length > 0, 'Expected completions to have length');
+            const completions = await plugin.getCompletions(document, Position.create(0, 7), {
+                triggerCharacter: '.'
+            } as CompletionContext);
+            assert.ok(
+                Array.isArray(completions && completions.items),
+                'Expected completion items to be an array'
+            );
+            assert.ok(completions!.items.length > 0, 'Expected completions to have length');
 
-        //     assert.deepStrictEqual(completions!.items[0], <CompletionItem>{
-        //         label: '@charset',
-        //         kind: CompletionItemKind.Keyword,
-        //         documentation: {
-        //             kind: 'markdown',
-        //             value: 'Defines character set of the document\\.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/CSS/@charset)'
-        //         },
-        //         textEdit: TextEdit.insert(Position.create(0, 7), '@charset'),
-        //         tags: []
-        //     });
-        // });
+            assert.deepStrictEqual(completions!.items.find(i => i.label == ":active"), <CompletionItem>{
+                label: ':active',
+                kind: CompletionItemKind.Function,
+                insertTextFormat: undefined,
+                documentation: {
+                    kind: 'markdown',
+                    value: 'Applies while an element is being activated by the user\\. For example, between the times the user presses the mouse button and releases it\\.\n\n[MDN Reference](https://developer.mozilla.org/docs/Web/CSS/:active)'
+                },
+                textEdit: TextEdit.insert(Position.create(0, 7), ':active'),
+                tags: []
+            });
+        });
 
         it('for style attribute', async () => {
             const { plugin, document } = setup('<div style="display: n"></div>');
@@ -133,8 +133,20 @@ describe('CSS Plugin', () => {
             );
         });
 
-        it('not for style attribute with interpolation', async () => {
-            const { plugin, document } = setup('<div style="height: {}"></div>');
+        it('for empty style attribute', async () => {
+            const { plugin, document } = setup('<div style=""></div>');
+            const completions = await plugin.getCompletions(document, Position.create(0, 12), {
+                triggerKind: CompletionTriggerKind.Invoked
+            } as CompletionContext);
+            assert.deepStrictEqual(
+                completions?.items.filter((item) => item.label.length <= 3).map(i => i.label).sort(),
+                ["all", "alt", "gap", "pad", "src", "top"]
+            );
+        });
+
+
+        it('not for style attribute with binding', async () => {
+            const { plugin, document } = setup('<div style="{value:         }"></div>');
             assert.deepStrictEqual(
                 await plugin.getCompletions(document, Position.create(0, 21)),
                 null
@@ -143,187 +155,113 @@ describe('CSS Plugin', () => {
 
     });
 
-    // describe('provides diagnostics', () => {
-    //     it('- everything ok', () => {
-    //         const { plugin, document } = setup('<style>h1 {color:blue;}</style>');
+    describe('provides diagnostics', () => {
+        it('- everything ok', () => {
+            const { plugin, document } = setup('<style>h1 {color:blue;}</style>');
 
-    //         const diagnostics = plugin.getDiagnostics(document);
+            const diagnostics = plugin.getDiagnostics(document);
 
-    //         assert.deepStrictEqual(diagnostics, []);
-    //     });
-
-    //     it('- has error', () => {
-    //         const { plugin, document } = setup('<style>h1 {iDunnoDisProperty:blue;}</style>');
-
-    //         const diagnostics = plugin.getDiagnostics(document);
-
-    //         assert.deepStrictEqual(diagnostics, [
-    //             {
-    //                 code: 'unknownProperties',
-    //                 message: "Unknown property: 'iDunnoDisProperty'",
-    //                 range: {
-    //                     end: {
-    //                         character: 28,
-    //                         line: 0
-    //                     },
-    //                     start: {
-    //                         character: 11,
-    //                         line: 0
-    //                     }
-    //                 },
-    //                 severity: 2,
-    //                 source: 'css'
-    //             }
-    //         ]);
-    //     });
-
-    //     it('- no diagnostics for sass', () => {
-    //         const { plugin, document } = setup(
-    //             `<style lang="sass">
-    //             h1
-    //                 iDunnoDisProperty:blue
-    //             </style>`
-    //         );
-    //         const diagnostics = plugin.getDiagnostics(document);
-    //         assert.deepStrictEqual(diagnostics, []);
-    //     });
-
-    //     it('- no diagnostics for stylus', () => {
-    //         const { plugin, document } = setup(
-    //             `<style lang="sass">
-    //             h1
-    //                 iDunnoDisProperty:blue
-    //             </style>`
-    //         );
-    //         const diagnostics = plugin.getDiagnostics(document);
-    //         assert.deepStrictEqual(diagnostics, []);
-    //     });
-    // });
-
-    describe('provides document colors', () => {
-        it('not for SASS', () => {
-            const { plugin, document } = setup(`<style lang="sass">
-            h1
-                color:blue
-            </style>`);
-
-            assert.deepStrictEqual(
-                plugin.getColorPresentations(
-                    document,
-                    {
-                        start: { line: 2, character: 22 },
-                        end: { line: 2, character: 26 }
-                    },
-                    { alpha: 1, blue: 255, green: 0, red: 0 }
-                ),
-                []
-            );
-            assert.deepStrictEqual(plugin.getDocumentColors(document), []);
+            assert.deepStrictEqual(diagnostics, []);
         });
 
-        it('not for stylus', () => {
-            const { plugin, document } = setup(`<style lang="stylus">
-            h1
-                color:blue
-            </style>`);
+        it('- has error', () => {
+            const { plugin, document } = setup('<style>h1 {iDunnoDisProperty:blue;}</style>');
 
-            assert.deepStrictEqual(
-                plugin.getColorPresentations(
-                    document,
-                    {
-                        start: { line: 2, character: 22 },
-                        end: { line: 2, character: 26 }
+            const diagnostics = plugin.getDiagnostics(document);
+
+            assert.deepStrictEqual(diagnostics, [
+                {
+                    code: 'unknownProperties',
+                    message: "Unknown property: 'iDunnoDisProperty'",
+                    range: {
+                        end: {
+                            character: 28,
+                            line: 0
+                        },
+                        start: {
+                            character: 11,
+                            line: 0
+                        }
                     },
-                    { alpha: 1, blue: 255, green: 0, red: 0 }
-                ),
-                []
-            );
-            assert.deepStrictEqual(plugin.getDocumentColors(document), []);
+                    severity: 2,
+                    source: 'css'
+                }
+            ]);
         });
     });
 
-    // describe('provides document symbols', () => {
-    //     it('for normal css', () => {
-    //         const { plugin, document } = setup('<style>h1 {color:blue;}</style>');
+    describe('provides document symbols', () => {
+        it('for normal css', () => {
+            const { plugin, document } = setup('<style>h1 {color:blue;}</style>');
 
-    //         const symbols = plugin.getDocumentSymbols(document);
+            const symbols = plugin.getDocumentSymbols(document);
 
-    //         assert.deepStrictEqual(symbols, [
-    //             {
-    //                 containerName: 'style',
-    //                 kind: 5,
-    //                 location: {
-    //                     range: {
-    //                         end: {
-    //                             character: 23,
-    //                             line: 0
-    //                         },
-    //                         start: {
-    //                             character: 7,
-    //                             line: 0
-    //                         }
-    //                     },
-    //                     uri: 'file:///hello.dothtml'
-    //                 },
-    //                 name: 'h1'
-    //             }
-    //         ]);
-    //     });
+            assert.deepStrictEqual(symbols, [
+                {
+                    containerName: 'style',
+                    kind: 5,
+                    location: {
+                        range: {
+                            end: {
+                                character: 23,
+                                line: 0
+                            },
+                            start: {
+                                character: 7,
+                                line: 0
+                            }
+                        },
+                        uri: 'file:///hello.dothtml'
+                    },
+                    name: 'h1'
+                }
+            ]);
+        });
+   });
 
-    //     it('not for SASS', () => {
-    //         const { plugin, document } = setup('<style lang="sass">h1 {color:blue;}</style>');
-    //         assert.deepStrictEqual(plugin.getDocumentSymbols(document), []);
-    //     });
+    it('provides selection range', () => {
+        const { plugin, document } = setup('<style>h1 {}</style>');
 
-    //     it('not for stylus', () => {
-    //         const { plugin, document } = setup('<style lang="stylus">h1 {color:blue;}</style>');
-    //         assert.deepStrictEqual(plugin.getDocumentSymbols(document), []);
-    //     });
-    // });
+        const selectionRange = plugin.getSelectionRange(document, Position.create(0, 11));
 
-    // it('provides selection range', () => {
-    //     const { plugin, document } = setup('<style>h1 {}</style>');
-
-    //     const selectionRange = plugin.getSelectionRange(document, Position.create(0, 11));
-
-    //     assert.deepStrictEqual(selectionRange, <SelectionRange>{
-    //         parent: {
-    //             parent: {
-    //                 parent: undefined,
-    //                 range: {
-    //                     end: {
-    //                         character: 12,
-    //                         line: 0
-    //                     },
-    //                     start: {
-    //                         character: 7,
-    //                         line: 0
-    //                     }
-    //                 }
-    //             },
-    //             range: {
-    //                 end: {
-    //                     character: 12,
-    //                     line: 0
-    //                 },
-    //                 start: {
-    //                     character: 10,
-    //                     line: 0
-    //                 }
-    //             }
-    //         },
-    //         range: {
-    //             end: {
-    //                 character: 11,
-    //                 line: 0
-    //             },
-    //             start: {
-    //                 character: 11,
-    //                 line: 0
-    //             }
-    //         }
-    //     });
-    // });
+        assert.deepStrictEqual(selectionRange, <SelectionRange>{
+            parent: {
+                parent: {
+                    parent: undefined,
+                    range: {
+                        end: {
+                            character: 12,
+                            line: 0
+                        },
+                        start: {
+                            character: 7,
+                            line: 0
+                        }
+                    }
+                },
+                range: {
+                    end: {
+                        character: 12,
+                        line: 0
+                    },
+                    start: {
+                        character: 10,
+                        line: 0
+                    }
+                }
+            },
+            range: {
+                end: {
+                    character: 11,
+                    line: 0
+                },
+                start: {
+                    character: 11,
+                    line: 0
+                }
+            }
+        });
+    });
 
     it('return null for selection range when not in style', () => {
         const { plugin, document } = setup('<script></script>');

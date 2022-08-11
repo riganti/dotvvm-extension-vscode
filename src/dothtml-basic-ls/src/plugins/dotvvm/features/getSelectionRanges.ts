@@ -1,7 +1,7 @@
 import { walk } from 'estree-walker';
 import { SyntaxNode } from 'tree-sitter-dotvvm';
 import { Position, SelectionRange } from 'vscode-languageserver';
-import { DotvvmDocument, isInTag, mapSelectionRangeToParent, offsetAt, toRange } from '../../../lib/documents';
+import { DotvvmDocument, isInTag, mapSelectionRangeToParent } from '../../../lib/documents';
 import { nodeToVsRange } from '../../../lib/parserutils';
 
 function nodeToSelectionRanges(node: SyntaxNode | null | undefined): SelectionRange | null {

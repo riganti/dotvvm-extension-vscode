@@ -81,7 +81,7 @@ Basic command
           self_closing: (self_closing_tag
             name: (tag_name)
             attribute: (attribute
-              name: (attribute_name)
+              name: (attribute_name_property)
               binding: (attribute_binding
                 name: (binding_name)
                 expr: (binding_expr
@@ -114,7 +114,7 @@ Block command
           self_closing: (self_closing_tag
             name: (tag_name)
             attribute: (attribute
-              name: (attribute_name)
+              name: (attribute_name_property)
               binding: (attribute_binding
                 name: (binding_name)
                 expr: (binding_expr
@@ -136,7 +136,7 @@ Block command with variable
           self_closing: (self_closing_tag
             name: (tag_name)
             attribute: (attribute
-              name: (attribute_name)
+              name: (attribute_name_property)
               binding: (attribute_binding
                 name: (binding_name)
                 expr: (binding_expr

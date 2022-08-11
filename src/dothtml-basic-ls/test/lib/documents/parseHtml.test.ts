@@ -10,15 +10,6 @@ describe('parseHtml', () => {
         );
     };
 
-    it('ignore arrow inside moustache', () => {
-        testRootElements(
-            parseHtml(
-                `<Foo on:click={() => console.log('ya!!!')} />
-                <style></style>`
-            )
-        );
-    });
-
     it('ignore greater than operator inside moustache', () => {
         testRootElements(
             parseHtml(
