@@ -130,9 +130,6 @@ export async function startServer(options?: LSOptions) {
                 !evt.initializationOptions?.dontFilterIncompleteCompletions,
             definitionLinkSupport: !!evt.capabilities.textDocument?.definition?.linkSupport
         });
-        // Order of plugin registration matters for FirstNonNull, which affects for example hover info
-        pluginHost.register((new DotvvmPlugin(configManager)));
-        pluginHost.register(new HTMLPlugin(docManager, configManager, configSeeker));
 
         const cssLanguageServices = createLanguageServices({
             clientCapabilities: evt.capabilities,
@@ -142,6 +139,10 @@ export async function startServer(options?: LSOptions) {
         pluginHost.register(
             new CSSPlugin(docManager, configManager, workspaceFolders, cssLanguageServices)
         );
+
+        // Order of plugin registration matters for FirstNonNull, which affects for example hover info
+        pluginHost.register(new DotvvmPlugin(configManager));
+        pluginHost.register(new HTMLPlugin(docManager, configManager, configSeeker));
 
         const clientSupportApplyEditCommand = !!evt.capabilities.workspace?.applyEdit;
         const clientCodeActionCapabilities = evt.capabilities.textDocument?.codeAction;
