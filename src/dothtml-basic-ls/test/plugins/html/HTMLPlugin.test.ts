@@ -14,14 +14,19 @@ import { LSConfigManager } from '../../../src/ls-config';
 import { SerializedConfigSeeker } from '../../../src/lib/serializedConfigSeeker';
 
 describe('HTML Plugin', () => {
+    const configSeeker = new SerializedConfigSeeker(["."])
     function setup(content: string) {
         const document = new DotvvmDocument('file:///hello.dothtml', content);
         const docManager = new DocumentManager(() => document);
         const pluginManager = new LSConfigManager();
-        const plugin = new HTMLPlugin(docManager, pluginManager, new SerializedConfigSeeker(["."]));
+        const plugin = new HTMLPlugin(docManager, pluginManager, configSeeker);
         docManager.openDocument(<any>'some doc');
         return { plugin, document };
     }
+
+    after(() => {
+        configSeeker.dispose()
+    })
 
     it('provides hover info', async () => {
         const { plugin, document } = setup('<h1>Hello, world!</h1>');

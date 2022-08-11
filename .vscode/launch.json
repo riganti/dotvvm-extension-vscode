@@ -31,6 +31,15 @@
 				"${workspaceFolder}/src/dotvvm-vscode/dist/**/*.js"
 			],
 			"preLaunchTask": "tasks: watch-tests"
+		},
+		{
+			"name": "Attach by Process ID",
+			"processId": "${command:PickProcess}",
+			"request": "attach",
+			"skipFiles": [
+				"<node_internals>/**"
+			],
+			"type": "node"
 		}
 	]
 }

@@ -18,10 +18,11 @@ export class DotvvmDocument extends WritableDocument {
      * Compute and cache directly because of performance reasons
      * and it will be called anyway.
      */
-    private path = urlToPath(this.url);
+    private path: string | null;
 
     constructor(public url: string, content: string) {
         super(content, "dotvvm");
+        this.path = urlToPath(this.url)
         this.updateDocInfo();
     }
 

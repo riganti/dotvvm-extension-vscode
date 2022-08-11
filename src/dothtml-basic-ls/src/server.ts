@@ -97,6 +97,7 @@ export async function startServer(options?: LSOptions) {
     const configManager = new LSConfigManager();
     const pluginHost = new PluginHost(docManager);
     let watcher: FallbackWatcher | undefined;
+    let configSeeker: SerializedConfigSeeker | undefined;
 
     connection.onInitialize((evt) => {
         const workspaceUris = evt.workspaceFolders!.map((folder) => folder.uri.toString());
@@ -105,7 +106,7 @@ export async function startServer(options?: LSOptions) {
             Logger.error('No workspace path set');
         }
         const workspacePaths = workspaceUris.map(urlToPath).filter(isNotNullOrUndefined);
-        const configSeeker = new SerializedConfigSeeker(workspacePaths);
+        configSeeker = new SerializedConfigSeeker(workspacePaths);
 
         const isTrusted: boolean = evt.initializationOptions?.isTrusted ?? true;
         configManager.updateIsTrusted(isTrusted);
@@ -131,6 +132,10 @@ export async function startServer(options?: LSOptions) {
             definitionLinkSupport: !!evt.capabilities.textDocument?.definition?.linkSupport
         });
 
+        // Order of plugin registration matters for FirstNonNull, which affects for example hover info
+        pluginHost.register(new DotvvmPlugin(configManager));
+        pluginHost.register(new HTMLPlugin(docManager, configManager, configSeeker));
+
         const cssLanguageServices = createLanguageServices({
             clientCapabilities: evt.capabilities,
             fileSystemProvider: new FileSystemProvider()
@@ -140,9 +145,6 @@ export async function startServer(options?: LSOptions) {
             new CSSPlugin(docManager, configManager, workspaceFolders, cssLanguageServices)
         );
 
-        // Order of plugin registration matters for FirstNonNull, which affects for example hover info
-        pluginHost.register(new DotvvmPlugin(configManager));
-        pluginHost.register(new HTMLPlugin(docManager, configManager, configSeeker));
 
         const clientSupportApplyEditCommand = !!evt.capabilities.workspace?.applyEdit;
         const clientCodeActionCapabilities = evt.capabilities.textDocument?.codeAction;
@@ -238,7 +240,8 @@ export async function startServer(options?: LSOptions) {
     });
 
     connection.onExit(() => {
-        watcher?.dispose();
+        watcher?.dispose()
+        configSeeker?.dispose()
     });
 
     connection.onRenameRequest((req) =>

@@ -61,6 +61,7 @@ export function activateLanguageServer(context: ExtensionContext) {
     console.log("2")
 
     const tempLsPath = runtimeConfig.get<string>('ls-path');
+    const runWithNode = runtimeConfig.get<boolean>('run-with-node');
     // Returns undefined if path is empty string
     // Return absolute path if not already
     const lsPath =
@@ -75,8 +76,9 @@ export function activateLanguageServer(context: ExtensionContext) {
 
     // const serverModule = eval("require.resolve(lsPath || 'dothtml-basic-ls/bin/server.js')");
     const platform = process.platform == "linux" ? "linux" : process.platform == "darwin" ? "macos" : "win.exe";
-    const serverModule = eval("require.resolve(lsPath || 'dothtml-basic-ls/dist/dotvvm-language-server-'+platform)");
-    console.log('Loading server from ', serverModule);
+    const serverPath = eval("require.resolve(lsPath || 'dothtml-basic-ls/dist/dotvvm-language-server-'+platform)");
+    const nodeServerPath = eval("require.resolve(lsPath || 'dothtml-basic-ls/bin/server.js')");
+    console.log('Loading server from ', serverPath);
 
     const runExecArgv: string[] = [];
     let port = runtimeConfig.get<number>('port') ?? -1;
@@ -86,21 +88,21 @@ export function activateLanguageServer(context: ExtensionContext) {
         console.log('setting port to', port);
         runExecArgv.push(`--inspect=${port}`);
     }
-    const debugArgs = ['--nolazy', `--inspect=${port}`]
+    const debugArgs = ['--nolazy', `--inspect=${port}`, `--enable-source-maps`]
 
     const serverOptions: ServerOptions = {
         run: {
-            command: serverModule,
+            command: runWithNode === true ? "node" : serverPath,
             // module: serverModule,
             transport: TransportKind.pipe,
-            args: runExecArgv,
+            args: runWithNode === true ? [nodeServerPath, ...runExecArgv] : runExecArgv
             // options: { execArgv: runExecArgv }
         },
         debug: {
-            command: serverModule,
+            command: runWithNode === false ? serverPath : "node",
             // module: serverModule,
             transport: TransportKind.pipe,
-            args: debugArgs
+            args: runWithNode === false ? runExecArgv : [nodeServerPath, ...debugArgs]
             // options: debugOptions
         }
     };
