@@ -14,6 +14,7 @@ import {
     WorkspaceEdit
 } from 'vscode-languageserver';
 import { DotvvmDocument } from '../../lib/documents';
+import { diagnosticsFromTree } from '../../lib/treeSitterDiagnostics';
 import { Logger } from '../../logger';
 import { LSConfigManager, LSDotvvmConfig } from '../../ls-config';
 import {
@@ -47,7 +48,9 @@ export class DotvvmPlugin
             return [];
         }
 
-        return getDiagnostics(document);
+        const syntaxDiagnostics = document.tree ? diagnosticsFromTree(document.tree.tree) : [];
+
+        return syntaxDiagnostics.concat(await getDiagnostics(document));
     }
 
     async formatDocument(document: DotvvmDocument, options: FormattingOptions): Promise<TextEdit[]> {

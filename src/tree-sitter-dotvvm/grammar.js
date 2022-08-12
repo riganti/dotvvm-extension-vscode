@@ -281,7 +281,7 @@ module.exports = grammar({
             field('property', csharpIdentifier)
         ),
         attribute_name_property: $ => new RegExp('\\p{Lu}' + csharpIdentifierRest.source), // probably DotVVM property: starts with uppercase letter
-        attribute_name_html: $ => choice(...predefinedAttributes, /[^A-Z.<>}{"'/=\s][^<>}{"'./=\s]+/), // probably html: doesn't start with uppercase letter
+        attribute_name_html: $ => choice(...predefinedAttributes, /[^A-Z.<>}{"'/=\s][^<>}{"'./=\s]*/), // probably html: doesn't start with uppercase letter
         _attribute_name: $ => choice($.attribute_name_js_event, $.attribute_name_property, $.attribute_name_attached_property, $.attribute_name_html),
         attribute_value: $ => /[^<>"'=\s{][^<>"'=\s]+/,
         attribute_binding: $ => seq(choice("{", "{{"), field('name', $.binding_name), ":", field('expr', optional($.binding_expr)), choice("}", "}}")),
