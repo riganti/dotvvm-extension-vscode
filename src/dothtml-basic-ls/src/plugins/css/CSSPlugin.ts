@@ -302,6 +302,10 @@ export class CSSPlugin
         }
 
         return this.collectFromAllCssDocuments(document, cssDoc => {
+            // we don't want symbols from style attributes
+            if (cssDoc instanceof StyleAttributeDocument)
+                return []
+
             return this.cssLanguage
                 .findDocumentSymbols(cssDoc, cssDoc.stylesheet)
                 .map((symbol) => {
