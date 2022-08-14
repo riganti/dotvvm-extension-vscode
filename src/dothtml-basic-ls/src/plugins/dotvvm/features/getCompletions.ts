@@ -105,7 +105,7 @@ export function decideCompletionContext(
 
         // rewrite resolved context to the parent element, so that we can get specific allowed node types
 
-        resolvedCx = res.resolveControlOrProperty(config, typeAncestor("html_element", node, e => e.startNode != null && e.startNode.endIndex <= offset))
+        resolvedCx = res.resolveControlOrProperty(config, typeAncestor("html_element", node, e => e.startNode != null && e.startNode.endIndex < offset))
     }
 
     return {

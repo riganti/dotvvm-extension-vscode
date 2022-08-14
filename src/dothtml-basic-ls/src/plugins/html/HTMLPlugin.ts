@@ -125,7 +125,7 @@ export class HTMLPlugin
 
         items = items.filter(i => {
             // HTML close tag is kindof buggy in dothtml, it's better to filter it out and reimplement with tree-sitter
-            if (i.commitCharacters && i.commitCharacters.includes('/'))
+            if (i.label.startsWith('/'))
                 return false
             return true
         })

@@ -273,13 +273,14 @@ export function resolveControlOrProperty(
 	while (p) {
 		const type = p.type
 		if (type == "attribute") {
-			attribute = p as AttributeNode
+			attribute ??= p as AttributeNode
 		} else if (type == "html_element" || type == "script_element" || type == "style_element") {
-			element = p
-		} else if (attribute == null && (type == "start_tag" || type == "self_closing_tag") && p.hasError()) {
+			element ??= p
+			break
+		} else if ((type == "start_tag" || type == "self_closing_tag") && p.hasError()) {
 			// often we are after an attribute, but still want to complete values for that specific attribute
 
-			attribute = p.attributeNodes.filter(a => a.startIndex < node.startIndex).at(-1)
+			attribute ??= p.attributeNodes.filter(a => a.startIndex < node.startIndex).at(-1)
 		}
 
 		p = p.parent
