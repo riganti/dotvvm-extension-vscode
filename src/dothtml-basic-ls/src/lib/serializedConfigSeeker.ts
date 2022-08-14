@@ -6,19 +6,49 @@ import { debounce } from "lodash";
 import { join } from "path";
 import { Identifier } from "typescript";
 
+export type PropertyMappingMode = "Exclude" | "Attribute" | "InnerElement" | "Both"
+
 export type DotvvmPropertyInfo = {
     type: string
     dataContextChange?: any[]
     dataContextManipulation?: any[]
     isValueInherited?: boolean
     mappingName: string
-    mappingMode?: "Exclude" | "Attribute" | "InnerElement" | "Both"
+    mappingMode?: PropertyMappingMode
     required?: boolean
+    onlyBindings?: boolean,
+    onlyHardcoded?: boolean,
+    isCommand?: boolean,
+    commandArguments?: CommandArgumentInfo[],
     isActive?: boolean
     fromCapability?: string
     capabilityPrefix?: string
     isCompileTimeOnly?: boolean
 }
+
+export type DotvvmPropertyGroupInfo = {
+    prefixes?: string[]
+    prefix?: string
+    type: string
+    dataContextChange?: any[]
+    dataContextManipulation?: any[]
+    mappingMode?: PropertyMappingMode
+    onlyBindings?: boolean,
+    onlyHardcoded?: boolean,
+    isCommand?: boolean,
+    commandArguments?: CommandArgumentInfo[],
+    fromCapability?: string
+}
+
+export type DotvvmControlInfo = {
+    assembly: string
+    baseType?: string
+    isAbstract?: boolean
+    defaultContentProperty?: string
+    withoutContent?: boolean
+}
+
+type CommandArgumentInfo = { name: string, type: string }
 
 export type CodeControlRegistrationInfo =
     { tagPrefix: string, namespace: string, assembly: string }
@@ -31,13 +61,18 @@ export type ControlRegistrationInfo =
 
 export type DotvvmSerializedConfig = {
     dotvvmVersion: string
-    properties: {
-        [control: string]: {
-            [property: string]: DotvvmPropertyInfo
-        }
-    },
-    capabilities: { },
-    propertyGroups: { },
+    properties: { [control: string]: {
+        [property: string]: DotvvmPropertyInfo
+    } }
+    capabilities: { [control: string]: {
+        [property: string]: DotvvmPropertyInfo
+    } }
+    propertyGroups: {[control: string]: {
+        [property: string]: DotvvmPropertyGroupInfo
+    } }
+    controls: {
+        [control: string]: DotvvmControlInfo
+    }
     config: {
         markup: {
             controls: ControlRegistrationInfo[],

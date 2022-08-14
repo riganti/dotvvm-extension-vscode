@@ -133,7 +133,7 @@ export async function startServer(options?: LSOptions) {
         });
 
         // Order of plugin registration matters for FirstNonNull, which affects for example hover info
-        pluginHost.register(new DotvvmPlugin(configManager));
+        pluginHost.register(new DotvvmPlugin(configSeeker, configManager));
         pluginHost.register(new HTMLPlugin(docManager, configManager, configSeeker));
 
         const cssLanguage = getCSSLanguageService({

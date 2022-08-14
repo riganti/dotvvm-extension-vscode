@@ -3,7 +3,8 @@
 export type DotnetType = {
 	namespace: string
 	name: string
-	assembly: string
+	assembly: string | null
+	fullName: string
 }
 
 export function parseTypeName(t: string): DotnetType | null {
@@ -17,6 +18,14 @@ export function parseTypeName(t: string): DotnetType | null {
 	return {
 		namespace: m.groups.namespace || '',
 		name: m.groups.name,
-		assembly: m.groups.assembly || ''
+		assembly: m.groups.assembly || null,
+		fullName: m.groups.namespace ? m.groups.namespace + '.' + m.groups.name : m.groups.name
 	}
+}
+
+
+export const KnownDotnetTypes = {
+	HtmlGenericControl: parseTypeName('DotVVM.Framework.Controls.HtmlGenericControl, DotVVM.Framework')!,
+	DotvvmControl: parseTypeName('DotVVM.Framework.Controls.DotvvmControl, DotVVM.Framework')!,
+	DotvvmBindableObject: parseTypeName('DotVVM.Framework.Controls.DotvvmBindableObject, DotVVM.Framework')!,
 }

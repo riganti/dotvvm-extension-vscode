@@ -1,7 +1,8 @@
 import { groupBy, uniqBy, uniqWith } from "lodash";
 import { IAttributeData, IHTMLDataProvider, ITagData, IValueData, MarkupContent } from "vscode-html-languageservice";
 import { parseTypeName } from "../../lib/dotnetUtils";
-import { CodeControlRegistrationInfo, ControlRegistrationInfo, MarkupControlRegistrationInfo, SerializedConfigSeeker } from "../../lib/serializedConfigSeeker";
+import { getControlLookupTable, resolveControl } from "../../lib/dotvvmControlResolver";
+import { CodeControlRegistrationInfo, ControlRegistrationInfo, DotvvmControlInfo, DotvvmPropertyGroupInfo, DotvvmPropertyInfo, MarkupControlRegistrationInfo, SerializedConfigSeeker } from "../../lib/serializedConfigSeeker";
 import { choose, unique, uniqueBy } from "../../utils";
 
 const boolValues = [ { name: "true" }, { name: "false" }];
@@ -34,61 +35,6 @@ export class DothtmlDataProvider implements IHTMLDataProvider {
 	{
 	}
 
-	private controlLookupTable() {
-		return this.config.cached("control-lookup", c => {
-			const controls = c.flatMap(c => c.config.markup.controls)
-
-			const markupControls = new Map<string, MarkupControlRegistrationInfo>()
-			const controlPrefix = new Map<string, CodeControlRegistrationInfo[]>()
-			for (const c of controls) {
-				if ("tagName" in c) {
-					markupControls.set(c.tagName, c)
-				} else {
-					let list = controlPrefix.get(c.tagPrefix)
-					if (list == null)
-						controlPrefix.set(c.tagPrefix, list = [])
-					if (list.some(l => "namespace" in l && l.namespace === c.namespace && l.assembly === c.assembly))
-						continue
-					list.push(c)
-				}
-			}
-
-			return {
-				markupControls,
-				controlPrefix
-			}
-		})
-	}
-
-	private findControl(type: string) {
-		for (const c of Object.values(this.config.configs)) {
-			if (type in c.properties)
-			{
-				return { properties: c.properties[type], propGroups: c.propertyGroups, capabilities: c.capabilities }
-			}
-		}
-	}
-
-	private resolveControl(name: string) {
-		const table = this.controlLookupTable()
-		const markupControl = table.markupControls.get(name)
-		if (markupControl)
-			return { kind: "markup", type: null, ...markupControl }
-
-		const [prefix, className] = name.split(":")
-		const codeControlReg =
-			table.controlPrefix.get(prefix)
-				?.find(c => this.findControl(c.namespace + "." + className))
-
-		
-		if (codeControlReg) {
-			const type = this.findControl(codeControlReg.namespace + "." + className)
-			return { kind: "code", type, ...codeControlReg }
-		}
-
-		console.log("Unknown control: " + name, "didn't find any of", table.controlPrefix.get(prefix)?.map(c => c.namespace + "." + className))
-	}
-
 	getId(): string {
 		return "dotvvm"
 	}
@@ -97,7 +43,7 @@ export class DothtmlDataProvider implements IHTMLDataProvider {
 	}
 	provideTags(): ITagData[] {
 		return this.config.cached("tags", c => {
-			const controlTypes = choose(unique(c.flatMap(c => Object.keys(c.properties))), parseTypeName)
+			const controlTypes = choose(unique(c.flatMap(c => Object.keys(c.controls))), parseTypeName)
 			// console.log("Control types:", controlTypes)
 			const markupMapping = c.flatMap(c => c.config.markup.controls)
 			const markupControls =
@@ -134,7 +80,7 @@ export class DothtmlDataProvider implements IHTMLDataProvider {
 			return defaultHtmlProperties
 		}
 
-		const control = this.resolveControl(tag)
+		const control = resolveControl(this.config, tag)
 		if (control == null) {
 			return []
 		}
@@ -148,7 +94,7 @@ export class DothtmlDataProvider implements IHTMLDataProvider {
 
 		console.log("Control: ", tag, "has props: ", Object.keys(control.type.properties), control)
 
-		const properties =
+		const properties = // TODO: all properties
 			Object.entries(control.type.properties)
 				.filter(([name, p]) => p.mappingMode != "Exclude" && p.mappingMode != "InnerElement")
 				.map(([name, p]) => <IAttributeData>{

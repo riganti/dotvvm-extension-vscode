@@ -14,6 +14,7 @@ import {
     WorkspaceEdit
 } from 'vscode-languageserver';
 import { DotvvmDocument } from '../../lib/documents';
+import { SerializedConfigSeeker } from '../../lib/serializedConfigSeeker';
 import { diagnosticsFromTree } from '../../lib/treeSitterDiagnostics';
 import { Logger } from '../../logger';
 import { LSConfigManager, LSDotvvmConfig } from '../../ls-config';
@@ -41,7 +42,10 @@ export class DotvvmPlugin
         SelectionRangeProvider
 {
     __name = 'dotvvm';
-    constructor(private configManager: LSConfigManager) {}
+    constructor(
+        private config: SerializedConfigSeeker,
+        private configManager: LSConfigManager
+    ) {}
 
     async getDiagnostics(document: DotvvmDocument): Promise<Diagnostic[]> {
         if (!this.featureEnabled('diagnostics') || !this.configManager.getIsTrusted()) {
@@ -71,7 +75,7 @@ export class DotvvmPlugin
             return null;
         }
 
-        return getCompletions(doc, position);
+        return getCompletions(this.config, doc, position);
     }
 
     async doHover(document: DotvvmDocument, position: Position): Promise<Hover | null> {

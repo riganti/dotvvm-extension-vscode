@@ -306,3 +306,10 @@ export function choose<T, U>(xs: T[], f: (t: T) => U | null | undefined): U[] {
     }
     return r
 }
+
+
+export const emptyObject = Object.freeze({})
+export const emptyArray = Object.freeze([])
+
+export type nullish = null | undefined
+export type falsy = false | 0 | '' | nullish

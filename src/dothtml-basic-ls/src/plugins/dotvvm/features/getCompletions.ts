@@ -12,7 +12,10 @@ import {
 } from 'vscode-languageserver';
 import { isInTag, DotvvmDocument } from '../../../lib/documents';
 import { AttributeContext, getAttributeContextAtPosition } from '../../../lib/documents/parseHtml';
+import { resolveControlOrProperty, ResolvedPropertyInfo } from '../../../lib/dotvvmControlResolver';
 import { containsPosition, nodeAncestors, nodeToORange, OffsetRange, typeAncestor } from '../../../lib/parserutils';
+import { DotvvmSerializedConfig, SerializedConfigSeeker } from '../../../lib/serializedConfigSeeker';
+import { falsy, nullish } from '../../../utils';
 import { getModifierData } from './getModifierData';
 import { attributeCanHaveEventModifier } from './utils';
 
@@ -43,6 +46,7 @@ const bindingTypes: CompletionItem[] = [
 }))
 
 export function decideCompletionContext(
+    config: SerializedConfigSeeker,
     doc: DotvvmDocument,
     offset: number
 ) {
@@ -51,15 +55,17 @@ export function decideCompletionContext(
     if (node == null) {
         return null
     }
+    const resolvedCx = resolveControlOrProperty(config, node)
     const errorNode = typeAncestor('ERROR', node)
     const hasError = errorNode || node?.hasError()
     const binding = typeAncestor(['literal_binding', 'attribute_binding'], node)
-    const control = typeAncestor(["start_tag", "self_closing_tag"], node)
+    const tag = typeAncestor(["start_tag", "self_closing_tag"], node)
 
     let context = "unknown"
     let completionTarget: null | undefined | OffsetRange = null
     let appendText = ""
 
+    // binding name
     if (containsPosition(offset, binding?.nameNode) ||
         node.type == "binding_name" ||
         (hasError && (['{', '{{'].includes(node.type) || ['{', '{{'].includes(doc.tree!.nodeAt(offset - 1).type)))) {
@@ -69,8 +75,6 @@ export function decideCompletionContext(
             completionTarget = nodeToORange(binding.nameNode)
             completionTarget.end =
                 binding.exprNode?.startIndex ?? binding.endIndex - (closingBrace?.text.length ?? 0)
-
-            console.log(closingBrace)
         }
         if (!doc.content.substr(offset-1, 6).includes('}') && (closingBrace == null || closingBrace.isMissing() || closingBrace.text == "")) {
             console.log("Adding missing brace")
@@ -78,17 +82,61 @@ export function decideCompletionContext(
         }
     }
 
+    return {
+        node, binding, tag,
 
-    return {node: node, binding, control, context, completionTarget, appendText}
+        control: resolvedCx?.control,
+        property: resolvedCx?.property,
+
+        context,
+        completionTarget,
+        appendText
+    }
+}
+
+function getBindingTypes(property: ResolvedPropertyInfo | falsy): CompletionItem[] {
+    if (!property || property.kind == "unknown") return bindingTypes
+
+    const descriptor = property.kind == "group" ? property.propertyGroup : property.dotvvmProperty
+
+    if (descriptor.isCommand) {
+
+        let commands = bindingTypes.filter(c => c.label == "command" || c.label == "staticCommand")
+
+        if (descriptor.commandArguments) {
+            commands = commands.map(c => ({
+                ...c,
+                insertText: c.label + ": (" + descriptor.commandArguments!.map(a => a.name).join(", ") + ") => ",
+            }))
+        }
+        return commands
+    }
+
+    if (descriptor.onlyHardcoded) {
+        return bindingTypes.filter(c => c.label == "resource")
+    }
+
+    if (descriptor.onlyBindings) {
+        return bindingTypes.filter(c => c.label == "value")
+    }
+
+    var allowsAllBindings =
+        property.kind == "group" && property.propertyGroup.declaringType == "DotVVM.Framework.Controls.JsComponent" && property.propertyGroup.name == "Props"
+
+    if (allowsAllBindings)
+        return bindingTypes
+
+    return bindingTypes.filter(c => c.label == "value" || c.label == "resource")
 }
 
 export function getCompletions(
+    config: SerializedConfigSeeker,
     doc: DotvvmDocument,
     position: Position
 ): CompletionList | null {
     const offset = doc.offsetAt(position);
     
-    const cx = decideCompletionContext(doc, offset)
+    const cx = decideCompletionContext(config, doc, offset)
     if (!cx) {
         console.log("No node found")
         return null;
@@ -108,12 +156,17 @@ export function getCompletions(
         return CompletionList.create(l)
     }
 
-    console.log("Context is ", cx.context, (cx.binding && `In binding ${cx.binding.text}`) ?? '', (cx.control && `In control ${cx.control.nameNode.text}`) ?? '')
+    console.log("Context is ", cx.context,
+        (cx.binding && `In binding ${cx.binding.text}`) || '',
+        (cx.control && `In control ${cx.control.type?.fullName ?? cx.control.kind}`) || '',
+        (cx.property && `In property ${cx.property.kind == 'property' ? cx.property.dotvvmProperty.name :
+                                       cx.property.kind == 'group' ? cx.property.propertyGroup.name + ':' + cx.property.member :
+                                       '<unknown>'}`) || ''
+    )
 
     if (cx.context == "binding_start") {
-        return list(bindingTypes)
+        return list(getBindingTypes(cx.property))
     }
 
-    return CompletionList.create([
-    ])
+    return null
 }
