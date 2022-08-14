@@ -121,41 +121,23 @@ export class HTMLPlugin
               // Other attributes/events would be false positives.
               CompletionList.create([])
             : this.lang.doComplete(document, position, html);
-        const items = this.toCompletionItems(results.items);
+        let items = results.items;
 
-        items.forEach((item) => {
-            if (item.label.startsWith('on:') && item.textEdit) {
-                item.textEdit = {
-                    ...item.textEdit,
-                    newText: item.textEdit.newText.replace('="$1"', '$2="$1"')
-                };
-            }
-        });
+        items = items.filter(i => {
+            // HTML close tag is kindof buggy in dothtml, it's better to filter it out and reimplement with tree-sitter
+            if (i.commitCharacters && i.commitCharacters.includes('/'))
+                return false
+            return true
+        })
 
         return CompletionList.create(
             [
-                ...this.toCompletionItems(items),
+                ...items,
                 ...emmetResults.items
             ],
             // Emmet completions change on every keystroke, so they are never complete
             emmetResults.items.length > 0
         );
-    }
-
-    /**
-     * The HTML language service uses newer types which clash
-     * without the stable ones. Transform to the stable types.
-     */
-    private toCompletionItems(items: (HtmlCompletionItem | CompletionItem)[]): CompletionItem[] {
-        return items.map((item) => {
-            if (!item.textEdit || TextEdit.is(item.textEdit)) {
-                return <CompletionItem>item;
-            }
-            return <CompletionItem>{
-                ...item,
-                textEdit: TextEdit.replace(item.textEdit.replace, item.textEdit.newText)
-            };
-        });
     }
 
     private isInComponentTag(html: HTMLDocument, document: DotvvmDocument, position: Position) {

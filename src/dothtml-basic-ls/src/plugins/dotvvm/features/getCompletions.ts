@@ -1,6 +1,6 @@
 import { bind } from 'lodash';
 import { EOL } from 'os';
-import { SyntaxNode } from 'tree-sitter-dotvvm';
+import { HtmlElementNode, SelfClosingTagNode, StartTagNode, SyntaxNode } from 'tree-sitter-dotvvm';
 import { Range } from 'vscode-html-languageservice';
 import {
     Position,
@@ -9,17 +9,18 @@ import {
     CompletionItem,
     InsertTextFormat,
     MarkupKind,
-    CompletionItemTag
+    CompletionItemTag,
+    TextEdit
 } from 'vscode-languageserver';
 import { isInTag, DotvvmDocument } from '../../../lib/documents';
 import { AttributeContext, getAttributeContextAtPosition } from '../../../lib/documents/parseHtml';
 import { parseTypeName } from '../../../lib/dotnetUtils';
 import type { ResolveControlResult, ResolvedPropertyInfo } from '../../../lib/dotvvmControlResolver';
 import * as res from '../../../lib/dotvvmControlResolver';
-import { containsPosition, nodeAncestors, nodeToORange, OffsetRange, typeAncestor } from '../../../lib/parserutils';
+import { containsPosition, nodeAncestors, nodeToORange, nodeToVsRange, OffsetRange, typeAncestor } from '../../../lib/parserutils';
 import { DotvvmSerializedConfig, SerializedConfigSeeker } from '../../../lib/serializedConfigSeeker';
 import { Logger } from '../../../logger';
-import { falsy, nullish } from '../../../utils';
+import { concatCompletionLists, emptyArray, falsy, nullish } from '../../../utils';
 import { CSSDocument } from '../../css/CSSDocument';
 import { getModifierData } from './getModifierData';
 import { attributeCanHaveEventModifier } from './utils';
@@ -92,7 +93,7 @@ export function decideCompletionContext(
         context = "binding_body"
     }
 
-    if (containsPosition(offset, tag?.nameNode) ||
+    else if (containsPosition(offset, tag?.nameNode) ||
         doc.tree!.nodeAt(offset - 1).type == "tag_name" ||
         node.type == "html_text" && doc.content[offset - 1] == "<") {
         
@@ -104,7 +105,7 @@ export function decideCompletionContext(
 
         // rewrite resolved context to the parent element, so that we can get specific allowed node types
 
-        resolvedCx = res.resolveControlOrProperty(config, typeAncestor("html_element", node, e => e.startNode != null && e.startNode.endIndex < offset))
+        resolvedCx = res.resolveControlOrProperty(config, typeAncestor("html_element", node, e => e.startNode != null && e.startNode.endIndex <= offset))
     }
 
     return {
@@ -156,9 +157,25 @@ function getBindingTypes(property: ResolvedPropertyInfo | falsy): CompletionItem
 
 function getTagCompletions(
     config: SerializedConfigSeeker,
+    elementNode: StartTagNode | SelfClosingTagNode | undefined,
     parentControl: ResolveControlResult | undefined,
     containingProperty: ResolvedPropertyInfo | undefined
-): CompletionItem[] {
+): CompletionList {
+
+    // when the end tag is missing, we also autocomplete the closing tag
+    const isSelfClosing = elementNode?.type == "self_closing_tag" && !elementNode.descendantsOfType("/>")[0].isMissing()
+    const isEndMissing = !isSelfClosing && (elementNode?.parent as HtmlElementNode).endNode == null
+
+    // automatically edit the end tag, when we change the start tag
+    const endTagRange =
+        nodeToVsRange((elementNode?.parent as HtmlElementNode).endNode?.nameNode)
+    function endEdits(text: string): TextEdit[] {
+        if (endTagRange)
+            return [ { range: endTagRange, newText: text } ]
+        else
+            return []
+    }
+
     let baseType = "DotVVM.Framework.Controls.DotvvmControl"
     if (containingProperty) {
         const pType = containingProperty.kind == "group" ? containingProperty.propertyGroup.type :
@@ -168,30 +185,71 @@ function getTagCompletions(
         }
         baseType = "DotVVM.Framework.Controls.DotvvmBindableObject"
     }
-    const controls = res.listControls(config, baseType)
 
-    console.log("Controls:", controls.map(t => t.tag))
-    return controls.map(c => {
+    const noContent = parentControl?.type?.withoutContent && containingProperty != null
+    const controls = noContent ? [] : res.listControls(config, baseType)
+    const controlCompletions = controls.filter(c => c.control.type?.isAbstract !== true).map(c => {
         const requiredProperties =
             !c.control.type ? [] :
             Array.from(res.listProperties(config, c.control.type, "Attribute")).filter(p => p.required)
 
+        // autocomplete all required properties which are not present on the tag
         let i = 1
         const requiredPropertiesSnippet =
             requiredProperties.length == 0 ? "" :
-            requiredProperties.map(p => `${p.name}=${p.isCommand ?     '{${' + i++ + ':staticCommand}: $' + i++ + '}' :
-                                                     p.onlyBindings ?  '{value: $' + i++ + '}' :
-                                                     p.onlyHardcoded ? '"$' + i++ + '"' :
-                                                                       '$' + i++}`).join(" ") + " $0"
+            requiredProperties
+                .filter(p => elementNode?.attributeNodes.find(a => a.nameNode.text == p.name) == null)
+                .map(p => `${p.name}=${p.isCommand ?     '{${' + i++ + ':staticCommand}: $' + i++ + '}' :
+                             p.onlyBindings ?  '{value: $' + i++ + '}' :
+                             p.onlyHardcoded ? '"$' + i++ + '"' :
+                                             '$' + i++} `).join("") + "$0"
         
         return <CompletionItem>{
             label: c.tag,
             documentation: c.description,
-            insertTextFormat: requiredProperties.length > 0 ? InsertTextFormat.Snippet : InsertTextFormat.PlainText,
-            insertText: c.tag + " " + requiredPropertiesSnippet,
-            kind: c.control.kind == "code" ? CompletionItemKind.Class : CompletionItemKind.Module
+            insertTextFormat: InsertTextFormat.Snippet,
+            insertText: c.tag + " " + requiredPropertiesSnippet + (isEndMissing ? `>$0</${c.tag}>` : '$0'),
+            kind: c.control.kind == "code" ? CompletionItemKind.Class : CompletionItemKind.Module,
+            additionalTextEdits: endEdits(c.tag)
         }
     })
+
+    const properties = parentControl?.type == null ? [] : res.listProperties(config, parentControl.type, "InnerElement")
+
+    const propertyCompletions = Array.from(properties).map(p => {
+        return <CompletionItem>{
+            label: p.name,
+            // documentation: p.description,
+            insertTextFormat: InsertTextFormat.Snippet,
+            insertText: p.name + (elementNode?.text.endsWith('>') ? "" : ">") + (isEndMissing || isSelfClosing ? `$0</${p.name}>` : '$0'),
+            kind: CompletionItemKind.Field,
+            additionalTextEdits: endEdits(p.name)
+        }
+    })
+    
+    return CompletionList.create(
+        [...controlCompletions, ...propertyCompletions],
+        // this makes VSCode refresh the tags on every keystroke
+        // it's necessary in order to make the endEdit work, otherwise the edit range get's outdated
+        true
+    )
+}
+
+/** Finds the currently open tag, and suggest an end tag for it */
+function getCloseTagCompletion(
+    node: SyntaxNode,
+    offset: number
+): CompletionItem[] {
+
+    let openElement = typeAncestor("html_element", node, e => e.startNode != null && e.startNode.endIndex < offset) as HtmlElementNode
+
+    let possibleClosingTag = openElement?.startNode?.nameNode.text
+
+    return possibleClosingTag == null ? [] : [{
+        label: '/' + possibleClosingTag,
+        insertText: '/' + possibleClosingTag + '>',
+        commitCharacters: [ '>' ],
+    }]
 }
 
 export function getCompletions(
@@ -207,7 +265,8 @@ export function getCompletions(
         return null;
     }
 
-    function list(l:CompletionItem[]) {
+    function list(list:CompletionItem[] | CompletionList) {
+        let l = "items" in list ? list.items : list
         if (!cx) throw "??"
         if (cx!.appendText) {
             l = l.map(i => i.textEdit != null ? i : { ...i, insertTextFormat: InsertTextFormat.Snippet, insertText: (i.insertText ?? i.label) + "$1" + cx!.appendText })
@@ -218,12 +277,12 @@ export function getCompletions(
             l = l.map(i => i.textEdit != null ? i : { ...i, textEdit: { range, newText: i.insertText ?? i.label } })
         }
 
-        return CompletionList.create(l)
+        return CompletionList.create(l, "isIncomplete" in list ? list.isIncomplete : false)
     }
 
     Logger.log("Context is ", cx.context,
         (cx.binding && `In binding ${cx.binding.text}`) || '',
-        (cx.control && `In control ${cx.control.type?.fullName ?? cx.control.kind}`) || '',
+        (cx.control && `In control ${cx.control.kind == "html" ? "html " + cx.control.name : cx.control.type?.fullName ?? cx.control.kind}`) || '',
         (cx.property && `In property ${cx.property.kind == 'property' ? cx.property.dotvvmProperty.name :
                                        cx.property.kind == 'group' ? cx.property.propertyGroup.name + ':' + cx.property.member :
                                        '<unknown>'}`) || '',
@@ -239,7 +298,10 @@ export function getCompletions(
     }
 
     if (cx.context == "tag_start") {
-        return list(getTagCompletions(config, cx.control, cx.property))
+        return concatCompletionLists(
+            list(getTagCompletions(config, cx.tag, cx.control, cx.property)),
+            getCloseTagCompletion(cx.node, offset)
+        )
     }
 
     return null

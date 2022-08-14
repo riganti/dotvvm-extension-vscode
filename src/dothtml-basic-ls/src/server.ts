@@ -67,7 +67,7 @@ export async function startServer(options?: LSOptions) {
         Logger.setLogErrorsOnly(options.logErrorsOnly);
     }
     parserUtils.init()
-    console.log("argv:", process.argv)
+    // console.log("argv:", process.argv)
     let connection = options?.connection;
     if (!connection) {
         if (process.argv.includes('--stdio')) {
@@ -78,7 +78,7 @@ export async function startServer(options?: LSOptions) {
         } else if (process.argv.some(o => o.startsWith("--pipe="))) {
             const pipeName = process.argv.find(o => o.startsWith("--pipe="))!.split("=")[1];
             const socket = net.connect(pipeName)
-            console.log("Connecting to pipe:", pipeName);
+            // console.log("Connecting to pipe:", pipeName);
             connection = createConnection(
                 new SocketMessageReader(socket),
                 new SocketMessageWriter(socket)
@@ -133,7 +133,7 @@ export async function startServer(options?: LSOptions) {
         });
 
         // Order of plugin registration matters for FirstNonNull, which affects for example hover info
-        // pluginHost.register(new HTMLPlugin(docManager, configManager, configSeeker));
+        pluginHost.register(new HTMLPlugin(docManager, configManager, configSeeker));
         pluginHost.register(new DotvvmPlugin(configSeeker, configManager));
 
         const cssLanguage = getCSSLanguageService({

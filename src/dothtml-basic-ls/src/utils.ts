@@ -1,6 +1,6 @@
 import { isEqual, uniqWith } from 'lodash';
 import { Node } from 'vscode-html-languageservice';
-import { Position, Range } from 'vscode-languageserver';
+import { CompletionItem, CompletionList, Position, Range } from 'vscode-languageserver';
 import { URI } from 'vscode-uri';
 
 type Predicate<T> = (x: T) => boolean;
@@ -305,6 +305,20 @@ export function choose<T, U>(xs: T[], f: (t: T) => U | null | undefined): U[] {
         if (u != null) r.push(u)
     }
     return r
+}
+
+export function concatCompletionLists(...lists: (CompletionList | CompletionItem[])[]): CompletionList {
+    let items = []
+    let isIncomplete = false
+    for (const list of lists) {
+        if ("items" in list) {
+            items.push(...list.items);
+            isIncomplete &&= list.isIncomplete;
+        } else {
+            items.push(...list);
+        }
+    }
+    return CompletionList.create(items, isIncomplete);
 }
 
 
