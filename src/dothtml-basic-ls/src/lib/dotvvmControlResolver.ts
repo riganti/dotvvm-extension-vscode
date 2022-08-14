@@ -1,4 +1,4 @@
-import { filter, lowerCase, sortBy } from "lodash";
+import { filter, has, lowerCase, sortBy } from "lodash";
 import { AttributeNode, HtmlElementNode, ScriptElementNode, StyleElementNode, SyntaxNode } from "tree-sitter-dotvvm";
 import { emptyArray, emptyObject, unique } from "../utils";
 import { DotnetType, parseTypeName } from "./dotnetUtils";
@@ -119,7 +119,17 @@ function getDotvvmProperty(config: SerializedConfigSeeker, control: FullControlI
 	return baseControl ? getDotvvmProperty(config, baseControl, name) : undefined
 }
 
-function* getPropertyGroups(config: SerializedConfigSeeker, control: FullControlInfo, context: PropertyMappingMode | null = null): Iterable<NamedDotvvmPropertyGroupInfo> {
+export function* listProperties(config: SerializedConfigSeeker, control: FullControlInfo, context: PropertyMappingMode | null = null): Iterable<NamedDotvvmPropertyInfo> {
+	const baseControl = control.baseType && findControl(config, control.baseType)
+	for (const [name, p] of Object.entries(control.properties)) {
+		if (isCompatibleMappingMode(p.mappingMode, context))
+			yield { ...p, name, declaringType: control.fullName }
+	}
+	if (baseControl)
+		yield* listProperties(config, baseControl, context)
+}
+
+export function* listPropertyGroups(config: SerializedConfigSeeker, control: FullControlInfo, context: PropertyMappingMode | null = null): Iterable<NamedDotvvmPropertyGroupInfo> {
 	const baseControl = control.baseType && findControl(config, control.baseType)
 	for (const [n, pg] of Object.entries(control.propGroups))
 	{
@@ -127,7 +137,7 @@ function* getPropertyGroups(config: SerializedConfigSeeker, control: FullControl
 			yield { ...pg, name: n, declaringType: control.fullName }
 	}
 	if (baseControl)
-		yield* getPropertyGroups(config, baseControl, context)
+		yield* listPropertyGroups(config, baseControl, context)
 }
 
 function isCompatibleMappingMode(propMode: PropertyMappingMode | null | undefined, context: PropertyMappingMode | null): boolean {
@@ -156,7 +166,7 @@ export function resolveControlProperty(config: SerializedConfigSeeker, control: 
 		return { kind: "property", dotvvmProperty: p }
 	}
 
-	const pgs = [...getPropertyGroups(config, control, context)]
+	const pgs = [...listPropertyGroups(config, control, context)]
 	const prefixes = sortBy(unique(pgs.flatMap(pg => pg.prefixes ?? pg.prefix ?? [])), p => p.length)
 
 	const matchingPrefix = prefixes.find(p => name.startsWith(p))
@@ -182,15 +192,20 @@ export function resolveControlOrProperty(
 	isElementProperty?: boolean
 } | null {
 
-	let attribute: AttributeNode | null = null
-	let element: HtmlElementNode | ScriptElementNode | StyleElementNode | null = null
+	let attribute: AttributeNode | undefined
+	let element: HtmlElementNode | ScriptElementNode | StyleElementNode | undefined
 
 	let p: SyntaxNode | null = node
 	while (p) {
-		if (p.type == "attribute") {
+		const type = p.type
+		if (type == "attribute") {
 			attribute = p as AttributeNode
-		} else if (p.type == "html_element" || p.type == "script_element" || p.type == "style_element") {
+		} else if (type == "html_element" || type == "script_element" || type == "style_element") {
 			element = p
+		} else if (attribute == null && (type == "start_tag" || type == "self_closing_tag") && p.hasError()) {
+			// often we are after an attribute, but still want to complete values for that specific attribute
+
+			attribute = p.attributeNodes.filter(a => a.startIndex < node.startIndex).at(-1)
 		}
 
 		p = p.parent

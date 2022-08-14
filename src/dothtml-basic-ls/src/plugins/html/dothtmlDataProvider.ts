@@ -1,7 +1,7 @@
 import { groupBy, uniqBy, uniqWith } from "lodash";
 import { IAttributeData, IHTMLDataProvider, ITagData, IValueData, MarkupContent } from "vscode-html-languageservice";
 import { parseTypeName } from "../../lib/dotnetUtils";
-import { getControlLookupTable, resolveControl } from "../../lib/dotvvmControlResolver";
+import * as res from "../../lib/dotvvmControlResolver";
 import { CodeControlRegistrationInfo, ControlRegistrationInfo, DotvvmControlInfo, DotvvmPropertyGroupInfo, DotvvmPropertyInfo, MarkupControlRegistrationInfo, SerializedConfigSeeker } from "../../lib/serializedConfigSeeker";
 import { choose, unique, uniqueBy } from "../../utils";
 
@@ -80,7 +80,7 @@ export class DothtmlDataProvider implements IHTMLDataProvider {
 			return defaultHtmlProperties
 		}
 
-		const control = resolveControl(this.config, tag)
+		const control = res.resolveControl(this.config, tag)
 		if (control == null) {
 			return []
 		}
@@ -92,13 +92,10 @@ export class DothtmlDataProvider implements IHTMLDataProvider {
 			return defaultControlProperties
 		}
 
-		console.log("Control: ", tag, "has props: ", Object.keys(control.type.properties), control)
-
-		const properties = // TODO: all properties
-			Object.entries(control.type.properties)
-				.filter(([name, p]) => p.mappingMode != "Exclude" && p.mappingMode != "InnerElement")
-				.map(([name, p]) => <IAttributeData>{
-					name: p.mappingName ?? name,
+		const properties =
+			Array.from(res.listProperties(this.config, control.type, "Attribute"))
+				.map(p => <IAttributeData>{
+					name: p.mappingName ?? p.name,
 					description: [
 						p.type != "System.String" ? "Type: " + parseTypeName(p.type)?.name : "",
 						p.fromCapability ? "From " + parseTypeName(p.fromCapability)?.name : "",
@@ -106,10 +103,11 @@ export class DothtmlDataProvider implements IHTMLDataProvider {
 						p.required ? "**Required**" : "",
 						p.isActive ? "Active" : "",
 						p.isCompileTimeOnly ? "Compile-Time" : "",
-					].join(" | "),
+					].filter(x => x).join(" | "),
 
 					values: p.type == "System.Boolean" ? boolValues : []
 				})
+		// console.log(tag, "Properties: ", properties.map(p => p.name))
 
 		return properties
 	}
