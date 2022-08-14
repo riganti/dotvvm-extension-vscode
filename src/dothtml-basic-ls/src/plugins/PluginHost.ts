@@ -177,6 +177,7 @@ export class PluginHost implements LSProvider, OnWatchFileChanges {
             );
         }
 
+        // Logger.log("Returning completions: " + flattenedCompletions.length);
         return CompletionList.create(flattenedCompletions, isIncomplete);
     }
 

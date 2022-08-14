@@ -5,6 +5,7 @@ import { WritableDocument } from './documents';
 import { log } from 'console';
 import TreeSitter from 'tree-sitter'
 import type WebTreeSitter from 'web-tree-sitter'
+import { nullish } from '../utils';
 
 let parserLoadPromise: Promise<void> | null = null;
 
@@ -94,7 +95,7 @@ export function* nodeAncestors(node: SyntaxNode | undefined | null): Iterable<Sy
 	}
 }
 
-export function typeAncestor<T extends SyntaxType>(type: T | T[], node: SyntaxNode | undefined | null): NodeOfType<T> | undefined {
+export function typeAncestor<T extends SyntaxType>(type: T | T[], node: SyntaxNode | undefined | null, condition: nullish | ((n: NodeOfType<T>) => boolean) = null): NodeOfType<T> | undefined {
 	if (node == null)
 		return
 
@@ -102,7 +103,7 @@ export function typeAncestor<T extends SyntaxType>(type: T | T[], node: SyntaxNo
 
 	let a: SyntaxNode | null = node
 	while (a != null) {
-		if (set.has(a.type))
+		if (set.has(a.type) && (condition == null || condition(a as NodeOfType<T>)))
 			return a as NodeOfType<T>
 		a = a.parent
 	}

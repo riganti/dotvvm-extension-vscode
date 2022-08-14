@@ -1,6 +1,7 @@
-import { filter, has, lowerCase, sortBy } from "lodash";
+import * as _ from "lodash";
+import { parse } from "path";
 import { AttributeNode, HtmlElementNode, ScriptElementNode, StyleElementNode, SyntaxNode } from "tree-sitter-dotvvm";
-import { emptyArray, emptyObject, unique } from "../utils";
+import { choose, emptyArray, emptyObject, nullish, unique, uniqueBy } from "../utils";
 import { DotnetType, parseTypeName } from "./dotnetUtils";
 import { nodeToORange, OffsetRange, typeAncestor } from "./parserutils";
 import { CodeControlRegistrationInfo, DotvvmControlInfo, DotvvmPropertyGroupInfo, DotvvmPropertyInfo, MarkupControlRegistrationInfo, PropertyMappingMode, SerializedConfigSeeker } from "./serializedConfigSeeker";
@@ -49,8 +50,10 @@ export function getControlLookupTable(config: SerializedConfigSeeker) {
 	})
 }
 
-export function findControl(config: SerializedConfigSeeker, type: string): undefined | FullControlInfo {
-	const t = parseTypeName(type)
+export function findControl(config: SerializedConfigSeeker, type: string | DotnetType | nullish): undefined | FullControlInfo {
+	if (type == null) return
+
+	const t = typeof type == 'string' ? parseTypeName(type) : type
 	if (!t) return
 
 	for (const c of Object.values(config.configs)) {
@@ -105,6 +108,76 @@ function elementName(e: HtmlElementNode | ScriptElementNode | StyleElementNode):
 	if (t === "style_element")
 		return "style"
 	return e.startNode?.nameNode.text ?? e.selfClosingNode?.nameNode.text ?? "unknown"
+}
+
+type ControlListResult = {
+	tag: string
+	control: ResolveControlResult & { kind: "markup" | "code" }
+	description?: string
+}
+export function listAllControls(config: SerializedConfigSeeker): ControlListResult[] {
+	return config.cached("all-controls", c => {
+		const controlTypes = choose(unique(c.flatMap(c => Object.keys(c.controls))), parseTypeName)
+		// console.log("Control types:", controlTypes)
+		const markupMapping = c.flatMap(c => c.config.markup.controls)
+		const markupControls: ControlListResult[] =
+			choose(markupMapping, m => "tagName" in m ? m : null)
+			.map(c => ({
+				tag: c.tagPrefix + ":" + c.tagName,
+				control: {
+					kind: "markup",
+					description: `Markup control from ${c.src}`,
+					type: findControl(config, "DotVVM.Framework.Controls.DotvvmMarkupControl")!,
+					...c
+				}
+			}))
+
+		const byNamespace = _.groupBy(choose(markupMapping, m => "namespace" in m ? m : null), m => m.namespace)
+
+		const mappedControls: ControlListResult[] =
+			choose(controlTypes, type => {
+				const c =
+					byNamespace[type.namespace]?.find(m => m.assembly == type.assembly) ??
+					byNamespace[type.namespace]?.[0]
+				if (c?.tagPrefix == null)
+				{
+					// console.log("Control has no registration?", c)
+					return null
+				}
+				return {
+					tag: c.tagPrefix + ":" + type.name,
+					control: { kind: "code", type: findControl(config, type)!, ...c },
+					// description: "Control " + c.namespace + "." + c.name, // TODO: fetch doccomments
+				}
+			})
+		// console.log("Asked for tags, got", markupControls.map(m => m.name), "and ", mappedControls.map(m => m.name))
+
+		return uniqueBy(markupControls.concat(mappedControls), c => c.tag) as any
+	})
+}
+
+export function listControls(config: SerializedConfigSeeker, baseType: string | nullish): ControlListResult[] {
+	baseType = baseType && (parseTypeName(baseType)?.fullName ?? baseType)
+
+	const all = listAllControls(config)
+	if (!baseType && baseType == "DotVVM.Framework.Controls.DotvvmBindableObject")
+		return all
+
+	return all.filter(c => {
+		if (c.control.type == null && baseType == "DotVVM.Framework.Controls.DotvvmControl")
+			return true;
+
+		let base = c.control.type
+		while (base != null) {
+			if (base.fullName == baseType)
+				return true
+			if (base.interfaces && base.interfaces.map(i => parseTypeName(i)?.fullName).includes(baseType!))
+				return true
+			base = findControl(config, base.baseType) ?? null
+		}
+
+		return false
+	})
 }
 
 export type ResolvedPropertyInfo =
@@ -167,7 +240,7 @@ export function resolveControlProperty(config: SerializedConfigSeeker, control: 
 	}
 
 	const pgs = [...listPropertyGroups(config, control, context)]
-	const prefixes = sortBy(unique(pgs.flatMap(pg => pg.prefixes ?? pg.prefix ?? [])), p => p.length)
+	const prefixes = _.sortBy(unique(pgs.flatMap(pg => pg.prefixes ?? pg.prefix ?? [])), p => p.length)
 
 	const matchingPrefix = prefixes.find(p => name.startsWith(p))
 	if (matchingPrefix != null) {
@@ -182,7 +255,7 @@ export function resolveControlProperty(config: SerializedConfigSeeker, control: 
 
 export function resolveControlOrProperty(
 	config: SerializedConfigSeeker,
-	node: SyntaxNode,
+	node: SyntaxNode | nullish,
 ): {
 	control: ResolveControlResult
 	property?: ResolvedPropertyInfo
@@ -191,6 +264,7 @@ export function resolveControlOrProperty(
 	controlAttributesRange?: OffsetRange
 	isElementProperty?: boolean
 } | null {
+	if (node == null) return null
 
 	let attribute: AttributeNode | undefined
 	let element: HtmlElementNode | ScriptElementNode | StyleElementNode | undefined

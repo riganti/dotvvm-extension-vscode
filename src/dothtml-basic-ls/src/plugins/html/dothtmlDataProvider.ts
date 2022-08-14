@@ -42,38 +42,39 @@ export class DothtmlDataProvider implements IHTMLDataProvider {
 		return languageId == "dotvvm"
 	}
 	provideTags(): ITagData[] {
-		return this.config.cached("tags", c => {
-			const controlTypes = choose(unique(c.flatMap(c => Object.keys(c.controls))), parseTypeName)
-			// console.log("Control types:", controlTypes)
-			const markupMapping = c.flatMap(c => c.config.markup.controls)
-			const markupControls =
-				choose(markupMapping, m => "tagName" in m ? m : null)
-				.map(c => <ITagData>{
-					name: c.tagPrefix + ":" + c.tagName,
-					description: "Markup control " + c.src
-				})
+		return []
+		// return this.config.cached("tags", c => {
+		// 	const controlTypes = choose(unique(c.flatMap(c => Object.keys(c.controls))), parseTypeName)
+		// 	// console.log("Control types:", controlTypes)
+		// 	const markupMapping = c.flatMap(c => c.config.markup.controls)
+		// 	const markupControls =
+		// 		choose(markupMapping, m => "tagName" in m ? m : null)
+		// 		.map(c => <ITagData>{
+		// 			name: c.tagPrefix + ":" + c.tagName,
+		// 			description: "Markup control " + c.src
+		// 		})
 
-			const byNamespace = groupBy(choose(markupMapping, m => "namespace" in m ? m : null), m => m.namespace)
+		// 	const byNamespace = groupBy(choose(markupMapping, m => "namespace" in m ? m : null), m => m.namespace)
 
-			const mappedControls =
-				choose(controlTypes, c => {
-					const prefix =
-						byNamespace[c.namespace]?.find(m => m.assembly == c.assembly)?.tagPrefix ??
-						byNamespace[c.namespace]?.[0]?.tagPrefix
-					if (prefix == null)
-					{
-						// console.log("Control has no registration?", c)
-						return null
-					}
-					return <ITagData>{
-						name: prefix ? prefix + ":" + c.name : c.name,
-						description: "Control " + c.namespace + "." + c.name,
-					}
-				})
-			// console.log("Asked for tags, got", markupControls.map(m => m.name), "and ", mappedControls.map(m => m.name))
+		// 	const mappedControls =
+		// 		choose(controlTypes, c => {
+		// 			const prefix =
+		// 				byNamespace[c.namespace]?.find(m => m.assembly == c.assembly)?.tagPrefix ??
+		// 				byNamespace[c.namespace]?.[0]?.tagPrefix
+		// 			if (prefix == null)
+		// 			{
+		// 				// console.log("Control has no registration?", c)
+		// 				return null
+		// 			}
+		// 			return <ITagData>{
+		// 				name: prefix ? prefix + ":" + c.name : c.name,
+		// 				description: "Control " + c.namespace + "." + c.name,
+		// 			}
+		// 		})
+		// 	// console.log("Asked for tags, got", markupControls.map(m => m.name), "and ", mappedControls.map(m => m.name))
 
-			return uniqueBy(markupControls.concat(mappedControls), c => c.name)
-		})
+		// 	return uniqueBy(markupControls.concat(mappedControls), c => c.name)
+		// })
 	}
 	provideAttributes(tag: string): IAttributeData[] {
 		if (tag.indexOf(':') < 0) {

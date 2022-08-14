@@ -43,6 +43,7 @@ export type DotvvmPropertyGroupInfo = {
 export type DotvvmControlInfo = {
     assembly: string
     baseType?: string
+    interfaces?: string[]
     isAbstract?: boolean
     defaultContentProperty?: string
     withoutContent?: boolean

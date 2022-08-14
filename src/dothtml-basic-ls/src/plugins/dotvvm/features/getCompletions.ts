@@ -8,14 +8,19 @@ import {
     CompletionItemKind,
     CompletionItem,
     InsertTextFormat,
-    MarkupKind
+    MarkupKind,
+    CompletionItemTag
 } from 'vscode-languageserver';
 import { isInTag, DotvvmDocument } from '../../../lib/documents';
 import { AttributeContext, getAttributeContextAtPosition } from '../../../lib/documents/parseHtml';
-import { resolveControlOrProperty, ResolvedPropertyInfo } from '../../../lib/dotvvmControlResolver';
+import { parseTypeName } from '../../../lib/dotnetUtils';
+import type { ResolveControlResult, ResolvedPropertyInfo } from '../../../lib/dotvvmControlResolver';
+import * as res from '../../../lib/dotvvmControlResolver';
 import { containsPosition, nodeAncestors, nodeToORange, OffsetRange, typeAncestor } from '../../../lib/parserutils';
 import { DotvvmSerializedConfig, SerializedConfigSeeker } from '../../../lib/serializedConfigSeeker';
+import { Logger } from '../../../logger';
 import { falsy, nullish } from '../../../utils';
+import { CSSDocument } from '../../css/CSSDocument';
 import { getModifierData } from './getModifierData';
 import { attributeCanHaveEventModifier } from './utils';
 
@@ -51,11 +56,11 @@ export function decideCompletionContext(
     offset: number
 ) {
     const node = doc.tree?.nodeAt(offset - 1)
-    console.log("Node stack:", [...nodeAncestors(node)].map(n => n.type).reverse().join(" > "))
+    Logger.log("Node stack:", [...nodeAncestors(node)].map(n => n.type).reverse().join(" > "), "at", JSON.stringify(`${doc.content.substring(offset - 5, offset)}[${doc.content[offset]}]${doc.content.substring(offset + 1, offset + 5)}`))
     if (node == null) {
         return null
     }
-    const resolvedCx = resolveControlOrProperty(config, node)
+    let resolvedCx = res.resolveControlOrProperty(config, node)
     const errorNode = typeAncestor('ERROR', node)
     const hasError = errorNode || node?.hasError()
     const binding = typeAncestor(['literal_binding', 'attribute_binding'], node)
@@ -80,6 +85,26 @@ export function decideCompletionContext(
             console.log("Adding missing brace")
             appendText = (binding?.firstChild ?? doc.tree!.nodeAt(offset - 1)).type == "{{" ? "}}" : "}"
         }
+    }
+
+    // binding body (currently just sentinel, to not activate other completion types)
+    else if (binding) {
+        context = "binding_body"
+    }
+
+    if (containsPosition(offset, tag?.nameNode) ||
+        doc.tree!.nodeAt(offset - 1).type == "tag_name" ||
+        node.type == "html_text" && doc.content[offset - 1] == "<") {
+        
+        context = "tag_start"
+        completionTarget =
+            containsPosition(offset, tag?.nameNode) ? nodeToORange(tag?.nameNode) :
+            doc.tree!.nodeAt(offset - 1).type == "tag_name" ? nodeToORange(doc.tree!.nodeAt(offset - 1)) :
+            null
+
+        // rewrite resolved context to the parent element, so that we can get specific allowed node types
+
+        resolvedCx = res.resolveControlOrProperty(config, typeAncestor("html_element", node, e => e.startNode != null && e.startNode.endIndex < offset))
     }
 
     return {
@@ -129,6 +154,46 @@ function getBindingTypes(property: ResolvedPropertyInfo | falsy): CompletionItem
     return bindingTypes.filter(c => c.label == "value" || c.label == "resource")
 }
 
+function getTagCompletions(
+    config: SerializedConfigSeeker,
+    parentControl: ResolveControlResult | undefined,
+    containingProperty: ResolvedPropertyInfo | undefined
+): CompletionItem[] {
+    let baseType = "DotVVM.Framework.Controls.DotvvmControl"
+    if (containingProperty) {
+        const pType = containingProperty.kind == "group" ? containingProperty.propertyGroup.type :
+                      containingProperty.kind == "property" ? containingProperty.dotvvmProperty.type : null
+        if (pType) {
+            console.log("Element property type: ", parseTypeName(pType))
+        }
+        baseType = "DotVVM.Framework.Controls.DotvvmBindableObject"
+    }
+    const controls = res.listControls(config, baseType)
+
+    console.log("Controls:", controls.map(t => t.tag))
+    return controls.map(c => {
+        const requiredProperties =
+            !c.control.type ? [] :
+            Array.from(res.listProperties(config, c.control.type, "Attribute")).filter(p => p.required)
+
+        let i = 1
+        const requiredPropertiesSnippet =
+            requiredProperties.length == 0 ? "" :
+            requiredProperties.map(p => `${p.name}=${p.isCommand ?     '{${' + i++ + ':staticCommand}: $' + i++ + '}' :
+                                                     p.onlyBindings ?  '{value: $' + i++ + '}' :
+                                                     p.onlyHardcoded ? '"$' + i++ + '"' :
+                                                                       '$' + i++}`).join(" ") + " $0"
+        
+        return <CompletionItem>{
+            label: c.tag,
+            documentation: c.description,
+            insertTextFormat: requiredProperties.length > 0 ? InsertTextFormat.Snippet : InsertTextFormat.PlainText,
+            insertText: c.tag + " " + requiredPropertiesSnippet,
+            kind: c.control.kind == "code" ? CompletionItemKind.Class : CompletionItemKind.Module
+        }
+    })
+}
+
 export function getCompletions(
     config: SerializedConfigSeeker,
     doc: DotvvmDocument,
@@ -138,7 +203,7 @@ export function getCompletions(
     
     const cx = decideCompletionContext(config, doc, offset)
     if (!cx) {
-        console.log("No node found")
+        Logger.log("No node found")
         return null;
     }
 
@@ -156,16 +221,25 @@ export function getCompletions(
         return CompletionList.create(l)
     }
 
-    console.log("Context is ", cx.context,
+    Logger.log("Context is ", cx.context,
         (cx.binding && `In binding ${cx.binding.text}`) || '',
         (cx.control && `In control ${cx.control.type?.fullName ?? cx.control.kind}`) || '',
         (cx.property && `In property ${cx.property.kind == 'property' ? cx.property.dotvvmProperty.name :
                                        cx.property.kind == 'group' ? cx.property.propertyGroup.name + ':' + cx.property.member :
-                                       '<unknown>'}`) || ''
+                                       '<unknown>'}`) || '',
+        (cx.completionTarget && `Completing range ${cx.completionTarget.start}-${cx.completionTarget.end}`) || ''
     )
 
     if (cx.context == "binding_start") {
         return list(getBindingTypes(cx.property))
+    }
+
+    if (cx.context == "binding_body") {
+        return null // Sorry, not supported atm
+    }
+
+    if (cx.context == "tag_start") {
+        return list(getTagCompletions(config, cx.control, cx.property))
     }
 
     return null

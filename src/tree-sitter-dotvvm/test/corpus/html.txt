@@ -182,3 +182,31 @@ single letter attribute name
               (attribute_name_html)))
           (end_tag
             (tag_name)))))
+
+===================
+tag - in progress
+===================
+
+<a
+
+---
+
+(source_file
+  (markup
+    (html_element
+      (self_closing_tag
+        (tag_name)
+        (MISSING "/>")))))
+===================
+attribute - in progress
+===================
+
+<a href=
+
+---
+
+(source_file
+  (ERROR
+    (tag_name)
+    (attribute_name_html)))
+

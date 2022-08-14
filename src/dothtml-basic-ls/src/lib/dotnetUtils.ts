@@ -8,7 +8,7 @@ export type DotnetType = {
 }
 
 export function parseTypeName(t: string): DotnetType | null {
-	const m = /^((?<namespace>[\w._0-9]+)\.)?(?<name>[\w_0-9]+)(, (?<assembly>.*))?$/.exec(t);
+	const m = /^((?<namespace>[\w._0-9]+)\.)?(?<name>[\w_0-9+`]+)(, (?<assembly>.*))?$/.exec(t);
 
 	if (!m || !m.groups) {
 		console.log("Can't parse type ", t)
