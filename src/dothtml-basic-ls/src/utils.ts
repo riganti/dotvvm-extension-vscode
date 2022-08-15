@@ -313,7 +313,7 @@ export function concatCompletionLists(...lists: (CompletionList | CompletionItem
     for (const list of lists) {
         if ("items" in list) {
             items.push(...list.items);
-            isIncomplete &&= list.isIncomplete;
+            isIncomplete ||= list.isIncomplete;
         } else {
             items.push(...list);
         }

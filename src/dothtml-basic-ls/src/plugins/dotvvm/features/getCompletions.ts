@@ -1,6 +1,6 @@
 import { bind } from 'lodash';
 import { EOL } from 'os';
-import { HtmlElementNode, SelfClosingTagNode, StartTagNode, SyntaxNode } from 'tree-sitter-dotvvm';
+import { ErroneousEndTagNode, HtmlElementNode, SelfClosingTagNode, StartTagNode, SyntaxNode } from 'tree-sitter-dotvvm';
 import { Range } from 'vscode-html-languageservice';
 import {
     Position,
@@ -95,7 +95,8 @@ export function decideCompletionContext(
 
     else if (containsPosition(offset, tag?.nameNode) ||
         doc.tree!.nodeAt(offset - 1).type == "tag_name" ||
-        node.type == "html_text" && doc.content[offset - 1] == "<") {
+        node.type == "html_text" && doc.content[offset - 1] == "<" ||
+        (hasError && node.type == "<")) {
         
         context = "tag_start"
         completionTarget =
@@ -164,11 +165,12 @@ function getTagCompletions(
 
     // when the end tag is missing, we also autocomplete the closing tag
     const isSelfClosing = elementNode?.type == "self_closing_tag" && !elementNode.descendantsOfType("/>")[0].isMissing()
-    const isEndMissing = !isSelfClosing && (elementNode?.parent as HtmlElementNode).endNode == null
+    const isEndMissing = !isSelfClosing && !elementNode?.text.endsWith('>') && (elementNode?.parent as HtmlElementNode).endNode == null
 
     // automatically edit the end tag, when we change the start tag
     const endTagRange =
-        nodeToVsRange((elementNode?.parent as HtmlElementNode).endNode?.nameNode)
+        nodeToVsRange((elementNode?.parent as HtmlElementNode).endNode?.nameNode) ??
+        nodeToVsRange(((elementNode?.parent as HtmlElementNode)?.children.find(c => c.type == "erroneous_end_tag") as ErroneousEndTagNode)?.nameNode)
     function endEdits(text: string): TextEdit[] {
         if (endTagRange)
             return [ { range: endTagRange, newText: text } ]
@@ -221,7 +223,7 @@ function getTagCompletions(
             label: p.name,
             // documentation: p.description,
             insertTextFormat: InsertTextFormat.Snippet,
-            insertText: p.name + (elementNode?.text.endsWith('>') ? "" : ">") + (isEndMissing || isSelfClosing ? `$0</${p.name}>` : '$0'),
+            insertText: p.name + (isEndMissing || isSelfClosing ? `>$0</${p.name}>` : '$0'),
             kind: CompletionItemKind.Field,
             additionalTextEdits: endEdits(p.name)
         }
