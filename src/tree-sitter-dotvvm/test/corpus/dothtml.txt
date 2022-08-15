@@ -28,3 +28,23 @@ component with attached property
             (attribute
               (attribute_name_attached_property)
               (attribute_value))))))
+==================
+component with postback handlers
+==================
+
+<dot:TextBox>
+  <PostBack.Handlers>
+    <dot:ConfirmPostbackHAndler />
+  </PostBack.Handlers>
+</dot:TextBox>
+---
+
+(source_file
+  (markup
+    (html_element
+      (start_tag (tag_name))
+      (html_element
+          (start_tag (tag_name))
+          (html_element (self_closing_tag (tag_name)))
+          (end_tag (tag_name)))
+      (end_tag (tag_name)))))

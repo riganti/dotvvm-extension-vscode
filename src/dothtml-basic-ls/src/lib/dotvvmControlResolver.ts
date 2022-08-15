@@ -1,6 +1,7 @@
 import * as _ from "lodash";
 import { parse } from "path";
 import { AttributeNode, HtmlElementNode, ScriptElementNode, StyleElementNode, SyntaxNode } from "tree-sitter-dotvvm";
+import { Logger } from "../logger";
 import { choose, emptyArray, emptyObject, nullish, unique, uniqueBy } from "../utils";
 import { DotnetType, parseTypeName } from "./dotnetUtils";
 import { nodeToORange, OffsetRange, typeAncestor } from "./parserutils";
@@ -110,7 +111,7 @@ function elementName(e: HtmlElementNode | ScriptElementNode | StyleElementNode):
 	return e.startNode?.nameNode.text ?? e.selfClosingNode?.nameNode.text ?? "unknown"
 }
 
-type ControlListResult = {
+export type ControlListResult = {
 	tag: string
 	control: ResolveControlResult & { kind: "markup" | "code" }
 	description?: string
@@ -171,7 +172,7 @@ export function listControls(config: SerializedConfigSeeker, baseType: string | 
 		while (base != null) {
 			if (base.fullName == baseType)
 				return true
-			if (base.interfaces && base.interfaces.map(i => parseTypeName(i)?.fullName).includes(baseType!))
+			if (base.interfaces && base.interfaces.some(i => parseTypeName(i)?.fullName == baseType))
 				return true
 			base = findControl(config, base.baseType) ?? null
 		}
@@ -186,10 +187,30 @@ export type ResolvedPropertyInfo =
 	| { kind: "unknown", name: string }
 
 function getDotvvmProperty(config: SerializedConfigSeeker, control: FullControlInfo, name: string): NamedDotvvmPropertyInfo | undefined {
+	if (name.includes('.')) {
+		return getDotvvmPropertyByFullName(config, name)
+	}
 	const baseControl = control.baseType && findControl(config, control.baseType)
 	if (name in control.properties)
 		return { name, declaringType: control.fullName, ...control.properties[name] }
 	return baseControl ? getDotvvmProperty(config, baseControl, name) : undefined
+}
+
+function getDotvvmPropertyByFullName(config: SerializedConfigSeeker, name: string): NamedDotvvmPropertyInfo | undefined {
+	const [controlName, propertyName] = name.split(".")
+	
+	for (const c of Object.values(config.configs)) {
+		const fullControlName =
+			Object.keys(c.properties)
+				.find(cName => cName.endsWith("." + controlName) && propertyName in c.properties[cName])
+		if (fullControlName) {
+			return {
+				name: propertyName,
+				declaringType: fullControlName,
+				...c.properties[fullControlName][propertyName]
+			}
+		}
+	}
 }
 
 export function* listProperties(config: SerializedConfigSeeker, control: FullControlInfo, context: PropertyMappingMode | null = null): Iterable<NamedDotvvmPropertyInfo> {
@@ -200,6 +221,24 @@ export function* listProperties(config: SerializedConfigSeeker, control: FullCon
 	}
 	if (baseControl)
 		yield* listProperties(config, baseControl, context)
+}
+
+export function listAttachedProperties(config: SerializedConfigSeeker, context: PropertyMappingMode | null = null): Map<string, NamedDotvvmPropertyInfo[]> {
+	const p = Object.values(config.configs).flatMap(function (c) {
+		let typeList: [string, NamedDotvvmPropertyInfo[]][] =[]
+		for (const [typeName, props] of Object.entries(c.properties)) {
+			let list: NamedDotvvmPropertyInfo[] = []
+			for (const [name, prop] of Object.entries(props)) {
+				if (prop.isAttached && isCompatibleMappingMode(prop.mappingMode, context))
+					list.push({ ...prop, name, declaringType: typeName })
+			}
+			if (list.length > 0)
+				typeList.push([typeName, list])
+		}
+		return typeList
+	})
+
+	return new Map(Array.from(p))
 }
 
 export function* listPropertyGroups(config: SerializedConfigSeeker, control: FullControlInfo, context: PropertyMappingMode | null = null): Iterable<NamedDotvvmPropertyGroupInfo> {
@@ -228,6 +267,13 @@ function isCompatibleMappingMode(propMode: PropertyMappingMode | null | undefine
 }
 
 export function resolveControlProperty(config: SerializedConfigSeeker, control: FullControlInfo | string | null | undefined, name: string, context: PropertyMappingMode | null = null): ResolvedPropertyInfo {
+	if (name.includes('.')) {
+		const p = getDotvvmPropertyByFullName(config, name)
+		if (p)
+			return { kind: "property", dotvvmProperty: p }
+		return { kind: "unknown", name }
+	}
+
 	if (typeof control == "string")
 		control = resolveControl(config, control)?.type
 	
@@ -282,7 +328,6 @@ export function resolveControlOrProperty(
 
 			attribute ??= p.attributeNodes.filter(a => a.startIndex < node.startIndex).at(-1)
 		}
-
 		p = p.parent
 	}
 
@@ -305,17 +350,23 @@ export function resolveControlOrProperty(
 		// probably html element, unless there it's InnerElement property of the parent control
 
 		property: do {// break target
-			const parentElement = typeAncestor("html_element", node)
+			const parentElement = typeAncestor("html_element", element.parent)
+			Logger.log("considering html_element ", node.text, "to be a inner element property")
 			if (parentElement == null) break property
-
+			
 			const parentName = elementName(parentElement)
-			if (!parentName.includes(':') || !elName.includes('.')) break property
+			Logger.log(`parentName=${parentName}, elName=${elName}`)
+			if (!parentName.includes(':') && !elName.includes('.')) break property
 
 			const parentControl = resolveControl(config, parentName)
+			Logger.log(`parentControl=${parentControl?.type?.fullName}`)
 			if (parentControl?.type == null) break property
 
 			const elementProperty = resolveControlProperty(config, parentControl.type, elName, "InnerElement")
-			if (elementProperty.kind == "unknown") break property
+			if (elementProperty.kind == "unknown") {
+				Logger.log("unknown property ", elName, " of control ", parentName)
+				break property
+			}
 
 			// to be a valid property, all element before it must also be properties
 
@@ -340,7 +391,6 @@ export function resolveControlOrProperty(
 			// 	}
 			// }
 
-			// TODO: ranges
 			return {
 				control: parentControl,
 				property: elementProperty,

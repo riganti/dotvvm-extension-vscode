@@ -24,6 +24,7 @@ export type DotvvmPropertyInfo = {
     fromCapability?: string
     capabilityPrefix?: string
     isCompileTimeOnly?: boolean
+    isAttached?: boolean
 }
 
 export type DotvvmPropertyGroupInfo = {

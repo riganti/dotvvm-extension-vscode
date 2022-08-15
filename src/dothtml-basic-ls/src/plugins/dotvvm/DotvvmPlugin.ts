@@ -27,7 +27,7 @@ import {
     SelectionRangeProvider
 } from '../interfaces';
 import { executeCommand, getCodeActions } from './features/getCodeActions';
-import { getCompletions } from './features/getCompletions';
+import { DotvvmCompletion } from './features/DotvvmCompletion';
 import { getDiagnostics } from './features/getDiagnostics';
 import { getHoverInfo } from './features/getHoverInfo';
 import { getSelectionRange } from './features/getSelectionRanges';
@@ -42,10 +42,14 @@ export class DotvvmPlugin
         SelectionRangeProvider
 {
     __name = 'dotvvm';
+    completion: DotvvmCompletion;
     constructor(
         private config: SerializedConfigSeeker,
         private configManager: LSConfigManager
-    ) {}
+    ) {
+
+        this.completion = new DotvvmCompletion(config)
+    }
 
     async getDiagnostics(document: DotvvmDocument): Promise<Diagnostic[]> {
         if (!this.featureEnabled('diagnostics') || !this.configManager.getIsTrusted()) {
@@ -75,7 +79,7 @@ export class DotvvmPlugin
             return null;
         }
 
-        return getCompletions(this.config, doc, position);
+        return this.completion.getCompletions(doc, position);
     }
 
     async doHover(document: DotvvmDocument, position: Position): Promise<Hover | null> {
