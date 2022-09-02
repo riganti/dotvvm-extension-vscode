@@ -58,7 +58,7 @@ export function findControl(config: SerializedConfigSeeker, type: string | Dotne
 	if (!t) return
 
 	for (const c of Object.values(config.configs)) {
-		if (t.fullName in c.controls) {
+		if (c.controls && t.fullName in c.controls) {
 			return {
 				...c.controls[t.fullName],
 				fullName: t.fullName,

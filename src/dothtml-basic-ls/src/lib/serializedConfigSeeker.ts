@@ -5,6 +5,7 @@ import { DidChangeWatchedFilesParams, FileChangeType, FileEvent } from 'vscode-l
 import { debounce } from "lodash";
 import { join } from "path";
 import { Identifier } from "typescript";
+import { Logger } from "../logger";
 
 export type PropertyMappingMode = "Exclude" | "Attribute" | "InnerElement" | "Both"
 
@@ -134,6 +135,7 @@ export class SerializedConfigSeeker {
             .on('add', (path) => this.onFSEvent(path, FileChangeType.Created))
             .on('unlink', (path) => this.onFSEvent(path, FileChangeType.Deleted))
             .on('change', (path) => this.onFSEvent(path, FileChangeType.Changed));
+        setTimeout(() => this.scheduleTrigger(), 30);
     }
 
     private onFSEvent(path: string, type: FileChangeType) {
@@ -150,6 +152,13 @@ export class SerializedConfigSeeker {
 
     cachedStuff: { [key: string]: any } = {};
 
+    private async loadDefaultConfigs(): Promise<void> {
+        // TODO: configs for BP, BS, etc.
+        Logger.log("Could not find file dotvvm_serialized_config.json.tmp anywhere, using a default config")
+        const defaultConfig = await fs.readFile(__dirname +  "/../../../data/defaultConfig-framework.json", "utf8")
+        this.configs["defaultConfig-framework"] = JSON.parse(defaultConfig)
+    }
+
     async onDidChangeWatchedFiles(changes: { type: FileChangeType, path: string }[]): Promise<void> {
         const promises = []
         for (const c of changes) {
@@ -162,6 +171,11 @@ export class SerializedConfigSeeker {
             }
         }
         await Promise.all(promises);
+        if (Object.keys(this.configs).filter(c => c != "defaultConfig-framework").length == 0) {
+            await this.loadDefaultConfigs()
+        } else {
+            delete this.configs["defaultConfig-framework"]
+        }
         this.cachedStuff = {}
 
         console.log("(re)loaded DotVVM serialized configuration: ", Object.keys(this.configs));
