@@ -8,4 +8,7 @@ src/tree_sitter/parser.h
 *.o.d
 build
 tree-sitter-dotvvm.wasm
-
+*.obj
+*.lib
+*.exp
+dts-tree-sitter

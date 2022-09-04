@@ -1,0 +1,76 @@
+name: Publish
+on:
+  workflow_dispatch:
+
+jobs:
+  build-native:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+        include:
+          - os: windows-latest
+            binary: dotvvm-language-server-windows.exe
+          - os: ubuntu-latest
+            binary: dotvvm-language-server-linux
+          - os: macos-latest
+            binary: dotvvm-language-server-macos
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+          cache: 'yarn'
+          cache-dependency-path: |
+            src/tree-sitter-dotvvm/yarn.lock
+            src/dothtml-basic-ls/yarn.lock
+      - name: Build language server package
+        run: |
+          cd src/tree-sitter-dotvvm
+          yarn install --immutable
+          yarn build
+          cd ../dothtml-basic-ls
+          yarn install --immutable
+          yarn build
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: dothtml-basic-ls-binaries
+          path: src/dothtml-basic-ls/dist/${{ matrix.binary }}
+
+  build-package:
+    runs-on: ubuntu-latest
+    needs: [ build-native-linux, build-native-windows, build-native-macos ]
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+          cache: 'yarn'
+          cache-dependency-path: |
+            src/tree-sitter-dotvvm/yarn.lock
+            src/dothtml-basic-ls/yarn.lock
+            src/dotvvm-vscode/yarn.lock
+      - name: Build macos version
+        run: |
+          cd src/tree-sitter-dotvvm
+          yarn install --immutable
+          yarn build
+          cd ../dothtml-basic-ls
+          yarn install --immutable
+          yarn build
+          cp ../../dothtml-basic-ls-binaries/* ./dist/
+          cd ../dotvvm-vscode
+          yarn install --immutable
+          yarn build
+      - name: Publish package
+        run: |
+          yarn run vsce package
+        working-directory: src/dotvvm-vscode
+      - name: Upload package
+        uses: actions/upload-artifact@v3
+        with:
+          name: package
+          path: src/dotvvm-vscode/*.vsix
