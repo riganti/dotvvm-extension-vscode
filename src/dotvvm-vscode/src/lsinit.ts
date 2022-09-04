@@ -52,6 +52,27 @@ export function activateLS(context: ExtensionContext) {
     };
 }
 
+function findServerBinary(searchPaths: (string | undefined)[]) {
+    const platform = process.platform == "linux" ? "linux" : process.platform == "darwin" ? "macos" : "win.exe";
+
+    const serverNameCandidates = [
+        'dotvvm-language-server-' + process.arch + '-' + platform,
+        'dotvvm-language-server-' + platform,
+        'dotvvm-language-server',
+    ]
+
+    for (const searchPath of searchPaths) {
+        if (!searchPath) { continue }
+
+        for (const n of serverNameCandidates) {
+            const serverPath = path.join(searchPath, n);
+            if (fs.existsSync(serverPath)) {
+                return serverPath;
+            }
+        }
+    }
+}
+
 export function activateLanguageServer(context: ExtensionContext) {
     const runtimeConfig = workspace.getConfiguration('dotvvm.language-server');
 
@@ -68,22 +89,21 @@ export function activateLanguageServer(context: ExtensionContext) {
                 ? tempLsPath
                 : path.join(rootPath as string, tempLsPath)
             : undefined;
+
+    console.log("DIRNAME=", __dirname)
     
 
     // const serverModule = eval("require.resolve(lsPath || 'dothtml-basic-ls/bin/server.js')");
-    const serverDir = path.dirname(eval("require.resolve((lsPath || 'dothtml-basic-ls/dist') + '/startServer.js')"));
-    const platform = process.platform == "linux" ? "linux" : process.platform == "darwin" ? "macos" : "win.exe";
-
-    const serverPathCandidates = [
-        path.join(serverDir, 'dotvvm-language-server-' + process.arch + '-' + platform),
-        path.join(serverDir, 'dotvvm-language-server-' + platform),
-        path.join(serverDir, 'dotvvm-language-server'),
-    ]
-    const serverPath = serverPathCandidates.find(fs.existsSync)
+    let serverDir
+    try
+    {
+        serverDir = path.dirname(eval("require.resolve((lsPath || 'dothtml-basic-ls/dist') + '/startServer.js')"));
+    } catch { }
+    const serverPath = findServerBinary([serverDir, __dirname])
     if (!serverPath) {
-        throw new Error("Could not find dotvvm-language-server executable. Tried: " + serverPathCandidates.join(", "))
+        throw new Error("Could not find dotvvm-language-server executable.")
     }
-    const nodeServerPath = path.join(serverDir, 'startServer.js')
+    const nodeServerPath = serverDir && path.join(serverDir, 'startServer.js')
     console.log('Loading server from ', serverPath);
 
     const runExecArgv: string[] = [];
@@ -96,19 +116,23 @@ export function activateLanguageServer(context: ExtensionContext) {
     }
     const debugArgs = ['--nolazy', `--inspect=${port}`, `--enable-source-maps`]
 
+    if (runWithNode && !nodeServerPath) {
+        throw new Error("Could not find dotvvm-language-server startServer.js")
+    }
+
     const serverOptions: ServerOptions = {
         run: {
             command: runWithNode === true ? "node" : serverPath,
             // module: serverModule,
             transport: TransportKind.pipe,
-            args: runWithNode === true ? [nodeServerPath, ...runExecArgv] : runExecArgv
+            args: runWithNode === true && nodeServerPath ? [nodeServerPath, ...runExecArgv] : runExecArgv
             // options: { execArgv: runExecArgv }
         },
         debug: {
             command: runWithNode === false ? serverPath : "node",
             // module: serverModule,
             transport: TransportKind.pipe,
-            args: runWithNode === false ? runExecArgv : [nodeServerPath, ...debugArgs]
+            args: runWithNode === false || !nodeServerPath ? runExecArgv : [nodeServerPath, ...debugArgs]
             // options: debugOptions
         }
     };
