@@ -21,7 +21,7 @@ jobs:
             src/dotvvm-vscode/yarn.lock
             
       - name: Restore dependencies and build packages
-        run: build.sh
+        run: ./build.sh
         working-directory: src
         
       - name: Run tree-sitter tests
