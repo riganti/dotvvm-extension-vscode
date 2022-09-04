@@ -15,6 +15,11 @@ jobs:
         with:
           node-version: '16'
           cache: 'yarn'
+          cache-dependency-path: |
+            src/tree-sitter-dotvvm/yarn.lock
+            src/dothtml-basic-ls/yarn.lock
+            src/dotvvm-vscode/yarn.lock
+            
       - name: Restore dependencies and build packages
         run: build.sh
         working-directory: src
