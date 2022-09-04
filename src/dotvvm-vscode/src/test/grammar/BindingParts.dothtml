@@ -35,11 +35,11 @@
 <div class=' {value: Test}'></div>
 #            ^^^^^^^^^^^^^ - meta.dotvvm.content.binding
 
+<div { value: Test } test=aaa></div>
+#    ^^^^^^^^^^^^^^^ - meta.dotvvm.content.binding
+
 <div class="{value: Test} "></div>
 #           ^^^^^^^^^^^^^^^^^^^^^^ meta.dotvvm.content.binding
 
 <div class="{ value: Test }"></div>
 #           ^^^^^^^^^^^^^^^ meta.dotvvm.content.binding
-
-<div { value: Test } test=aaa></div>
-#    ^^^^^^^^^^^^^^^ - meta.dotvvm.content.binding
