@@ -41,12 +41,13 @@ jobs:
           cache-dependency-path: |
             src/tree-sitter-dotvvm/yarn.lock
             src/dothtml-basic-ls/yarn.lock
-      - name: Build language server package
+      - name: Build tree sitter
         run: |
           cd src/tree-sitter-dotvvm
           yarn install --immutable
           yarn build
-          cd ../dothtml-basic-ls
+      - name: Build language server
+          cd src/dothtml-basic-ls
           yarn install --immutable
           yarn build
       - name: Upload artifact
