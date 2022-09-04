@@ -1304,18 +1304,17 @@ __metadata:
     estree-walker: ^2.0.1
     fast-glob: ^3.2.7
     lodash: ^4.17.21
-    prettier: 2.5.1
-    superstring: ^2.4.4
     tree-sitter-dotvvm: "portal:../tree-sitter-dotvvm"
     tree-sitter-javascript: ^0.19.0
     typescript: ^4.7.4
     vscode-css-languageservice: ~5.1.0
     vscode-emmet-helper: ~2.6.0
     vscode-html-languageservice: ~4.1.0
-    vscode-languageserver: 7.1.0-next.4
-    vscode-languageserver-protocol: 3.16.0
-    vscode-languageserver-types: 3.16.0
-    vscode-uri: ~3.0.0
+    vscode-languageserver: 8.0.2
+    vscode-languageserver-protocol: 3.17.1
+    vscode-languageserver-types: 3.17.2
+    vscode-uri: ~3.0.3
+    web-tree-sitter: ^0.20.5
   bin:
     dotvvmserver: bin/server.js
   languageName: node
@@ -2642,7 +2641,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nan@npm:^2.12.1, nan@npm:^2.14.0, nan@npm:^2.14.2, nan@npm:^2.16.0":
+"nan@npm:^2.12.1, nan@npm:^2.14.0, nan@npm:^2.16.0":
   version: 2.16.0
   resolution: "nan@npm:2.16.0"
   dependencies:
@@ -2949,15 +2948,6 @@ __metadata:
   version: 1.2.1
   resolution: "prelude-ls@npm:1.2.1"
   checksum: cd192ec0d0a8e4c6da3bb80e4f62afe336df3f76271ac6deb0e6a36187133b6073a19e9727a1ff108cd8b9982e4768850d413baa71214dd80c7979617dca827a
-  languageName: node
-  linkType: hard
-
-"prettier@npm:2.5.1":
-  version: 2.5.1
-  resolution: "prettier@npm:2.5.1"
-  bin:
-    prettier: bin-prettier.js
-  checksum: 21b9408476ea1c544b0e45d51ceb94a84789ff92095abb710942d780c862d0daebdb29972d47f6b4d0f7ebbfb0ffbf56cc2cfa3e3e9d1cca54864af185b15b66
   languageName: node
   linkType: hard
 
@@ -3442,16 +3432,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"superstring@npm:^2.4.4":
-  version: 2.4.4
-  resolution: "superstring@npm:2.4.4"
-  dependencies:
-    nan: ^2.14.2
-    node-gyp: latest
-  checksum: ac40e6624e48f7b5ff0bb36a406598eb8c357fd2f084133aa76084f1b251f483a94e99c3ac1c70d10566ade2de6ecaf3a27da8e2736643b1072e7d208fdb4320
-  languageName: node
-  linkType: hard
-
 "supports-color@npm:8.1.1, supports-color@npm:^8.0.0":
   version: 8.1.1
   resolution: "supports-color@npm:8.1.1"
@@ -3811,17 +3791,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vscode-jsonrpc@npm:6.0.0":
-  version: 6.0.0
-  resolution: "vscode-jsonrpc@npm:6.0.0"
-  checksum: 3a67a56f287e8c449f2d9752eedf91e704dc7b9a326f47fb56ac07667631deb45ca52192e9bccb2ab108764e48409d70fa64b930d46fc3822f75270b111c5f53
-  languageName: node
-  linkType: hard
-
-"vscode-jsonrpc@npm:6.1.0-next.2":
-  version: 6.1.0-next.2
-  resolution: "vscode-jsonrpc@npm:6.1.0-next.2"
-  checksum: 9fe6c549629826daa845fdf0e99dc0cd59ee4fac476bc1f7923dc7ff6aafdc3d439870a0b8154ffdd39de5a22f7629543a0a3bdac51f5c7bbb079901d4b571af
+"vscode-jsonrpc@npm:8.0.1":
+  version: 8.0.1
+  resolution: "vscode-jsonrpc@npm:8.0.1"
+  checksum: bf88444bf7523614c799fe66f9576a5610d98632d5fe2745beb49bd1c2d8dafe801a1c047fea0c9f10aec2c5fa568863b4bb0048dba09b00ba58ebb727544468
   languageName: node
   linkType: hard
 
@@ -3843,23 +3816,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vscode-languageserver-protocol@npm:3.16.0":
-  version: 3.16.0
-  resolution: "vscode-languageserver-protocol@npm:3.16.0"
+"vscode-languageserver-protocol@npm:3.17.1":
+  version: 3.17.1
+  resolution: "vscode-languageserver-protocol@npm:3.17.1"
   dependencies:
-    vscode-jsonrpc: 6.0.0
-    vscode-languageserver-types: 3.16.0
-  checksum: ac30cbe4b778344f7b93defbaa1332dcb5a5a3a0afda6b88618a9ed44093c1ae1d2f11548bdcff42a73bb46943df025d4fe721559144dd7bf25ae60663aabe06
-  languageName: node
-  linkType: hard
-
-"vscode-languageserver-protocol@npm:3.17.0-next.5":
-  version: 3.17.0-next.5
-  resolution: "vscode-languageserver-protocol@npm:3.17.0-next.5"
-  dependencies:
-    vscode-jsonrpc: 6.1.0-next.2
-    vscode-languageserver-types: 3.17.0-next.1
-  checksum: 1a9f3491fe898f23c602565d4f004bd9145e892a43cab8d930610b38437fae9d693948f7b2cc28dec36e8ad812b7c5d87bc480a1b74738709b2095c72758dc44
+    vscode-jsonrpc: 8.0.1
+    vscode-languageserver-types: 3.17.1
+  checksum: e1dd28e7dc7bbcfececd56ace1f271eadf70b014e4bc091e04c509324a68a005f3515eb77611c507bf9193f9dbf0f0e04d723349cbc8c6827e844ae701f465ee
   languageName: node
   linkType: hard
 
@@ -3880,17 +3843,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vscode-languageserver-types@npm:3.16.0":
-  version: 3.16.0
-  resolution: "vscode-languageserver-types@npm:3.16.0"
-  checksum: 7a44fb10b9fbeb9529f832337b7f0430fc6275d62945b86851d425a950e22da3917ef5f6c552688191769dd1eae047c6ee9ec3d9f2280498353007c2dfe0725c
-  languageName: node
-  linkType: hard
-
-"vscode-languageserver-types@npm:3.17.0-next.1":
-  version: 3.17.0-next.1
-  resolution: "vscode-languageserver-types@npm:3.17.0-next.1"
-  checksum: 777269e9936ded31b6e55eb8f9381174a627b01504f426e86225f776339e2c56152c682623dc7beb3d49d0a58376d6ea7fb4ae1057c68426d758b74e3c6efa70
+"vscode-languageserver-types@npm:3.17.1":
+  version: 3.17.1
+  resolution: "vscode-languageserver-types@npm:3.17.1"
+  checksum: ceb4145dfd840e026a51a6059af6ca2ced606763d945ab24851b1871bf8614f12e7f6fdb1f865ba6ea26f62db066ef188b183b1c830e0f38f28e08b584136464
   languageName: node
   linkType: hard
 
@@ -3901,14 +3857,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vscode-languageserver@npm:7.1.0-next.4":
-  version: 7.1.0-next.4
-  resolution: "vscode-languageserver@npm:7.1.0-next.4"
+"vscode-languageserver@npm:8.0.2":
+  version: 8.0.2
+  resolution: "vscode-languageserver@npm:8.0.2"
   dependencies:
-    vscode-languageserver-protocol: 3.17.0-next.5
+    vscode-languageserver-protocol: 3.17.2
   bin:
     installServerIntoExtension: bin/installServerIntoExtension
-  checksum: bf3305b22c11c847ed8c8c8274ec3f0dd99731f39e184f54f67f070eb9fafb274de42378134e533c42655ff304bb4e1cf28bffdbaca2a093d88054c4d2160b4a
+  checksum: f564417bf08f5400e8381b6d0defb4e7242a04525696b1728b05524b89932047af625fac07715b4d36307e1de599cbef54d240c15101fe831aaface431f21e1b
   languageName: node
   linkType: hard
 
@@ -3957,7 +3913,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"vscode-uri@npm:^3.0.2, vscode-uri@npm:~3.0.0":
+"vscode-uri@npm:^3.0.2, vscode-uri@npm:~3.0.3":
   version: 3.0.3
   resolution: "vscode-uri@npm:3.0.3"
   checksum: 683bf9de835c3cef0b51c104a4949bf746148ded7c2287ebafcc506d20aa0e90b99385a972dba8132903420dba67fc33a5e146e30212c4a6b3ca5d74d1f95702
@@ -3971,6 +3927,13 @@ __metadata:
     glob-to-regexp: ^0.4.1
     graceful-fs: ^4.1.2
   checksum: 23d4bc58634dbe13b86093e01c6a68d8096028b664ab7139d58f0c37d962d549a940e98f2f201cecdabd6f9c340338dc73ef8bf094a2249ef582f35183d1a131
+  languageName: node
+  linkType: hard
+
+"web-tree-sitter@npm:^0.20.5":
+  version: 0.20.7
+  resolution: "web-tree-sitter@npm:0.20.7"
+  checksum: f2949a679bbca5ecb225ab26a67ff99e6e3907fa905c6bd62bfe6d2cfa216347f8cc481efcd32f181cb6b964bc03c42f9611e16da0825bff43de389b17ff9f7f
   languageName: node
   linkType: hard
 
