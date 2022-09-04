@@ -5,23 +5,29 @@ import { PropertyMappingMode, SerializedConfigSeeker } from '../../../lib/serial
 import { CompletionItem, CompletionItemKind, CompletionList, InsertTextFormat, LRUCache, Range, TextEdit } from 'vscode-languageserver';
 import { nodeToVsRange } from '../../../lib/parserutils';
 import { getCollectionElementType, parseTypeName } from '../../../lib/dotnetUtils';
-import { nullish } from '../../../utils';
+import type { nullish } from '../../../utils';
+import { createDotvvmControlInfoProvider, DotvvmControlInfoProvider, PropertyCompletionInfo } from '../../../lib/dotvvmControlInformation';
+import { count } from 'console';
 
 
 
 
 export class DotvvmTagCompletion
 {
-	constructor(public config: SerializedConfigSeeker) { }
+	private controlInformation: DotvvmControlInfoProvider
+	constructor(public config: SerializedConfigSeeker)
+	{
+		this.controlInformation = createDotvvmControlInfoProvider(this.config)
+	}
 
-	
 	private getExpectedBaseType(
 		containingProperty: ResolvedPropertyInfo | undefined): string {
 		let baseType: string | undefined = "DotVVM.Framework.Controls.DotvvmControl"
 		
 		if (containingProperty) {
-			const pType = containingProperty.kind == "group" ? containingProperty.propertyGroup.type :
-						containingProperty.kind == "property" ? containingProperty.dotvvmProperty.type : null
+			const pType =
+				containingProperty.kind == "group" ? containingProperty.propertyGroup.type :
+				containingProperty.kind == "property" ? containingProperty.dotvvmProperty.type : null
 			if (pType) {
 				const t = parseTypeName(pType)
 
@@ -34,6 +40,37 @@ export class DotvvmTagCompletion
 	
 	}
 
+	private static createPropertySnippet(name: string, prop: PropertyCompletionInfo, counter: { i: number }): string {
+		let result = name
+		if (prop.noValue) {
+			return result + " "
+		}
+
+		result += "="
+		if (prop.onlyBindings === true) {
+			if (prop.autocompleteBinding)
+				result += ("${" + counter.i++ + ":" + prop.autocompleteBinding + "}: ${" + counter.i++ + "}")
+			else 
+				result += "{$" + counter.i++ + "}"
+			return result + " "
+		}
+
+		if (prop.autocompleteValue != null) {
+			const addQuotes = prop.hasQuotes ?? /\W/.test(prop.autocompleteValue)
+			if (addQuotes) result += '"'
+
+			result += "${" + counter.i++ + ":" + prop.autocompleteValue + "}"
+
+			if (addQuotes) result += '"'
+			return result + " "
+		}
+
+		if (prop.hasQuotes)
+			return result + '"' + "$" + counter.i++ + '" '
+
+		return result + "$" + counter.i++ + " "
+	}
+
 	private createControlCompletion(
 		currentElementNode: StartTagNode | SelfClosingTagNode | undefined,
 		tag: string,
@@ -41,20 +78,22 @@ export class DotvvmTagCompletion
 		control: ResolveControlResult,
 		completeEndTag: boolean
 	): CompletionItem {
-		const requiredProperties =
-			!control.type ? [] :
-			Array.from(res.listProperties(this.config, control.type, "Attribute")).filter(p => p.required)
+		const info = this.controlInformation.getControlCompletionInfo(control)
 
 		// autocomplete all required properties which are not present on the tag
-		let i = 1
+		let counter = {i: 1}
 		const requiredPropertiesSnippet =
-			requiredProperties.length == 0 ? "" :
-			requiredProperties
-				.filter(p => currentElementNode?.attributeNodes.find(a => a.nameNode.text == p.name) == null)
-				.map(p => `${p.name}=${p.isCommand ?     '{${' + i++ + ':staticCommand}: $' + i++ + '}' :
-							p.onlyBindings ?  '{value: $' + i++ + '}' :
-							p.onlyHardcoded ? '"$' + i++ + '"' :
-											'$' + i++} `).join("") + "$0"
+			info.autoProperties == null || info.autoProperties.length == 0 ? "" :
+			info.autoProperties
+				.filter(p => currentElementNode?.attributeNodes.find(a => a.nameNode.text.toLowerCase() == p.toLowerCase()) == null)
+				.map(pName => {
+					const p = res.findProperty(this.config, control.type!, pName)
+					if (p == null) return pName + "=$" + counter.i++ + " "
+					if (p.mappingMode == "InnerElement") return "" // TODO: auto-add inner elements
+
+					const property = this.controlInformation.getPropertyCompletionInfo(p)
+					return DotvvmTagCompletion.createPropertySnippet(pName, property, counter)
+				}).join("") + "$" + counter.i++
 		
 		return {
 			label: tag,

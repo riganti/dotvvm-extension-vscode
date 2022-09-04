@@ -11,11 +11,12 @@ export type PropertyMappingMode = "Exclude" | "Attribute" | "InnerElement" | "Bo
 
 export type DotvvmPropertyInfo = {
     type: string
-    dataContextChange?: any[]
-    dataContextManipulation?: any[]
+    dataContextChange?: DataContextChangeAttribute[]
+    dataContextManipulation?: any
     isValueInherited?: boolean
     mappingName: string
     mappingMode?: PropertyMappingMode
+    defaultValue?: any
     required?: boolean
     onlyBindings?: boolean,
     onlyHardcoded?: boolean,
@@ -26,6 +27,12 @@ export type DotvvmPropertyInfo = {
     capabilityPrefix?: string
     isCompileTimeOnly?: boolean
     isAttached?: boolean
+}
+
+export type DataContextChangeAttribute = {
+    $type: string
+    PropertyDependsOn?: string[]
+    Order?: number
 }
 
 export type DotvvmPropertyGroupInfo = {

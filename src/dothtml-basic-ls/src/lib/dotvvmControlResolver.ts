@@ -213,12 +213,23 @@ function getDotvvmPropertyByFullName(config: SerializedConfigSeeker, name: strin
 	}
 }
 
-export function* listProperties(config: SerializedConfigSeeker, control: FullControlInfo, context: PropertyMappingMode | null = null): Iterable<NamedDotvvmPropertyInfo> {
+export function findProperty(config: SerializedConfigSeeker, control: FullControlInfo, propertyName: string): NamedDotvvmPropertyInfo | undefined {
+	for (const [name, p] of Object.entries(control.properties)) {
+		if (name == propertyName)
+			return { ...p, name, declaringType: control.fullName }
+	}
 	const baseControl = control.baseType && findControl(config, control.baseType)
+	if (baseControl)
+		return findProperty(config, baseControl, propertyName)
+	
+}
+
+export function* listProperties(config: SerializedConfigSeeker, control: FullControlInfo, context: PropertyMappingMode | null = null): Iterable<NamedDotvvmPropertyInfo> {
 	for (const [name, p] of Object.entries(control.properties)) {
 		if (isCompatibleMappingMode(p.mappingMode, context))
-			yield { ...p, name, declaringType: control.fullName }
+		yield { ...p, name, declaringType: control.fullName }
 	}
+	const baseControl = control.baseType && findControl(config, control.baseType)
 	if (baseControl)
 		yield* listProperties(config, baseControl, context)
 }

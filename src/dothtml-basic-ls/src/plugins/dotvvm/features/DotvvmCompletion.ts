@@ -217,6 +217,4 @@ export class DotvvmCompletion {
 
         return null
     }
-
-
 }
