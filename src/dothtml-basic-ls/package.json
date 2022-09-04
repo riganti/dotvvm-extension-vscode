@@ -24,7 +24,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/sveltejs/language-tools.git"
+        "url": "git+https://github.com/riganti/dotvvm-extension-vscode.git"
     },
     "keywords": [
         "dotvvm",
@@ -32,8 +32,19 @@
         "editor",
         "language-server"
     ],
-    "author": "James Birtles <jameshbirtles@gmail.com> and the Svelte Language Tools contributors",
-    "license": "MIT",
+    "contributors": [
+		{
+			"name": "DotVVM team and contributors"
+		},
+		{
+			"name": "James Birtles",
+			"email": "jameshbirtles@gmail.com"
+		},
+		{
+			"name": "Svelte Language Tools contributors"
+		}
+	],
+    "license": "Apache-2.0",
     "engines": {
         "node": ">= 12.0.0"
     },

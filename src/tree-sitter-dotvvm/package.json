@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "description": "Tree-sitter based parser of DotVVM HTML-like markup",
   "main": "bindings/node",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "build": "tree-sitter generate && tree-sitter build-wasm && tsc -p . && node-gyp build && yarn run build-types",
     "test": "tree-sitter generate && yarn run build-types && tree-sitter test",
