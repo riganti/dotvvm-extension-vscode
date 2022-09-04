@@ -6,6 +6,7 @@ import { nullish } from "../utils"
 export type DotnetType = {
 	namespace: string
 	name: string
+	nongenericName?: string
 	assembly: string | null
 	fullName: string
 } & (
@@ -100,6 +101,7 @@ function parseSuffixes(type: DotnetType, rest: string): { type: DotnetType, rest
 			namespace,
 			assembly,
 			typeArgs,
+			nongenericName: name,
 			name: `${name}[${typeArgs.map(t => '[' + t.name + ']').join(',')}]`,
 			fullName: `${fullName}[${typeArgs.map(t => '[' + t.fullName + ']').join(',')}]`
 		}

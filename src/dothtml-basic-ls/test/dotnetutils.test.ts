@@ -59,6 +59,7 @@ describe('dotnet utils', () => {
                 fullName: 'System.Nullable`1[[System.Boolean]]',
                 kind: 'generic',
                 name: 'Nullable`1[[Boolean]]',
+                nongenericName: "Nullable`1",
                 namespace: 'System',
                 typeArgs: [ {
                     assembly: 'CoreLibrary',
@@ -77,6 +78,7 @@ describe('dotnet utils', () => {
                 kind: 'generic',
                 name: 'Dictionary`2[[String],[String]]',
                 namespace: 'System.Collections.Generic',
+                nongenericName: "Dictionary`2",
                 typeArgs: [ {
                     assembly: 'CoreLibrary',
                     fullName: 'System.String',

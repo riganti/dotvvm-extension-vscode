@@ -47,11 +47,16 @@ export class DotvvmTagCompletion
 		}
 
 		result += "="
-		if (prop.onlyBindings === true) {
-			if (prop.autocompleteBinding)
-				result += ("${" + counter.i++ + ":" + prop.autocompleteBinding + "}: ${" + counter.i++ + "}")
+		if (prop.onlyBindings === true || prop.autocompleteBinding) {
+			if (prop.autocompleteBinding && prop.bindingTypes?.length == 1)
+				result += ("{" + prop.autocompleteBinding + ": ${" + counter.i++ + "}}")
+
+			else if (prop.autocompleteBinding)
+				result += ("{${" + counter.i++ + ":" + prop.autocompleteBinding + "}: ${" + counter.i++ + "}}")
+
 			else 
 				result += "{$" + counter.i++ + "}"
+
 			return result + " "
 		}
 
@@ -93,13 +98,17 @@ export class DotvvmTagCompletion
 
 					const property = this.controlInformation.getPropertyCompletionInfo(p)
 					return DotvvmTagCompletion.createPropertySnippet(pName, property, counter)
-				}).join("") + "$" + counter.i++
+				}).join("")
+
+		const ending =
+			completeEndTag && info.selfClosing ? `$0 />` :
+			completeEndTag ? `>$0</${tag}>` : '$0'
 		
 		return {
 			label: tag,
 			documentation: description,
 			insertTextFormat: InsertTextFormat.Snippet,
-			insertText: tag + " " + requiredPropertiesSnippet + (completeEndTag ? `>$0</${tag}>` : '$0'),
+			insertText: tag + " " + requiredPropertiesSnippet + ending,
 			kind: control.kind == "code" ? CompletionItemKind.Class : CompletionItemKind.Module
 		}
 	}
