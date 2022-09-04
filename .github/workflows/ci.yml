@@ -1,0 +1,35 @@
+name: CI
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+          cache: 'yarn'
+      - name: Restore dependencies and build packages
+        run: build.sh
+        working-directory: src
+        
+      - name: Run tree-sitter tests
+        run: yarn test
+        working-directory: src/tree-sitter-dotvvm
+        
+      - name: Run language server tests
+        run: yarn test
+        working-directory: src/dothtml-basic-ls
+        
+      - name: Prepare VS Code extension tests
+        run: yarn pretest
+        working-directory: src/dotvvm-vscode
+      - name: Run VS Code extension tests
+        run: yarn test
+        working-directory: src/dotvvm-vscode
