@@ -5,7 +5,7 @@
   "main": "bindings/node",
   "license": "MIT",
   "scripts": {
-    "build": "tree-sitter generate && tsc -p . && node-gyp build && yarn run build-types",
+    "build": "tree-sitter generate && tsc -p . && node-gyp configure && node-gyp build && yarn run build-types",
     "test": "tree-sitter generate && yarn run build-types && tree-sitter test",
     "build-types": "node ./build/src/build-typescript-nodes.js ./src > src/node-types.d.ts"
   },
