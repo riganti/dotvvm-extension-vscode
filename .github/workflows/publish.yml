@@ -9,11 +9,14 @@ jobs:
         os: [windows-latest, ubuntu-latest, macos-latest]
         include:
           - os: windows-latest
-            binary: dotvvm-language-server-windows.exe
+            binary: dotvvm-language-server.exe
+            output-name: dotvvm-language-server-x64-win.exe
           - os: ubuntu-latest
-            binary: dotvvm-language-server-linux
+            binary: dotvvm-language-server
+            output-name: dotvvm-language-server-x64-linux
           - os: macos-latest
-            binary: dotvvm-language-server-macos
+            binary: dotvvm-language-server
+            output-name: dotvvm-language-server-x64-macos
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -35,7 +38,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: dothtml-basic-ls-binaries
+          name: ${{ matrix.output-name }}
           path: src/dothtml-basic-ls/dist/${{ matrix.binary }}
 
   build-package:

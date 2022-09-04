@@ -1,4 +1,5 @@
 import * as path from 'path';
+import * as fs from 'fs'
 import {
     commands,
     ExtensionContext,
@@ -52,16 +53,13 @@ export function activateLS(context: ExtensionContext) {
 }
 
 export function activateLanguageServer(context: ExtensionContext) {
-    console.log("1")
-
     const runtimeConfig = workspace.getConfiguration('dotvvm.language-server');
 
     const { workspaceFolders } = workspace;
     const rootPath = Array.isArray(workspaceFolders) ? workspaceFolders[0].uri.fsPath : undefined;
-    console.log("2")
 
     const tempLsPath = runtimeConfig.get<string>('ls-path');
-    const runWithNode = runtimeConfig.get<boolean>('run-with-node');
+    const runWithNode: boolean | undefined = runtimeConfig.get<boolean>('run-with-node');
     // Returns undefined if path is empty string
     // Return absolute path if not already
     const lsPath =
@@ -70,14 +68,22 @@ export function activateLanguageServer(context: ExtensionContext) {
                 ? tempLsPath
                 : path.join(rootPath as string, tempLsPath)
             : undefined;
-    console.log("3")
-
-    console.log("4")
+    
 
     // const serverModule = eval("require.resolve(lsPath || 'dothtml-basic-ls/bin/server.js')");
+    const serverDir = path.dirname(eval("require.resolve((lsPath || 'dothtml-basic-ls/dist') + '/startServer.js')"));
     const platform = process.platform == "linux" ? "linux" : process.platform == "darwin" ? "macos" : "win.exe";
-    const serverPath = eval("require.resolve(lsPath || 'dothtml-basic-ls/dist/dotvvm-language-server-'+platform)");
-    const nodeServerPath = eval("require.resolve(lsPath || 'dothtml-basic-ls/bin/server.js')");
+
+    const serverPathCandidates = [
+        path.join(serverDir, 'dotvvm-language-server-' + process.arch + '-' + platform),
+        path.join(serverDir, 'dotvvm-language-server-' + platform),
+        path.join(serverDir, 'dotvvm-language-server'),
+    ]
+    const serverPath = serverPathCandidates.find(fs.existsSync)
+    if (!serverPath) {
+        throw new Error("Could not find dotvvm-language-server executable. Tried: " + serverPathCandidates.join(", "))
+    }
+    const nodeServerPath = path.join(serverDir, 'startServer.js')
     console.log('Loading server from ', serverPath);
 
     const runExecArgv: string[] = [];

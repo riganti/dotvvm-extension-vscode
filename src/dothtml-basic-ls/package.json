@@ -6,19 +6,21 @@
     "typings": "dist/src/index",
     "scripts": {
         "test": "cross-env TS_NODE_TRANSPILE_ONLY=true mocha --require test/testinit.js --require ts-node/register \"test/**/*.ts\" --exclude \"test/**/*.d.ts\"",
-        "build": "tsc && pkg .",
+        "build": "tsc && pkg . --targets host",
         "debug-build": "tsc",
         "debug-watch": "tsc --watch",
         "prepublishOnly": "npm run build",
         "watch": "tsc -w"
     },
     "bin": {
-        "dotvvmserver": "bin/server.js"
+        "dotvvmserver": "dist/startServer.js"
     },
     "pkg": {
         "assets": [
             "node_modules/web-tree-sitter/tree-sitter.wasm",
-            "node_modules/tree-sitter-dotvvm/tree-sitter-dotvvm.wasm"
+            "node_modules/tree-sitter-dotvvm/tree-sitter-dotvvm.wasm",
+            "./data/*.json",
+            "./data/*.xml"
         ],
         "outputPath": "dist"
     },
