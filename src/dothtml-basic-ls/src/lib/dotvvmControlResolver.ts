@@ -27,7 +27,7 @@ export type NamedDotvvmPropertyGroupInfo = { name: string, declaringType: string
 
 export function getControlLookupTable(config: SerializedConfigSeeker) {
 	return config.cached("control-lookup", c => {
-		const controls = c.flatMap(c => c.config.markup.controls)
+		const controls = c.flatMap(c => c.config?.markup.controls ?? [])
 
 		const markupControls = new Map<string, MarkupControlRegistrationInfo>()
 		const controlPrefix = new Map<string, CodeControlRegistrationInfo[]>()
@@ -63,9 +63,9 @@ export function findControl(config: SerializedConfigSeeker, type: string | Dotne
 				...c.controls[t.fullName],
 				fullName: t.fullName,
 				name: t.name,
-				properties: c.properties[t.fullName] ?? emptyObject,
-				propGroups: c.propertyGroups[t.fullName] ?? emptyObject,
-				capabilities: c.capabilities[t.fullName] ?? emptyObject
+				properties: c.properties?.[t.fullName] ?? emptyObject,
+				propGroups: c.propertyGroups?.[t.fullName] ?? emptyObject,
+				capabilities: c.capabilities?.[t.fullName] ?? emptyObject
 			}
 		}
 	}
@@ -118,9 +118,9 @@ export type ControlListResult = {
 }
 export function listAllControls(config: SerializedConfigSeeker): ControlListResult[] {
 	return config.cached("all-controls", c => {
-		const controlTypes = choose(unique(c.flatMap(c => Object.keys(c.controls))), parseTypeName)
+		const controlTypes = choose(unique(c.flatMap(c => Object.keys(c.controls ?? emptyObject))), parseTypeName)
 		// console.log("Control types:", controlTypes)
-		const markupMapping = c.flatMap(c => c.config.markup.controls)
+		const markupMapping = c.flatMap(c => c.config?.markup.controls ?? [])
 		const markupControls: ControlListResult[] =
 			choose(markupMapping, m => "tagName" in m ? m : null)
 			.map(c => ({
@@ -200,9 +200,11 @@ function getDotvvmPropertyByFullName(config: SerializedConfigSeeker, name: strin
 	const [controlName, propertyName] = name.split(".")
 	
 	for (const c of Object.values(config.configs)) {
+		if (!c.properties) { continue }
+
 		const fullControlName =
 			Object.keys(c.properties)
-				.find(cName => cName.endsWith("." + controlName) && propertyName in c.properties[cName])
+				.find(cName => cName.endsWith("." + controlName) && propertyName in c.properties![cName])
 		if (fullControlName) {
 			return {
 				name: propertyName,
@@ -236,6 +238,8 @@ export function* listProperties(config: SerializedConfigSeeker, control: FullCon
 
 export function listAttachedProperties(config: SerializedConfigSeeker, context: PropertyMappingMode | null = null): Map<string, NamedDotvvmPropertyInfo[]> {
 	const p = Object.values(config.configs).flatMap(function (c) {
+		if (!c.properties) { return [] }
+
 		let typeList: [string, NamedDotvvmPropertyInfo[]][] =[]
 		for (const [typeName, props] of Object.entries(c.properties)) {
 			let list: NamedDotvvmPropertyInfo[] = []
