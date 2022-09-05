@@ -157,7 +157,7 @@ export function activateLanguageServer(context: ExtensionContext) {
             command: runWithNode === false ? serverPath : "node",
             // module: serverModule,
             transport: TransportKind.pipe,
-            args: runWithNode === false || !nodeServerPath ? runExecArgv : [nodeServerPath, ...debugArgs]
+            args: runWithNode === false || !nodeServerPath ? runExecArgv : [...debugArgs, nodeServerPath]
             // options: debugOptions
         }
     };
