@@ -73,6 +73,27 @@ function findServerBinary(searchPaths: (string | undefined)[]) {
     }
 }
 
+function setExecutableFlag(path: string) {
+    if (process.platform === 'win32') {
+        return;
+    }
+
+    const stat = fs.statSync(path)
+    if ((stat.mode & 0o111) != 0) {
+        return;
+    }
+
+    console.log("The language server binary (", path, ") is not executable. Setting the executable flag.")
+
+    try {
+        const newMode = (stat.mode & 0o777) | 0o111
+
+        fs.chmodSync(path, newMode);
+    } catch (e) {
+        console.log("Failed to set the executable flag:", e)
+    }
+}
+
 export function activateLanguageServer(context: ExtensionContext) {
     const runtimeConfig = workspace.getConfiguration('dotvvm.language-server');
 
@@ -116,8 +137,12 @@ export function activateLanguageServer(context: ExtensionContext) {
     }
     const debugArgs = ['--nolazy', `--inspect=${port}`, `--enable-source-maps`]
 
-    if (runWithNode && !nodeServerPath) {
+    if (runWithNode === true && !nodeServerPath) {
         throw new Error("Could not find dotvvm-language-server startServer.js")
+    }
+
+    if (runWithNode !== false) {
+        setExecutableFlag(serverPath);
     }
 
     const serverOptions: ServerOptions = {
