@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PublishAot>true</PublishAot>
+    <TrimMode>link</TrimMode>
+    <!-- <IlcDisableReflection>true</IlcDisableReflection> -->
+    <NativeLib>Static</NativeLib>
+    <!-- <IlcInstructionSet>skylake</IlcInstructionSet> -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="$(Configuration) == 'Release'">
+    <StripSymbols>true</StripSymbols>
+    <IlcOptimizationPreference>Size</IlcOptimizationPreference>
+    <!-- <IlcGenerateStackTraceData>false</IlcGenerateStackTraceData> -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="DotVVM" Version="4.0.10" />
+    <PackageReference Include="ICSharpCode.Decompiler" Version="7.2.1.6856" />
+    <PackageReference Include="System.Text.Json" Version="6.0.5" />
+  </ItemGroup>
+
+</Project>
