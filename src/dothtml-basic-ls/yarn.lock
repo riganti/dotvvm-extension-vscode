@@ -872,7 +872,7 @@ __metadata:
     web-tree-sitter: ^0.20.5
     why-is-node-running: ^2.2.2
   bin:
-    dotvvmserver: bin/server.js
+    dotvvmserver: dist/startServer.js
   languageName: unknown
   linkType: soft
 

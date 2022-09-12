@@ -1,20 +1,37 @@
 name: Publish
 on:
   workflow_dispatch:
+    inputs:
+      PUBLISH:
+        description: 'Publish the extension to marketplace?'
+        required: true
+        default: false
+        type: boolean
+      PUBLISH_VERSION:
+        description: 'Version to publish - "major", "minor", "patch" or explicit version number'
+        required: true
+        default: 'patch' 
+        type: string
 
 jobs:
   build-native:
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest, macos-latest]
         include:
           - os: windows-latest
-            binary: dotvvm-language-server-windows.exe
+            binary: dotvvm-language-server.exe
+            output-name: dotvvm-language-server-x64-win.exe
           - os: ubuntu-latest
-            binary: dotvvm-language-server-linux
+            binary: dotvvm-language-server
+            output-name: dotvvm-language-server-x64-linux
           - os: macos-latest
-            binary: dotvvm-language-server-macos
+            binary: dotvvm-language-server
+            output-name: dotvvm-language-server-x64-macos
     runs-on: ${{ matrix.os }}
+    env:
+      CXXFLAGS: '--std=c++14'
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v2
@@ -24,27 +41,31 @@ jobs:
           cache-dependency-path: |
             src/tree-sitter-dotvvm/yarn.lock
             src/dothtml-basic-ls/yarn.lock
-      - name: Build language server package
+      - name: Build tree sitter
         run: |
           cd src/tree-sitter-dotvvm
           yarn install --immutable
           yarn build
-          cd ../dothtml-basic-ls
+      - name: Build language server
+        run: |
+          cd src/dothtml-basic-ls
           yarn install --immutable
           yarn build
       - name: Upload artifact
         uses: actions/upload-artifact@v3
         with:
-          name: dothtml-basic-ls-binaries
+          name: ${{ matrix.output-name }}
           path: src/dothtml-basic-ls/dist/${{ matrix.binary }}
 
   build-package:
     runs-on: ubuntu-latest
-    needs: [ build-native-linux, build-native-windows, build-native-macos ]
+    needs: build-native
     steps:
+      - uses: actions/checkout@v3
       - name: Download all artifacts
         uses: actions/download-artifact@v3
-      - uses: actions/checkout@v3
+        with:
+          path: ~/artifacts
       - uses: actions/setup-node@v2
         with:
           node-version: '16'
@@ -53,7 +74,7 @@ jobs:
             src/tree-sitter-dotvvm/yarn.lock
             src/dothtml-basic-ls/yarn.lock
             src/dotvvm-vscode/yarn.lock
-      - name: Build macos version
+      - name: Build
         run: |
           cd src/tree-sitter-dotvvm
           yarn install --immutable
@@ -61,16 +82,25 @@ jobs:
           cd ../dothtml-basic-ls
           yarn install --immutable
           yarn build
-          cp ../../dothtml-basic-ls-binaries/* ./dist/
           cd ../dotvvm-vscode
+          mkdir dist
+          for ls in ~/artifacts/dotvvm-language-server*; do
+              cp "$ls"/dotvvm-language-server* "dist/$(basename "$ls")"
+          done
           yarn install --immutable
           yarn build
       - name: Publish package
         run: |
-          yarn run vsce package
+          yarn run vsce package --no-dependencies
         working-directory: src/dotvvm-vscode
       - name: Upload package
         uses: actions/upload-artifact@v3
         with:
           name: package
           path: src/dotvvm-vscode/*.vsix
+      - name: Publish package
+        if: ${{ inputs.PUBLISH }}
+        run: |
+          yarn run vsce publish '${{ inputs.PUBLISH_VERSION }}' --yarn
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}

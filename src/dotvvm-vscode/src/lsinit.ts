@@ -1,4 +1,5 @@
 import * as path from 'path';
+import * as fs from 'fs'
 import {
     commands,
     ExtensionContext,
@@ -51,17 +52,56 @@ export function activateLS(context: ExtensionContext) {
     };
 }
 
-export function activateLanguageServer(context: ExtensionContext) {
-    console.log("1")
+function findServerBinary(searchPaths: (string | undefined)[]) {
+    const platform = process.platform == "linux" ? "linux" : process.platform == "darwin" ? "macos" : "win.exe";
 
+    const serverNameCandidates = [
+        'dotvvm-language-server-' + process.arch + '-' + platform,
+        'dotvvm-language-server-' + platform,
+        'dotvvm-language-server',
+    ]
+
+    for (const searchPath of searchPaths) {
+        if (!searchPath) { continue }
+
+        for (const n of serverNameCandidates) {
+            const serverPath = path.join(searchPath, n);
+            if (fs.existsSync(serverPath)) {
+                return serverPath;
+            }
+        }
+    }
+}
+
+function setExecutableFlag(path: string) {
+    if (process.platform === 'win32') {
+        return;
+    }
+
+    const stat = fs.statSync(path)
+    if ((stat.mode & 0o111) != 0) {
+        return;
+    }
+
+    console.log("The language server binary (", path, ") is not executable. Setting the executable flag.")
+
+    try {
+        const newMode = (stat.mode & 0o777) | 0o111
+
+        fs.chmodSync(path, newMode);
+    } catch (e) {
+        console.log("Failed to set the executable flag:", e)
+    }
+}
+
+export function activateLanguageServer(context: ExtensionContext) {
     const runtimeConfig = workspace.getConfiguration('dotvvm.language-server');
 
     const { workspaceFolders } = workspace;
     const rootPath = Array.isArray(workspaceFolders) ? workspaceFolders[0].uri.fsPath : undefined;
-    console.log("2")
 
     const tempLsPath = runtimeConfig.get<string>('ls-path');
-    const runWithNode = runtimeConfig.get<boolean>('run-with-node');
+    const runWithNode: boolean | undefined = runtimeConfig.get<boolean>('run-with-node');
     // Returns undefined if path is empty string
     // Return absolute path if not already
     const lsPath =
@@ -70,14 +110,21 @@ export function activateLanguageServer(context: ExtensionContext) {
                 ? tempLsPath
                 : path.join(rootPath as string, tempLsPath)
             : undefined;
-    console.log("3")
 
-    console.log("4")
+    console.log("DIRNAME=", __dirname)
+    
 
     // const serverModule = eval("require.resolve(lsPath || 'dothtml-basic-ls/bin/server.js')");
-    const platform = process.platform == "linux" ? "linux" : process.platform == "darwin" ? "macos" : "win.exe";
-    const serverPath = eval("require.resolve(lsPath || 'dothtml-basic-ls/dist/dotvvm-language-server-'+platform)");
-    const nodeServerPath = eval("require.resolve(lsPath || 'dothtml-basic-ls/bin/server.js')");
+    let serverDir
+    try
+    {
+        serverDir = path.dirname(eval("require.resolve((lsPath || 'dothtml-basic-ls/dist') + '/startServer.js')"));
+    } catch { }
+    const serverPath = findServerBinary([serverDir, __dirname])
+    if (!serverPath) {
+        throw new Error("Could not find dotvvm-language-server executable.")
+    }
+    const nodeServerPath = serverDir && path.join(serverDir, 'startServer.js')
     console.log('Loading server from ', serverPath);
 
     const runExecArgv: string[] = [];
@@ -90,19 +137,27 @@ export function activateLanguageServer(context: ExtensionContext) {
     }
     const debugArgs = ['--nolazy', `--inspect=${port}`, `--enable-source-maps`]
 
+    if (runWithNode === true && !nodeServerPath) {
+        throw new Error("Could not find dotvvm-language-server startServer.js")
+    }
+
+    if (runWithNode !== false) {
+        setExecutableFlag(serverPath);
+    }
+
     const serverOptions: ServerOptions = {
         run: {
             command: runWithNode === true ? "node" : serverPath,
             // module: serverModule,
             transport: TransportKind.pipe,
-            args: runWithNode === true ? [nodeServerPath, ...runExecArgv] : runExecArgv
+            args: runWithNode === true && nodeServerPath ? [nodeServerPath, ...runExecArgv] : runExecArgv
             // options: { execArgv: runExecArgv }
         },
         debug: {
             command: runWithNode === false ? serverPath : "node",
             // module: serverModule,
             transport: TransportKind.pipe,
-            args: runWithNode === false ? runExecArgv : [nodeServerPath, ...debugArgs]
+            args: runWithNode === false || !nodeServerPath ? runExecArgv : [...debugArgs, nodeServerPath]
             // options: debugOptions
         }
     };

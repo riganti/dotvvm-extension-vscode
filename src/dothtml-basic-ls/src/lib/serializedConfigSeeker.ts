@@ -71,19 +71,19 @@ export type ControlRegistrationInfo =
 
 export type DotvvmSerializedConfig = {
     dotvvmVersion: string
-    properties: { [control: string]: {
+    properties?: { [control: string]: {
         [property: string]: DotvvmPropertyInfo
     } }
-    capabilities: { [control: string]: {
+    capabilities?: { [control: string]: {
         [property: string]: DotvvmPropertyInfo
     } }
-    propertyGroups: {[control: string]: {
+    propertyGroups?: {[control: string]: {
         [property: string]: DotvvmPropertyGroupInfo
     } }
-    controls: {
+    controls?: {
         [control: string]: DotvvmControlInfo
     }
-    config: {
+    config?: {
         markup: {
             controls: ControlRegistrationInfo[],
             assemblies: string[],
@@ -142,7 +142,7 @@ export class SerializedConfigSeeker {
             .on('add', (path) => this.onFSEvent(path, FileChangeType.Created))
             .on('unlink', (path) => this.onFSEvent(path, FileChangeType.Deleted))
             .on('change', (path) => this.onFSEvent(path, FileChangeType.Changed));
-        setTimeout(() => this.scheduleTrigger(), 30);
+        setTimeout(() => this.scheduleTrigger(), 100);
     }
 
     private onFSEvent(path: string, type: FileChangeType) {

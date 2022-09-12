@@ -1460,7 +1460,7 @@ __metadata:
     vscode-uri: ~3.0.3
     web-tree-sitter: ^0.20.5
   bin:
-    dotvvmserver: bin/server.js
+    dotvvmserver: dist/startServer.js
   languageName: node
   linkType: soft
 
