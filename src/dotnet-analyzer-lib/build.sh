@@ -21,6 +21,4 @@ dotnetLibs="./bin/$configuration/net7.0/linux-x64/publish/AnalyzerLib.a
   $ilcompiler/framework/libSystem.Security.Cryptography.Native.OpenSsl.a
 "
 
-clang -o bin/test test.c $dotnetLibs \
-  -Wall -pthread -lstdc++ -ldl -lm \
-  -Wl,--require-defined,NativeAOT_StaticInitialization -Wl,--allow-multiple-definition
+clang -o bin/test test.c $dotnetLibs -Wall -pthread -lstdc++ -ldl -lm
