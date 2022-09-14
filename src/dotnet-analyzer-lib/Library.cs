@@ -34,8 +34,10 @@ public static unsafe class Library
     public static int NewContext(
         byte* assembly, byte** paths, int pathCount
     ) => CatchErrors(() => {
+        Console.WriteLine("Creating new context");
         var cx = new AnalyzerContext(UnmarshallString(assembly), UnmarshallStrings(paths, pathCount));
         AnalyzerContext.Register(cx);
+        Console.WriteLine("New context created: " + cx.Id);
         return cx.Id;
     });
 
