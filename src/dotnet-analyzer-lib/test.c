@@ -25,10 +25,10 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    char* assembly = argv[1];
+    const char* assembly = argv[1];
     printf("Loading assembly: %s\n", assembly);
 
-    char* searchPaths[] = {};
+    const char* searchPaths[] = {};
     netanalyzerlib_context_id_t cx = netanalyzerlib_context_new(assembly, searchPaths, 0);
     if (cx < 0)
         printErrorAndExit();

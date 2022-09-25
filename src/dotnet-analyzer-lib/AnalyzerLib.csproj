@@ -9,9 +9,12 @@
     <PublishAot>true</PublishAot>
     <TrimMode>link</TrimMode>
     <!-- <IlcDisableReflection>true</IlcDisableReflection> -->
+    <!-- <IlcTrimMetadata>true</IlcTrimMetadata> -->
     <NativeLib>Static</NativeLib>
     <!-- <IlcInstructionSet>skylake</IlcInstructionSet> -->
     <InvariantGlobalization>true</InvariantGlobalization>
+    <!-- <UseSystemResourceKeys>false</UseSystemResourceKeys>
+    <EventSourceSupport>false</EventSourceSupport> -->
   </PropertyGroup>
 
   <PropertyGroup Condition="$(Configuration) == 'Release'">
@@ -25,5 +28,7 @@
     <PackageReference Include="ICSharpCode.Decompiler" Version="7.2.1.6856" />
     <PackageReference Include="System.Text.Json" Version="6.0.5" />
   </ItemGroup>
+
+  <!-- <ItemGroup><IlcArg Include="- -make-repro-path:/tmp/something-dn-native" /></ItemGroup> -->
 
 </Project>

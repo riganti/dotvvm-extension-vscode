@@ -28,14 +28,14 @@ static void NewAnalyzerContext(const Napi::CallbackInfo& info) {
   Napi::Array searchPathJs = info[1].As<Napi::Array>();
   vector<string> searchPath;
   vector<const char*> searchPathCStrs;
-  for (int i = 0; i < searchPathJs.Length(); i++) {
+  for (uint32_t i = 0; i < searchPathJs.Length(); i++) {
     string path = searchPathJs.Get(i).As<Napi::String>();
     searchPath.push_back(path);
     searchPathCStrs.push_back(searchPath[searchPath.size() - 1].c_str());
   }
 
   printf("calling netanalyzerlib_analyzer_new('%s', ...)\n", mainFile.c_str());
-  for (int i = 0; i < searchPathCStrs.size(); i++) {
+  for (uint32_t i = 0; i < searchPathCStrs.size(); i++) {
     printf("  '%s'\n", searchPathCStrs[i]);
   }
 

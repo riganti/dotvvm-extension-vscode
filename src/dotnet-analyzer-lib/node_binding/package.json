@@ -1,6 +1,7 @@
 {
   "name": "dotnet-analyzer-lib",
   "packageManager": "yarn@3.2.2",
+  "typings": "index.d.ts",
   "dependencies": {
     "cmake-js": "^6.3.2",
     "node-addon-api": "*"
