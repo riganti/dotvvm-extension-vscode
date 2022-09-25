@@ -11,6 +11,7 @@
   "license": "MIT",
   "scripts": {
     "install": "cmake-js compile",
-    "build": "rm -rf build && cmake-js build"
+    "build": "rm -rf build && cmake-js build",
+    "sanity-check": "node test/sanitycheck.mjs"
   }
 }

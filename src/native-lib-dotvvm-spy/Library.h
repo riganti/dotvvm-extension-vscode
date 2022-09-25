@@ -5,31 +5,31 @@ extern "C" {
 #endif
 
 /** Smoke test method: adds numbers */
-int32_t netanalyzerlib_test_add(int32_t a, int32_t b);
+int32_t dotvvmspy_test_add(int32_t a, int32_t b);
 
 /** Returns a newly allocated buffer with error message describing why the last operation failed.
  * 	NULL is returned if no failure occurred.
  *  You are responsible for freeing the memory */
-char* netanalyzerlib_error_get();
+char* dotvvmspy_error_get();
 
-typedef int32_t netanalyzerlib_context_id_t;
+typedef int32_t dotvvmspy_context_id_t;
 
 /** Creates new context - initializes ILSpy's DecompilerTypeSystem
  * */
-netanalyzerlib_context_id_t netanalyzerlib_context_new(const char* mainAssembly, const char** searchPaths, char pathCount);
+dotvvmspy_context_id_t dotvvmspy_context_new(const char* mainAssembly, const char** searchPaths, char pathCount);
 
 /** Frees context and all associated data */
-void netanalyzerlib_context_dispose(netanalyzerlib_context_id_t contextId);
+void dotvvmspy_context_dispose(dotvvmspy_context_id_t contextId);
 
 
 typedef struct {
 	char** type_names;
 	int32_t count;
-} netanalyzerlib_name_list;
+} dotvvmspy_name_list;
 
 /** Returns a list of all types implementing the specified interface */
-netanalyzerlib_name_list* netanalyzerlib_find_implementations(
-	netanalyzerlib_context_id_t contextId,
+dotvvmspy_name_list* dotvvmspy_find_implementations(
+	dotvvmspy_context_id_t contextId,
 	const char* interfaceName,
 	uint32_t searchFlags,
 	int32_t limit

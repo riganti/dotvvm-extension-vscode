@@ -2,6 +2,8 @@ using ICSharpCode.Decompiler.TypeSystem;
 using System;
 using System.Linq;
 
+namespace LibDotvvmSpy;
+
 static class DotvvmUtils
 {
     public static string[] GetInterfaceImplementations(this DecompilerTypeSystem ts, string interfaceName, SymbolSearchFlags flags, int limit)

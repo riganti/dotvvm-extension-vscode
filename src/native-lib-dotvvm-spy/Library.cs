@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace AnalyzerLib;
+namespace LibDotvvmSpy;
 
 // entry point for native code
 public static unsafe class Library
@@ -13,14 +13,14 @@ public static unsafe class Library
     [ThreadStatic]
     static string errorMessage;
 
-    [UnmanagedCallersOnly(EntryPoint = "netanalyzerlib_test_add")]
+    [UnmanagedCallersOnly(EntryPoint = "dotvvmspy_test_add")]
     public static int Add(int a, int b)
     {
         Console.WriteLine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
         return a + b;
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "netanalyzerlib_error_get")]
+    [UnmanagedCallersOnly(EntryPoint = "dotvvmspy_error_get")]
     public static byte* GetError()
     {
         var bytes = utf8.GetByteCount(errorMessage);
@@ -30,7 +30,7 @@ public static unsafe class Library
         return buffer.ptr;
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "netanalyzerlib_context_new")]
+    [UnmanagedCallersOnly(EntryPoint = "dotvvmspy_context_new")]
     public static int NewContext(
         byte* assembly, byte** paths, int pathCount
     ) => CatchErrors(() => {
@@ -42,13 +42,13 @@ public static unsafe class Library
     });
 
 
-    [UnmanagedCallersOnly(EntryPoint = "netanalyzerlib_context_dispose")]
+    [UnmanagedCallersOnly(EntryPoint = "dotvvmspy_context_dispose")]
     public static void DisposeContext(int contextId)
     {
         AnalyzerContext.Get(contextId).Dispose();
     }
 
-    [UnmanagedCallersOnly(EntryPoint = "netanalyzerlib_find_implementations")]
+    [UnmanagedCallersOnly(EntryPoint = "dotvvmspy_find_implementations")]
     public static NameList* FindImplementations(int contextId, byte* interfaceName, uint searchFlags, int limit)
     {
         return CatchErrors<NameList>(() => {

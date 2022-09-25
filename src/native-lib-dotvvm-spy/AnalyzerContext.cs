@@ -7,7 +7,7 @@ using ICSharpCode.Decompiler.Metadata;
 using ICSharpCode.Decompiler.TypeSystem;
 using ICSharpCode.Decompiler.TypeSystem.Implementation;
 
-namespace AnalyzerLib;
+namespace LibDotvvmSpy;
 
 public class AnalyzerContext
 {

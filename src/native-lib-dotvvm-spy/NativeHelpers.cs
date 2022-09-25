@@ -4,7 +4,7 @@ using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace AnalyzerLib;
+namespace LibDotvvmSpy;
 
 static class NativeHelpers
 {

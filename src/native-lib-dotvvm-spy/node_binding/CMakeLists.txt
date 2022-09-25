@@ -33,11 +33,11 @@ set(ILCOMPILER $ENV{HOME}/.nuget/packages/runtime.linux-x64.microsoft.dotnet.ilc
 
 # add_library(hello_library STATIC src/Hello.cpp)
 # add_library(testlib STATIC IMPORTED)
-# set_target_properties(testlib PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../bin/AnalyzerLib.a )
+# set_target_properties(testlib PROPERTIES IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../bin/libDotvvmSpy.a )
 
-  # PRIVATE ${CMAKE_SOURCE_DIR}/../bin/AnalyzerLib.a
+  # PRIVATE ${CMAKE_SOURCE_DIR}/../bin/libDotvvmSpy.a
 # target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB}
-#   ${CMAKE_SOURCE_DIR}/../bin/AnalyzerLib.a
+#   ${CMAKE_SOURCE_DIR}/../bin/libDotvvmSpy.a
 #   ${ILCOMPILER}/sdk/libbootstrapperdll.a
 #   ${ILCOMPILER}/sdk/libRuntime.WorkstationGC.a
 #   ${ILCOMPILER}/framework/libSystem.Native.a
@@ -52,13 +52,13 @@ set(ILCOMPILER $ENV{HOME}/.nuget/packages/runtime.linux-x64.microsoft.dotnet.ilc
 
 # set(CMAKE_EXE_LINKER_FLAGS "-rpath hovno\\\$ORIGIN")
 # add_library(analyzerlib SHARED IMPORTED)
-# set_property(TARGET analyzerlib PROPERTY IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../bin/AnalyzerLib.so)
+# set_property(TARGET analyzerlib PROPERTY IMPORTED_LOCATION ${CMAKE_SOURCE_DIR}/../bin/libDotvvmSpy.so)
 set_target_properties(${PROJECT_NAME} PROPERTIES
         BUILD_WITH_INSTALL_RPATH FALSE
         LINK_FLAGS "-Wl,-rpath,\\\$ORIGIN")
 # set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-Wl,-rpath,hovno")
 
-target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/../bin/libAnalyzerLib.so)
+target_link_libraries(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/../bin/libDotvvmSpy.so)
 
 add_definitions(-DNAPI_VERSION=3)
 
@@ -66,7 +66,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE "node_modules/node-addon-api"
 # target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
 # target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address -fno-omit-frame-pointer)
 
-configure_file(${CMAKE_SOURCE_DIR}/../bin/libAnalyzerLib.so ${CMAKE_BINARY_DIR}/Release/libAnalyzerLib.so COPYONLY)
+configure_file(${CMAKE_SOURCE_DIR}/../bin/libDotvvmSpy.so ${CMAKE_BINARY_DIR}/Release/libDotvvmSpy.so COPYONLY)
 
 # magic from https://github.com/cmake-js/cmake-js#node-api-and-node-addon-api
 if(MSVC AND CMAKE_JS_NODELIB_DEF AND CMAKE_JS_NODELIB_TARGET)
