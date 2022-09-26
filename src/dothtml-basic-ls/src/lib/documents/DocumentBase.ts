@@ -86,6 +86,29 @@ export abstract class ReadableDocument implements TextDocument {
     get lineCount(): number {
         return this.getText().split(/\r?\n/).length;
     }
+
+    getLastNonWhitespaceIndex(startIndex: number) {
+        const text = this.getText();
+        for (let i = startIndex; i >= 0; i--) {
+            if (!/\s/.test(text[i])) return i
+        }
+        return 0
+    }
+    isAtLineEnd(offset: number) {
+        const text = this.getText();
+        while (text[offset] == ' ' || text[offset] == '\t') {
+            offset++
+        }
+        return text[offset] == '\n' || text[offset] == '\r' || offset == text.length
+    }
+    isAtLineStart(offset: number) {
+        offset = offset - 1
+        const text = this.getText();
+        while (text[offset] == ' ' || text[offset] == '\t') {
+            offset--
+        }
+        return text[offset] == '\n' || text[offset] == '\r' || offset == 0
+    }
 }
 
 /**

@@ -48,6 +48,17 @@ public static unsafe class Library
         AnalyzerContext.Get(contextId).Dispose();
     }
 
+    [UnmanagedCallersOnly(EntryPoint = "dotvvmspy_get_assemblies")]
+    public static AssemblyList* GetAssemblies(int contextId)
+    {
+        return CatchErrors<AssemblyList>(() => {
+            var cx = AnalyzerContext.Get(contextId);
+            var assemblies = cx.TypeSystem.Modules.Select(m => m.Name).ToArray();
+            return AssemblyList.MarshallList(assemblies);
+        });
+    }
+
+
     [UnmanagedCallersOnly(EntryPoint = "dotvvmspy_find_implementations")]
     public static NameList* FindImplementations(int contextId, byte* interfaceName, uint searchFlags, int limit)
     {
@@ -56,6 +67,28 @@ public static unsafe class Library
             var t = DotvvmUtils.GetInterfaceImplementations(cx.TypeSystem, UnmarshallString(interfaceName), (DotvvmUtils.SymbolSearchFlags)searchFlags, limit);
             return NameList.MarshallList(t);
         });
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    public struct AssemblyList
+    {
+        public byte** Names;
+        public int Count;
+
+        static public AssemblyList* MarshallList(string[] names)
+        {
+            MarshallStrings(
+                names,
+                out var typeNames, out var buffer,
+                bufferPaddingStart: sizeof(AssemblyList)
+            );
+
+            AssemblyList* result = (AssemblyList*)buffer.ptr;
+            result->Names = (byte**)typeNames.ptr;
+            result->Count = names.Length;
+
+            return result;
+        }
     }
 
     [StructLayout(LayoutKind.Sequential)]

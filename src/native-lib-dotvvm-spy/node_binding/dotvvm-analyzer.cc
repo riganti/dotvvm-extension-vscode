@@ -24,7 +24,10 @@ static void NewAnalyzerContext(const Napi::CallbackInfo& info) {
   printf("preparing dotvvmspy_analyzer_new\n");
 
   
+  auto self = info.This().As<Napi::Object>();
+  self.Set("mainAssembly", info[0]);
   string mainFile = info[0].As<Napi::String>();
+
   Napi::Array searchPathJs = info[1].As<Napi::Array>();
   vector<string> searchPath;
   vector<const char*> searchPathCStrs;
@@ -44,7 +47,6 @@ static void NewAnalyzerContext(const Napi::CallbackInfo& info) {
     ThrowAnalyzerError(env);
   }
 
-  auto self = info.This().As<Napi::Object>();
   self.Set("contextId", Napi::Number::New(env, cx));
 }
 

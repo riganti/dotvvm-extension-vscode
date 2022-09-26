@@ -1,5 +1,5 @@
 {
-  "name": "dotnet-analyzer-lib",
+  "name": "lib-dotvvm-spy",
   "packageManager": "yarn@3.2.2",
   "typings": "index.d.ts",
   "dependencies": {
@@ -8,7 +8,7 @@
   },
   "version": "1.0.0",
   "main": "index.js",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "install": "cmake-js compile",
     "build": "rm -rf build && cmake-js build",
