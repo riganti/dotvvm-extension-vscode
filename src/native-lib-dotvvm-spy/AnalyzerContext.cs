@@ -40,9 +40,9 @@ public class AnalyzerContext
 
     public AnalyzerContext(string mainAssembly, string[] searchDirectories)
     {
-        var main = new PEFile(mainAssembly);
+        var main = new PEFile(mainAssembly, StreamOptions);
         var frameworkVersion = main.DetectTargetFrameworkId();
-        var resolver = new UniversalAssemblyResolver(main.FileName, false, frameworkVersion);
+        var resolver = new UniversalAssemblyResolver(main.FileName, false, frameworkVersion, streamOptions: StreamOptions);
         foreach (var sd in searchDirectories)
             resolver.AddSearchDirectory(sd);
 
@@ -71,4 +71,17 @@ public class AnalyzerContext
             states[Id] = null;
         }
     }
+
+    static AnalyzerContext()
+    {
+        // disable locking on Linux/Darwin to avoid blocking MSBuild
+        AppContext.SetSwitch("System.IO.DisableFileLocking", true);
+    }
+    // prefetch entire files on Windows to avoid locking
+    // on Linux/Darwin, we disable locking, so we can leave it on disk and avoid spending memory
+    private PEStreamOptions StreamOptions =>
+        System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+            ? PEStreamOptions.PrefetchEntireImage
+            : PEStreamOptions.Default;
+
 }
