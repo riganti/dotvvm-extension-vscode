@@ -1,6 +1,7 @@
 import { SerializedConfigSeeker } from "./serializedConfigSeeker"
 import * as res from './dotvvmControlResolver';
 import { emptyObject } from "../utils";
+import { parseTypeName } from "./dotnetUtils";
 
 export type ControlCompletionInfo = {
 	/** true if we don't expect any content of this control */
@@ -26,15 +27,68 @@ export type PropertyCompletionInfo = {
 
 
 const predefinedControls: { [c: string]: ControlCompletionInfo } = {
+	"DotVVM.Framework.Controls.Button": {
+		autoProperties: ["Click"]
+	},
+	"DotVVM.Framework.Controls.LinkButton": {
+		autoProperties: ["Click"]
+	},
+	"DotVVM.Framework.Controls.DataPager": {
+		autoProperties: ["DataSet"]
+	},
+	"DotVVM.Framework.Controls.CheckBox": {
+		autoProperties: ["Checked"],
+		selfClosing: true
+	},
+	"DotVVM.Framework.Controls.ContentPlaceHolder": {
+		autoProperties: ["ID"],
+		selfClosing: true
+	},
+	"DotVVM.Framework.Controls.SpaContentPlaceHolder": {
+		autoProperties: ["ID"],
+		selfClosing: true
+	},
+	"DotVVM.Framework.Controls.Content": {
+		autoProperties: ["ContentPlaceHolderID"]
+	},
+	"DotVVM.Framework.Controls.EmptyData": {
+		autoProperties: ["DataSource"]
+	},
+	"DotVVM.Framework.Controls.HtmlLiteral": {
+		autoProperties: ["Html"],
+		selfClosing: true
+	},
+	"DotVVM.Framework.Controls.Literal": {
+		autoProperties: ["Text"],
+	},
+	"DotVVM.Framework.Controls.Validator": {
+		autoProperties: ["Value"],
+		selfClosing: true
+	},
 }
 
 const predefinedProperties: { [c: string]: PropertyCompletionInfo } = {
 	"DotVVM.Framework.Controls.TextBox.Text": {
+		onlyBindings: true,
 		bindingTypes: ["value"],
 		autocompleteBinding: "value"
+	},
+	"DotVVM.Framework.Controls.Literal.Text": {
+		onlyBindings: true
 	}
 }
 
+const bindingTypeMapping: { [c: string]: string[] } = {
+	"IBinding": ["value", "resource", "staticCommand", "command"],
+	"IValueBinding": ["value"],
+	"IValueBinding`1": ["value"],
+	"ICommandBinding": ["staticCommand", "command"],
+	"ICommandBinding`1": ["staticCommand", "command"],
+	"IStaticValueBinding": ["value", "resource"],
+	"IStaticValueBinding`1": ["value", "resource"],
+	"IStaticCommandBinding": ["staticCommand"],
+	"IStaticCommandBinding`1": ["staticCommand"],
+}
 
 export function createDotvvmControlInfoProvider(
 	config: SerializedConfigSeeker
@@ -44,22 +98,32 @@ export function createDotvvmControlInfoProvider(
 	function getPropertyCompletionInfo(
 		prop: res.NamedDotvvmPropertyInfo
 	): PropertyCompletionInfo {
+		if (prop?.type == null) throw new Error("Missing property type")
+		const predefined = predefinedProperties[prop.declaringType + '.' + prop.name]
+		const type = parseTypeName(prop.type)
+		const isBindingType = (type?.nongenericName ?? type?.name ?? "") in bindingTypeMapping
+
 		const noValue = prop.type == "System.Boolean" && prop.defaultValue === false
-		const onlyBindings = prop.onlyBindings
+		const onlyBindings = predefined?.onlyBindings || isBindingType || Boolean(prop.onlyBindings) || prop.isCommand
 		const bindingTypes =
+			predefined?.bindingTypes ?? (
+			isBindingType ? bindingTypeMapping[type?.nongenericName ?? type?.name!] :
 			prop.isCommand ? [ "staticCommand", "command" ] :
 			prop.onlyHardcoded ? [ "resource" ] :
-			[ "value", "resource" ];
+			[ "value", "resource" ]);
 		const autocompleteBinding =
 			prop.isCommand ? "staticCommand" :
-			prop.onlyBindings ? "value" : undefined;
-		const hasQuotes = undefined // TODO
+			prop.onlyBindings ? "value" :
+			onlyBindings && bindingTypes.length > 0 ? bindingTypes[0] :
+			undefined;
+
+		const hasQuotes =
+			prop.type == "System.String" || type?.kind == "array"
 
 		const autocompleteValue =
 			prop.type == "System.Boolean" && prop.defaultValue === true ? "false" :
 			undefined
 
-		const predefined = predefinedProperties[prop.declaringType + '.' + prop.name]
 		return { noValue, onlyBindings, bindingTypes, autocompleteBinding, autocompleteValue, hasQuotes, ...predefined }
 	}
 	function getAttributeCompletionInfo(
