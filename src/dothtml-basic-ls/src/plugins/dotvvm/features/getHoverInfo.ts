@@ -16,5 +16,6 @@ export function getHoverInfo(
     if (sublang.lang != "html") {
         return null;
     }
-    return { contents: "Some test hover" };
+    // return { contents: "Some test hover" };
+    return null
 }

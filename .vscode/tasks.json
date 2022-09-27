@@ -6,16 +6,32 @@
 		{
 			"type": "npm",
 			"path": "src/dotvvm-vscode",
+			"script": "build",
+			"problemMatcher": "$ts-webpack",
+			// "isBackground": true,
+			// "presentation": {
+			// 	"reveal": "never",
+			// 	"group": "watchers"
+			// },
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
+			"dependsOn": [ "LS-tsc-watch" ]
+		},
+		{
+			"type": "npm",
+			"path": "src/dothtml-basic-ls",
 			"script": "watch",
-			"problemMatcher": "$ts-webpack-watch",
+			"problemMatcher": "$tsc-watch",
 			"isBackground": true,
+			"label": "LS-tsc-watch",
 			"presentation": {
 				"reveal": "never",
 				"group": "watchers"
 			},
 			"group": {
-				"kind": "build",
-				"isDefault": true
+				"kind": "build"
 			},
 		},
 		{
