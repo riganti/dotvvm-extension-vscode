@@ -69,6 +69,19 @@ export function findControl(config: SerializedConfigSeeker, type: string | Dotne
 			}
 		}
 	}
+	// fallback for older dotvvm versions, only look for properties
+	for (const c of Object.values(config.configs)) {
+		if (c.properties && t.fullName in c.properties) {
+			return {
+				assembly: t.assembly ?? "unknown",
+				fullName: t.fullName,
+				name: t.name,
+				properties: c.properties?.[t.fullName] ?? emptyObject,
+				propGroups: c.propertyGroups?.[t.fullName] ?? emptyObject,
+				capabilities: c.capabilities?.[t.fullName] ?? emptyObject
+			}
+		}
+	}
 }
 
 export function resolveControl(config: SerializedConfigSeeker, name: string): ResolveControlResult | undefined {
@@ -118,7 +131,7 @@ export type ControlListResult = {
 }
 export function listAllControls(config: SerializedConfigSeeker): ControlListResult[] {
 	return config.cached("all-controls", c => {
-		const controlTypes = choose(unique(c.flatMap(c => Object.keys(c.controls ?? emptyObject))), parseTypeName)
+		const controlTypes = choose(unique(c.flatMap(c => Object.keys(c.controls ?? c.properties ?? emptyObject))), parseTypeName)
 		// console.log("Control types:", controlTypes)
 		const markupMapping = c.flatMap(c => c.config?.markup.controls ?? [])
 		const markupControls: ControlListResult[] =

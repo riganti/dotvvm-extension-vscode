@@ -160,6 +160,10 @@ export class SerializedConfigSeeker {
     cachedStuff: { [key: string]: any } = {};
 
     private async loadDefaultConfigs(): Promise<void> {
+        if (this.configs["defaultConfig-framework"]) {
+            return
+        }
+
         // TODO: configs for BP, BS, etc.
         Logger.log("Could not find file dotvvm_serialized_config.json.tmp anywhere, using a default config")
         const defaultConfig = await fs.readFile(__dirname +  "/../../../data/defaultConfig-framework.json", "utf8")
@@ -171,14 +175,19 @@ export class SerializedConfigSeeker {
         for (const c of changes) {
             if (c.type == FileChangeType.Created || c.type == FileChangeType.Changed) {
                 promises.push(fs.readFile(c.path, "utf8").then(x => {
-                    this.configs[c.path] = JSON.parse(x);
+                    let conf = JSON.parse(x);
+                    if (!("config" in conf) && "routes" in conf) {
+                        conf = { config: c }
+                    }
+                    this.configs[c.path] = conf;
                 }))
             } else if (c.type == FileChangeType.Deleted) {
                 delete this.configs[c.path];
             }
         }
         await Promise.all(promises);
-        if (Object.keys(this.configs).filter(c => c != "defaultConfig-framework").length == 0) {
+        if (Object.entries(this.configs)
+            .filter(([k, c]) => c.controls != null && c.properties != null && c.config != null && k != "defaultConfig-framework").length == 0) {
             await this.loadDefaultConfigs()
         } else {
             delete this.configs["defaultConfig-framework"]
