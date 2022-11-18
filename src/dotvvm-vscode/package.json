@@ -3,6 +3,7 @@
   "displayName": "DotVVM for Visual Studio Code",
   "description": "DotVVM support for VS Code",
   "version": "0.0.1",
+  "icon": "img/dotvvm-logo.png",
   "publisher": "TomasHerceg",
   "repository": {
     "type": "git",
