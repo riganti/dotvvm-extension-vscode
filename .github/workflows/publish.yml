@@ -101,7 +101,7 @@ jobs:
       - name: Publish package
         if: ${{ inputs.PUBLISH }}
         run: |
-          yarn run vsce publish '${{ inputs.PUBLISH_VERSION }}' --yarn
+          yarn run vsce publish '${{ inputs.PUBLISH_VERSION }}' --no-dependencies --yarn
         working-directory: src/dotvvm-vscode
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
