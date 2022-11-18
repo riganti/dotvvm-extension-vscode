@@ -91,7 +91,7 @@ jobs:
           yarn build
       - name: Publish package
         run: |
-          yarn run vsce package --no-dependencies
+          yarn run vsce package '${{ inputs.PUBLISH_VERSION }}' --no-dependencies
         working-directory: src/dotvvm-vscode
       - name: Upload package
         uses: actions/upload-artifact@v3
