@@ -3,7 +3,7 @@ This extension adds support for **DotVVM** projects in **Visual Studio Code**:�
 *   Syntax Highlighting and IntelliSense in DOTHTML markup files
 *   Design-time error checking
 
-We also have separate packages for **[Visual Studio 2019](https://marketplace.visualstudio.com/items?itemName=TomasHerceg.DotVVM-VSExtension2019)** and **[Visual Studio 2022](https://marketplace.visualstudio.com/items?itemName=TomasHerceg.DotVVM-VSExtension2022)**.
+We also have separate packages for **[Visual Studio 2022](https://marketplace.visualstudio.com/items?itemName=TomasHerceg.DotVVM-VSExtension2022)** and **[Visual Studio 2019](https://marketplace.visualstudio.com/items?itemName=TomasHerceg.DotVVM-VSExtension2019)**.
 
 ## What is DotVVM?
 
@@ -67,16 +67,16 @@ You just need to know **C#, HTML and CSS**. For most scenarios, you don't have t
 1.  Install this extension.
 2.  Read the [documentation](http://www.dotvvm.com/docs).
 
-## Need More?
+## Commercial Products
 
-### We have Commercial Controls!
+### Component Packages
 *   [Bootstrap for DotVVM](https://www.dotvvm.com/landing/bootstrap-for-dotvvm) - more than 40 controls that make using Bootstrap easier and your code much cleaner
 *   [DotVVM Business Pack](https://www.dotvvm.com/products/dotvvm-business-pack) - Enterprise ready controls for Line of business web apps
 
-### We have a more Advanced DotVVM Extension!
+### Advanced Extension for Visual Studio 2022 and 2019
 *   [DotVVM for Visual Studio](https://www.dotvvm.com/landing/dotvvm-for-visual-studio-extension) - project templates, Intellisense for bindings, advanced design-time diagnostics, quick refactorings, navigation shortcuts and many more
 
-## [](https://github.com/riganti/dotvvm#more-info)More Info
+## [More Info](https://github.com/riganti/dotvvm#more-info)
 
 *   [DotVVM.com](https://www.dotvvm.com/)
 *   [DotVVM Blog](https://www.dotvvm.com/blog)
