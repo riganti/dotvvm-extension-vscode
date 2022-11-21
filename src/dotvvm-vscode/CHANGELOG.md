@@ -1,9 +1,7 @@
-# Change Log
+# Changes
 
-All notable changes to the "dotvvm-vscode" extension will be documented in this file.
-
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
-
-## [Unreleased]
-
-- Initial release
+## 0.9.0 (first version after a major rewrite)
+* Added DotVVM language server
+* Added auto-completion for controls and properties
+* Updated dothtml grammar for DotVVM 4.0
+* Added expand selection support
