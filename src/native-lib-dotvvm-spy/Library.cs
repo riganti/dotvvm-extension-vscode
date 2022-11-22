@@ -16,7 +16,6 @@ public static unsafe class Library
     [UnmanagedCallersOnly(EntryPoint = "dotvvmspy_test_add")]
     public static int Add(int a, int b)
     {
-        Console.WriteLine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile));
         return a + b;
     }
 

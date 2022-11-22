@@ -11,7 +11,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "install": "cmake-js compile",
-    "build": "rm -rf build && cmake-js build",
+    "build": "rm -rf build && cmake-js build --silent --log-level warn",
     "sanity-check": "node test/sanitycheck.mjs"
   }
 }

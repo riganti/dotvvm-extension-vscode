@@ -9,7 +9,7 @@ fi
 
 echo 'If the dotnet build fails on a cryptic error, use `rm -rf bin obj`, it often fixes the problem'
 
-dotnet publish /p:NativeLib=Shared /p:SelfContained=true -r linux-x64 -c $configuration
+dotnet publish /p:NativeLib=Shared /p:SelfContained=true -r linux-x64 -c $configuration --verbosity q
 
 cp ./bin/$configuration/net7.0/linux-x64/publish/LibDotvvmSpy.so bin/libDotvvmSpy.so
 
