@@ -43,7 +43,7 @@ function formatCsharpType(type: DotnetType, snippetCounter = { i:1 }): string {
         const name = type.name.replace(/`[0-9]+$/, '')
         return `${name}<${type.typeArgs.map(t => formatCsharpType(t, snippetCounter)).join(", ")}>`
     } else if (type.kind == "simple") {
-        const genericArgsM = /`[0-9]+$/.exec(type.fullName)
+        const genericArgsM = /`(?<num>[0-9]+)$/.exec(type.fullName)
         if (genericArgsM) {
             // open generics, replace with snippets
             let name = type.fullName.replace(/`(?<num>[0-9]+)$/, '')
@@ -72,9 +72,16 @@ function typeToCompletionItem(type: string | DotnetType): CompletionItem {
         }
         type = ptype
     }
-    let insertText = formatCsharpType(type)
+    let insertText
+    try {
+        insertText = formatCsharpType(type)
+    } catch (e) {
+        Logger.error("Could not format type", type)
+        insertText = type.fullName
+    }
+    const name = type?.name?.replace(/`[0-9]+$/, num => "<" + ",".repeat(Number(num.substring(1)) - 1) + ">")
     return ({
-        label: `${type?.name} (${type?.namespace})`,
+        label: `${name} (${type?.namespace})`,
         insertText,
         insertTextMode: insertText.includes("<$") ? InsertTextFormat.Snippet : InsertTextFormat.PlainText
     })
