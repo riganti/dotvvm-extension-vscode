@@ -19,6 +19,7 @@ clang -o bin/test_dyn test.c ./bin/libDotvvmSpy.so -g -Wall -pthread -lstdc++ -l
   # -g
 
 cd node_binding
+rm -rf build
 yarn install
 yarn build
 yarn sanity-check
