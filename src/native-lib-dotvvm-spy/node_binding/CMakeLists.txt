@@ -34,8 +34,8 @@ endif(WIN32)
 
 if (UNIX)
   message(STATUS "Configuring build for Linux")
-  set(LibDotvvmSpyExecutable libDotvvmSpy.so)
-  set_target_properties(${PROJECT_NAME} PROPERTIES
+  set(LIBDOTVVMSPY_EXECUTABLE_NAME libDotvvmSpy.so)
+  set_target_properties(LibDotvvmSpy PROPERTIES
     IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/../bin/${LIBDOTVVMSPY_EXECUTABLE_NAME}"
     BUILD_WITH_INSTALL_RPATH FALSE
     LINK_FLAGS "-Wl,-rpath,\\\$ORIGIN")
