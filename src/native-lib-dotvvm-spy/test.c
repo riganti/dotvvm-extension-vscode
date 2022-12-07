@@ -5,7 +5,7 @@
 int printErrorAndExit() {
     char* error = dotvvmspy_error_get();
     if (error == NULL) {
-        printf("WTF, no error message");
+        printf("No error message?");
     } else {
         printf(".NET Error: %s", error);
         free(error);

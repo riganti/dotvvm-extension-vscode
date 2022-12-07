@@ -66,11 +66,11 @@ static Napi::Value FindImplementations(const Napi::CallbackInfo& info) {
   int32_t limit = info[2].As<Napi::Number>().Int32Value();
 
   auto result = dotvvmspy_find_implementations(cx, interface.c_str(), flags, limit);
-  if (result == NULL)
+  if (result == nullptr)
     ThrowAnalyzerError(info.Env());
 
   auto list = Napi::Array::New(env);
-  for (int i = 0; i < result->count; i++) {
+  for (size_t i = 0; i < result->count; i++) {
     list.Set(i, Napi::String::New(env, result->type_names[i]));
   }
 

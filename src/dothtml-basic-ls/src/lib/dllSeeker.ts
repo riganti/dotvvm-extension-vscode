@@ -12,14 +12,23 @@ import { parseTypeName } from "./dotnetUtils";
 
 
 var dotvvmspy: undefined | typeof import("lib-dotvvm-spy");
-try {
-    dotvvmspy = require('lib-dotvvm-spy');
+if (process.arch != "x64" || !["win32", "linux"].includes(process.platform)) {
+    Logger.error(`Cannot start lib-dotvvm-spy on ${process.platform}-${process.arch}, it currently only works on x64 Linux/Windows. Some features will be disabled.`);
+}
+else if (process.env["DOTVVM_LS_DISABLE_DOTNET"]) {
+    // mainly for testing that LS works even without this.
+    Logger.error(`DOTVVM_LS_DISABLE_DOTNET is set, some features will be disabled.`)
+}
+else {
+    try {
+        dotvvmspy = require('lib-dotvvm-spy');
 
-    if (dotvvmspy?.sanityCheck() !== true) {
-        throw new Error("Sanity check didn't return true");
+        if (dotvvmspy?.sanityCheck() !== true) {
+            throw new Error("Sanity check didn't return true");
+        }
+    } catch(e) {
+        Logger.error("lib-dotvvm-spy doesn't work, some features will be disabled", e);
     }
-} catch(e) {
-    Logger.error("lib-dotvvm-spy doesn't work, some features will be disabled", e);
 }
 
 export class DllSeeker {

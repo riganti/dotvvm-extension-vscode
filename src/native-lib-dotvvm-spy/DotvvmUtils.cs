@@ -105,6 +105,7 @@ static class DotvvmUtils
             (m.IsAbstract ? SymbolSearchFlags.None : SymbolSearchFlags.NonAbstract);
     }
 
+    [Flags]
     public enum SymbolSearchFlags: uint
     {
         None = 0,

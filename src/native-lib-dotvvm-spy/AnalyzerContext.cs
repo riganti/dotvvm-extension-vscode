@@ -49,14 +49,6 @@ public class AnalyzerContext
         TypeSystem = new DecompilerTypeSystem(main, resolver);
     }
 
-    public void FindType(string name)
-    {
-        var t = this.TypeSystem.FindType(new FullTypeName(name));
-        var handle = GCHandle.Alloc(t, GCHandleType.Pinned);
-        handle.AddrOfPinnedObject();
-        var d = t.GetDefinition();
-    }
-
     public readonly DecompilerTypeSystem TypeSystem;
 
     public void Dispose()
