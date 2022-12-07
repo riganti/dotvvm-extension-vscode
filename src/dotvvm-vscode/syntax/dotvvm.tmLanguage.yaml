@@ -11,11 +11,12 @@ patterns:
 repository:
   scope:
     patterns:
+    - include: '#comments'
     - include: '#directives'
     - include: '#content'
 
   directives:
-    begin: '\A'
+    begin: '^(?=\s*@)' # only start if there is something starting with @
     end: '^(?=\s*[^@\s])' # first non-empty row not starting with @
     name: meta.dotvvm.directives
     patterns:
@@ -23,7 +24,7 @@ repository:
       beginCaptures:
         1: { name: markup.bold.dotvvm.directive.at }
         2: { name: keyword.control.dotvvm.directive.name meta.dotvvm.directives.directive.name }
-      end: '\n'
+      end: '$'
       name: meta.dotvvm.directives.directive
       contentName: meta.dotvvm.directives.directive.value
 
@@ -145,11 +146,13 @@ repository:
   tags-name:
     patterns:
     # DotVVM (`<prefix>:<type>`) elements.
-    - match: '(\w+)(:)(\w[\w0-9:-]*)'
+    - match: '(\w+)(:)(\w[\w0-9:-_]*)'
       captures:
         1: { name: keyword.control.dotvvm }
         2: { name: punctuation.definition.keyword.dotvvm }
         3: { name: entity.name.tag.dotvvm }
+    # Properties, tags with uppercase first letter
+    - { match: '[A-Z][\w0-9:-_.]*', name: meta.tag.property.dotvvm entity.other.attribute-name.element-property }
     # Custom elements. (has a dash, but otherwise is a valid HTML element)
     - { match: '[a-z][\w0-9:]*-[\w0-9:-]*', name: meta.tag.custom.dotvvm entity.name.tag.dotvvm }
     # HTML elements.

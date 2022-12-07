@@ -1,0 +1,7 @@
+# SYNTAX TEST "source.dotvvm" "html markup without directives in the start"
+<a href="abc" > def </a>
+#^ meta.scope.tag.a.dotvvm meta.tag.start.dotvvm
+#   ^^^^ meta.tag.start.dotvvm meta.attribute.href.dotvvm
+#         ^^^ meta.attribute.href.dotvvm string.quoted.dotvvm
+#               ^^^^^ meta.dotvvm.content
+#                      ^ meta.scope.tag.a.dotvvm meta.tag.end.dotvvm
