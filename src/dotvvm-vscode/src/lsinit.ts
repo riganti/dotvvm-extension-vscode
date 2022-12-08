@@ -138,7 +138,7 @@ export function activateLanguageServer(context: ExtensionContext) {
         throw new Error("Could not find dotvvm-language-server startServer.js")
     }
 
-    if (runWithNode !== false) {
+    if (runWithNode !== true) {
         setExecutableFlag(serverPath);
     }
 
