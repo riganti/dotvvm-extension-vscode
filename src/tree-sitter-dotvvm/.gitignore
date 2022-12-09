@@ -12,3 +12,4 @@ tree-sitter-dotvvm.wasm
 *.lib
 *.exp
 dts-tree-sitter
+target

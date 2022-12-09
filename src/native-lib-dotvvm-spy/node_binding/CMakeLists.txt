@@ -29,7 +29,8 @@ if (WIN32)
   set(LIBDOTVVMSPY_EXECUTABLE_NAME libDotvvmSpy.dll)
   set_target_properties(LibDotvvmSpy PROPERTIES
     IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/../bin/${LIBDOTVVMSPY_EXECUTABLE_NAME}"
-    IMPORTED_IMPLIB "${CMAKE_SOURCE_DIR}/../bin/libDotvvmSpy.lib")
+    IMPORTED_IMPLIB "${CMAKE_SOURCE_DIR}/../bin/libDotvvmSpy.lib"
+    IMPORTED_NO_SONAME TRUE)
 endif(WIN32)
 
 if (UNIX)
@@ -37,6 +38,8 @@ if (UNIX)
   set(LIBDOTVVMSPY_EXECUTABLE_NAME libDotvvmSpy.so)
   set_target_properties(LibDotvvmSpy PROPERTIES
     IMPORTED_LOCATION "${CMAKE_SOURCE_DIR}/../bin/${LIBDOTVVMSPY_EXECUTABLE_NAME}"
+    IMPORTED_NO_SONAME TRUE)
+  set_target_properties(${PROJECT_NAME} PROPERTIES
     BUILD_WITH_INSTALL_RPATH FALSE
     LINK_FLAGS "-Wl,-rpath,\\\$ORIGIN")
 endif(UNIX)
