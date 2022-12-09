@@ -48,11 +48,20 @@ endif(UNIX)
 target_link_libraries(${PROJECT_NAME} LibDotvvmSpy ${CMAKE_JS_LIB})
 configure_file(
   ${CMAKE_SOURCE_DIR}/../bin/${LIBDOTVVMSPY_EXECUTABLE_NAME} 
-  ${CMAKE_BINARY_DIR}/Release/${LIBDOTVVMSPY_EXECUTABLE_NAME} COPYONLY)
+  hack/node_modules/dotnet-analyzer-lib-node/${LIBDOTVVMSPY_EXECUTABLE_NAME} COPYONLY)
 
 # include node-api header files
 add_definitions(-DNAPI_VERSION=3)
 target_include_directories(${PROJECT_NAME} PRIVATE "node_modules/node-addon-api")
+
+# soo, this is a hack for the dynamic linking to work with `pkg`
+# If the X.node addon is in node_modules folder, they will extract the entire folder,
+# otherwise only one file.
+# We need the libDotvvmSpy.so file to be there
+set_target_properties(${PROJECT_NAME} PROPERTIES
+  LIBRARY_OUTPUT_DIRECTORY_DEBUG hack/node_modules/dotnet-analyzer-lib-node
+  LIBRARY_OUTPUT_DIRECTORY_RELEASE hack/node_modules/dotnet-analyzer-lib-node
+)
 
 # target_compile_options(${PROJECT_NAME} PRIVATE -fsanitize=address)
 # target_link_options(${PROJECT_NAME} PRIVATE -fsanitize=address -fno-omit-frame-pointer)

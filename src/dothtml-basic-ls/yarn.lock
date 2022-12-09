@@ -992,7 +992,7 @@ __metadata:
     cross-env: ^7.0.2
     estree-walker: ^2.0.1
     fast-glob: ^3.2.7
-    lib-dotvvm-spy: "file:../native-lib-dotvvm-spy/node_binding"
+    lib-dotvvm-spy: "portal:../native-lib-dotvvm-spy/node_binding"
     lodash: ^4.17.21
     mocha: ^9.2.0
     pkg: ^5.8.0
@@ -1745,15 +1745,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lib-dotvvm-spy@file:../native-lib-dotvvm-spy/node_binding::locator=dotvvm-language-server%40workspace%3A.":
-  version: 1.0.0
-  resolution: "lib-dotvvm-spy@file:../native-lib-dotvvm-spy/node_binding#../native-lib-dotvvm-spy/node_binding::hash=25e494&locator=dotvvm-language-server%40workspace%3A."
+"lib-dotvvm-spy@portal:../native-lib-dotvvm-spy/node_binding::locator=dotvvm-language-server%40workspace%3A.":
+  version: 0.0.0-use.local
+  resolution: "lib-dotvvm-spy@portal:../native-lib-dotvvm-spy/node_binding::locator=dotvvm-language-server%40workspace%3A."
   dependencies:
     cmake-js: ^6.3.2
     node-addon-api: "*"
-  checksum: 36ff243b6e64df34c08d1eae311690d912ef8a3775ce834b4247133e03ba3d4b78ee2daddaaccf9a69605c4b69f7ccd88c0a8714b81277182a1aedde233512fe
   languageName: node
-  linkType: hard
+  linkType: soft
 
 "listenercount@npm:~1.0.1":
   version: 1.0.1
