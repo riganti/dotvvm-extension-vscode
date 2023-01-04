@@ -15,6 +15,9 @@
     "scope": {
       "patterns": [
         {
+          "include": "#comments"
+        },
+        {
           "include": "#directives"
         },
         {
@@ -23,7 +26,7 @@
       ]
     },
     "directives": {
-      "begin": "\\A",
+      "begin": "^(?=\\s*@)",
       "end": "^(?=\\s*[^@\\s])",
       "name": "meta.dotvvm.directives",
       "patterns": [
@@ -37,7 +40,7 @@
               "name": "keyword.control.dotvvm.directive.name meta.dotvvm.directives.directive.name"
             }
           },
-          "end": "\\n",
+          "end": "$",
           "name": "meta.dotvvm.directives.directive",
           "contentName": "meta.dotvvm.directives.directive.value"
         }
@@ -237,7 +240,7 @@
     "tags-name": {
       "patterns": [
         {
-          "match": "(\\w+)(:)(\\w[\\w0-9:-]*)",
+          "match": "(\\w+)(:)(\\w[\\w0-9:-_]*)",
           "captures": {
             "1": {
               "name": "keyword.control.dotvvm"
@@ -249,6 +252,10 @@
               "name": "entity.name.tag.dotvvm"
             }
           }
+        },
+        {
+          "match": "[A-Z][\\w0-9:-_.]*",
+          "name": "meta.tag.property.dotvvm entity.other.attribute-name.element-property"
         },
         {
           "match": "[a-z][\\w0-9:]*-[\\w0-9:-]*",
