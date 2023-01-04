@@ -100,7 +100,7 @@ module.exports = grammar({
             field('content', choice(
                 $.doctype,
                 $.html_element,
-                $._comment,
+               $._comment,
                 $.script_element,
                 $.style_element,
                 $.erroneous_end_tag,
@@ -462,6 +462,14 @@ module.exports = grammar({
                 field('right', $._cs_expression)
             ))
         ),
+        cs_prefix_unary_expression: $ => prec.right(PREC.UNARY, choice(
+            ...[
+              '!',    
+              '+',    
+              '-',    
+              '~'            
+            ].map(operator => seq(field('operator', operator), field('expression', $._cs_expression))))),
+
         cs_member_access_expression: $ => prec(PREC.DOT, seq(
             field('expression', choice($._cs_expression)),
             choice('.', '?.'),// choice('.', '->'),
@@ -550,7 +558,7 @@ module.exports = grammar({
             // $.object_creation_expression,
             $.cs_parenthesized_expression,
             // $.postfix_unary_expression,
-            // $.prefix_unary_expression,
+            $.cs_prefix_unary_expression,
             // $.query_expression,
             // $.range_expression,
             // $.ref_expression,

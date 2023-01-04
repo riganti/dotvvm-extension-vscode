@@ -1,0 +1,30 @@
+@someDirective Something
+<!-- ^ keyword -->
+<a href={value: 'String'} />
+<!--    ^ punctuation.special -->
+<!--                 ^ string -->
+<!--                    ^ punctuation.special -->
+<a href={value: $"abc {_this.Name}"} />
+<!--            ^ string -->
+<!--                      ^ variable.builtin -->
+<!--                          ^ variable -->
+<a await="{value: await null}" />
+<!--  ^ attribute -->
+<!--      ^ punctuation.special -->
+<!--              ^ keyword -->
+<!--                       ^ constant.builtin -->
+
+
+<a a="{value: 10 == 20 + 10 - 11}" />
+<!--           ^ number -->
+<!--              ^ operator -->
+<!--                   ^ operator -->
+<!--                        ^ operator -->
+
+<a a="{value: !Condition ? _index : _collection.Index}" />
+<!--                         ^ variable.builtin -->
+<!--                                   ^ variable.builtin -->
+<!--          ^ operator -->
+<!--                     ^ operator -->
+<!--                              ^ operator -->
+

@@ -16,6 +16,11 @@
     <div class="container">
         <h1>Task List</h1>
 
+        <a href="https://google.com" >Google</a>
+        <u>Underline</u>
+        <b>Bold</b>
+        <em>Italic</em>
+
         <fieldset data-testattribute>
             <legend>Add Task</legend>
 
@@ -24,7 +29,7 @@
         </fieldset>
         <p>&nbsp;</p>
 
-        <table class="table">
+        <table class=table>
             <dot:Repeater DataSource="{value: Tasks}" WrapperTagName="tbody" RenderSettings.Mode="Server" PostBack.Update="true">
                 <tr class="{value: IsCompleted ? ' completed' : '' }">
                     <td>{{value: Title}}</td>

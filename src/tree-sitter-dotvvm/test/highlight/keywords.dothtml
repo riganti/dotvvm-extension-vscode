@@ -1,0 +1,9 @@
+@viewModel Something
+<!-- ^ keyword -->
+<a href={value: _this} />
+<!--      ^ keyword -->
+<!--             ^ variable.builtin -->
+
+<a href={value: _parent10.viewModel} />
+<!--            ^ variable.builtin -->
+<!--                        ^ variable -->
