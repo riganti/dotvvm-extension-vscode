@@ -10,8 +10,6 @@ import { createDotvvmControlInfoProvider, DotvvmControlInfoProvider, PropertyCom
 import { count } from 'console';
 
 
-
-
 export class DotvvmTagCompletion
 {
 	private controlInformation: DotvvmControlInfoProvider

@@ -40,7 +40,37 @@ Basic @baseType and @masterPage
     (directive_general (directive_name) (directive_general_value))
     (directive_general (directive_name))))
 
+==================
+lowercase @baseType and @masterPage
+==================
 
+@basetype Somewhere.MyControl, TheAssembly
+@masterpage /Views/Layout.dothtml
+
+---
+(source_file
+    (directives
+    (directive_baseType
+        (directive_assembly_qualified_name
+        (cs_type_name
+            (cs_identifier)
+            (cs_identifier))))
+    (directive_masterPage (directive_general_value))))
+
+==================
+@baseType without proper type
+==================
+
+@baseType something
+
+---
+(source_file
+    (directives
+    (directive_baseType
+        (directive_assembly_qualified_name
+        (cs_type_name
+            (cs_identifier))))
+    ))
 ==================
 Basic @service and @import
 ==================

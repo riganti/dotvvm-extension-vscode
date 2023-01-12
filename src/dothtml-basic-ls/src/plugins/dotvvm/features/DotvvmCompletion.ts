@@ -1,6 +1,4 @@
-import { bind } from 'lodash';
-import { EOL } from 'os';
-import { ErroneousEndTagNode, HtmlElementNode, SelfClosingTagNode, StartTagNode, SyntaxNode } from 'tree-sitter-dotvvm';
+import type { HtmlElementNode, SyntaxNode } from 'tree-sitter-dotvvm';
 import { Range } from 'vscode-html-languageservice';
 import {
     Position,
@@ -21,6 +19,7 @@ import { containsPosition, nodeAncestors, nodeToORange, nodeToVsRange, OffsetRan
 import { SerializedConfigSeeker } from '../../../lib/serializedConfigSeeker';
 import { Logger } from '../../../logger';
 import { concatCompletionLists, emptyArray, falsy, nullish } from '../../../utils';
+import { DotvvmDirectiveCompletion } from './directiveCompletion';
 import { DotvvmTagCompletion } from './tagCompletion';
 
 const bindingTypes: CompletionItem[] = [
@@ -39,8 +38,11 @@ export function decideCompletionContext(
     doc: DotvvmDocument,
     offset: number
 ) {
+    const lastNonWhitespace = doc.getLastNonWhitespaceIndex(offset - 1)
     const node = doc.tree?.nodeAt(offset - 1)
-    Logger.log("Node stack:", [...nodeAncestors(node)].map(n => n.type).reverse().join(" > "), "at", JSON.stringify(`${doc.content.substring(offset - 5, offset)}[${doc.content[offset]}]${doc.content.substring(offset + 1, offset + 5)}`))
+    const lastNonWhitespaceNode = doc.tree?.nodeAt(lastNonWhitespace)
+    const atLineEnd = doc.isAtLineEnd(offset)
+    Logger.log("Node stack:", [...nodeAncestors(node)].map(n => n.type).reverse().join(" > "), (node?.hasError() ? "[err] " : "") + "at", JSON.stringify(`${doc.content.substring(offset - 5, offset)}[${doc.content[offset]}]${doc.content.substring(offset + 1, offset + 5)}`))
     if (node == null) {
         return null
     }
@@ -53,9 +55,26 @@ export function decideCompletionContext(
     let context = "unknown"
     let completionTarget: null | undefined | OffsetRange = null
     let appendText = ""
+    let x
+
+    // directive name
+    if (node.type == "directive_name" ||
+        node.type == "@" && typeAncestor("ERROR", node) != null && typeAncestor("markup", node) == null) {
+        context = "directive_name"
+        if (node.type == "directive_name") {
+            completionTarget = nodeToORange(node)
+        }
+    }
+    // directive value
+    else if (x = typeAncestor(["directive_viewModel", "directive_baseType", "directive_masterPage", "directive_import", "directive_service", "directive_js"], lastNonWhitespaceNode)) {
+        context = x.type
+        if (!atLineEnd && x && x.valueNode.text.length > 0) {
+            completionTarget = nodeToORange(x.valueNode)
+        }
+    }
 
     // binding name
-    if (containsPosition(offset, binding?.nameNode) ||
+    else if (containsPosition(offset, binding?.nameNode) ||
         node.type == "binding_name" ||
         (hasError && (['{', '{{'].includes(node.type) || ['{', '{{'].includes(doc.tree!.nodeAt(offset - 1).type)))) {
         context = "binding_start"
@@ -76,6 +95,7 @@ export function decideCompletionContext(
         context = "binding_body"
     }
 
+    // start tag
     else if (containsPosition(offset, tag?.nameNode) ||
         doc.tree!.nodeAt(offset - 1).type == "tag_name" ||
         node.type == "html_text" && doc.content[offset - 1] == "<" ||
@@ -159,8 +179,10 @@ function getCloseTagCompletion(
 
 export class DotvvmCompletion {
     tagCompletion: DotvvmTagCompletion;
+    directiveCompletion: DotvvmDirectiveCompletion;
     constructor(public config: SerializedConfigSeeker) {
         this.tagCompletion = new DotvvmTagCompletion(config)
+        this.directiveCompletion = new DotvvmDirectiveCompletion(config)
     }
 
     
@@ -199,6 +221,17 @@ export class DotvvmCompletion {
                                         '<unknown>'}`) || '',
             (cx.completionTarget && `Completing range ${cx.completionTarget.start}-${cx.completionTarget.end}`) || ''
         )
+
+        if (cx.context == "directive_name") {
+            return list(this.directiveCompletion.getDirectiveNames(doc))
+        }
+
+        if (cx.context == "directive_viewModel") {
+            return list(this.directiveCompletion.getViewModelValues(doc))
+        }
+        if (cx.context == "directive_baseType") {
+            return list(this.directiveCompletion.getBaseTypeValues(doc))
+        }
 
         if (cx.context == "binding_start") {
             return list(getBindingTypes(cx.property))

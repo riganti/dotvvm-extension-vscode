@@ -327,6 +327,7 @@ export type UnnamedType =
   | "??"
   | "??="
   | "@"
+  | "DOCTYPE"
   | "["
   | "]"
   | "^"
@@ -338,29 +339,45 @@ export type UnnamedType =
   | "_parent"
   | "_root"
   | "_this"
+  | "area"
   | "await"
+  | "base"
   | "baseType"
+  | "br"
   | "class"
+  | "col"
   | "command"
   | "controlCommand"
   | "controlProperty"
   | "data-bind"
+  | "embed"
   | "false"
   | "for"
+  | "hr"
   | "id"
+  | "img"
   | "import"
+  | "input"
   | "js"
+  | "keygen"
+  | "link"
   | "masterPage"
+  | "menuitem"
+  | "meta"
   | "name"
+  | "param"
   | "property"
   | "resource"
   | "service"
+  | "source"
   | "staticCommand"
   | "style"
+  | "track"
   | "true"
   | "value"
   | "var"
   | "viewModel"
+  | "wbr"
   | "{"
   | "{{"
   | "|"
@@ -480,6 +497,7 @@ export type SyntaxNode =
   | UnnamedNode<"??">
   | UnnamedNode<"??=">
   | UnnamedNode<"@">
+  | UnnamedNode<"DOCTYPE">
   | UnnamedNode<"[">
   | UnnamedNode<"]">
   | UnnamedNode<"^">
@@ -491,11 +509,15 @@ export type SyntaxNode =
   | UnnamedNode<"_parent">
   | UnnamedNode<"_root">
   | UnnamedNode<"_this">
+  | UnnamedNode<"area">
   | AttributeNameJsEventNode
   | AttributeValueNode
   | UnnamedNode<"await">
+  | UnnamedNode<"base">
   | UnnamedNode<"baseType">
+  | UnnamedNode<"br">
   | UnnamedNode<"class">
+  | UnnamedNode<"col">
   | UnnamedNode<"command">
   | UnnamedNode<"controlCommand">
   | UnnamedNode<"controlProperty">
@@ -505,26 +527,38 @@ export type SyntaxNode =
   | UnnamedNode<"data-bind">
   | DirectiveGeneralValueNode
   | DotvvmCommentNode
+  | UnnamedNode<"embed">
   | ErroneousEndTagNameNode
   | UnnamedNode<"false">
   | UnnamedNode<"for">
+  | UnnamedNode<"hr">
   | HtmlCommentNode
   | UnnamedNode<"id">
+  | UnnamedNode<"img">
   | UnnamedNode<"import">
+  | UnnamedNode<"input">
   | UnnamedNode<"js">
+  | UnnamedNode<"keygen">
+  | UnnamedNode<"link">
   | UnnamedNode<"masterPage">
+  | UnnamedNode<"menuitem">
+  | UnnamedNode<"meta">
   | UnnamedNode<"name">
+  | UnnamedNode<"param">
   | UnnamedNode<"property">
   | RawTextNode
   | UnnamedNode<"resource">
   | UnnamedNode<"service">
+  | UnnamedNode<"source">
   | UnnamedNode<"staticCommand">
   | UnnamedNode<"style">
   | TagNameNode
+  | UnnamedNode<"track">
   | UnnamedNode<"true">
   | UnnamedNode<"value">
   | UnnamedNode<"var">
   | UnnamedNode<"viewModel">
+  | UnnamedNode<"wbr">
   | UnnamedNode<"{">
   | UnnamedNode<"{{">
   | UnnamedNode<"|">

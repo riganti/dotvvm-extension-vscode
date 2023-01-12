@@ -1,6 +1,3 @@
-#!/bin/bash
-set -e
-
 cd tree-sitter-dotvvm
 echo "Building tree sitter"
 yarn install --immutable
@@ -9,9 +6,7 @@ yarn build
 cd ..
 cd native-lib-dotvvm-spy
 echo "Attempting to build .NET Native dotvvm-spy"
-set +e
-./build.sh
-set -e
+./build.ps1 -ErrorAction SilentlyContinue
 
 cd ..
 echo "Building dohtml language server"

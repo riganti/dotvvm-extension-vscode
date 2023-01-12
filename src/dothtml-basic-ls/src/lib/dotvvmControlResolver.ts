@@ -379,7 +379,7 @@ export function resolveControlOrProperty(
 
 		property: do {// break target
 			const parentElement = typeAncestor("html_element", element.parent)
-			Logger.log("considering html_element ", node.text, "to be a inner element property")
+			// Logger.log("considering html_element ", node, "to be a inner element property")
 			if (parentElement == null) break property
 			
 			const parentName = elementName(parentElement)

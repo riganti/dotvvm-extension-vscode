@@ -17,6 +17,8 @@
     },
     "pkg": {
         "assets": [
+            "node_modules/lib-dotvvm-spy/build/hack/node_modules/dotnet-analyzer-lib-node/libDotvvmSpy.so",
+            "node_modules/lib-dotvvm-spy/build/hack/node_modules/dotnet-analyzer-lib-node/dotnet-analyzer-lib-node.node",
             "node_modules/web-tree-sitter/tree-sitter.wasm",
             "node_modules/tree-sitter-dotvvm/tree-sitter-dotvvm.wasm",
             "./data/*.json",
@@ -55,7 +57,7 @@
         "@types/estree": "^0.0.42",
         "@types/lodash": "^4.14.116",
         "@types/mocha": "^9.1.0",
-        "@types/node": "^13.9.0",
+        "@types/node": "^18.7.21",
         "@types/prettier": "^2.2.3",
         "@types/sinon": "^7.5.2",
         "cross-env": "^7.0.2",
@@ -70,6 +72,7 @@
         "chokidar": "^3.4.1",
         "estree-walker": "^2.0.1",
         "fast-glob": "^3.2.7",
+        "lib-dotvvm-spy": "portal:../native-lib-dotvvm-spy/node_binding",
         "lodash": "^4.17.21",
         "tree-sitter-dotvvm": "portal:../tree-sitter-dotvvm",
         "tree-sitter-javascript": "^0.19.0",

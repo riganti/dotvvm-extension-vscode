@@ -1,0 +1,17 @@
+{
+  "name": "lib-dotvvm-spy",
+  "packageManager": "yarn@3.2.2",
+  "typings": "index.d.ts",
+  "dependencies": {
+    "cmake-js": "^6.3.2",
+    "node-addon-api": "*"
+  },
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "scripts": {
+    "install": "cmake-js compile",
+    "build": "cmake-js build --silent --log-level warn",
+    "sanity-check": "node test/sanitycheck.mjs"
+  }
+}

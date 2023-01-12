@@ -3,18 +3,13 @@ import * as fs from 'fs'
 import {
     commands,
     ExtensionContext,
-    extensions,
     IndentAction,
     languages,
+    OutputChannel,
     Position,
-    ProgressLocation,
-    Range,
     TextDocument,
-    Uri,
-    ViewColumn,
     window,
     workspace,
-    WorkspaceEdit
 } from 'vscode';
 import {
     ExecuteCommandRequest,
@@ -94,6 +89,8 @@ function setExecutableFlag(path: string) {
     }
 }
 
+let dotvvmOutputChannel: OutputChannel | undefined
+
 export function activateLanguageServer(context: ExtensionContext) {
     const runtimeConfig = workspace.getConfiguration('dotvvm.language-server');
 
@@ -122,7 +119,7 @@ export function activateLanguageServer(context: ExtensionContext) {
     } catch { }
     const serverPath = findServerBinary([serverDir, __dirname])
     if (!serverPath) {
-        throw new Error("Could not find dotvvm-language-server executable.")
+        throw new Error(`Could not find dotvvm-language-server executable in ${[serverDir, __dirname]}.`)
     }
     const nodeServerPath = serverDir && path.join(serverDir, 'startServer.js')
     console.log('Loading server from ', serverPath);
@@ -141,10 +138,13 @@ export function activateLanguageServer(context: ExtensionContext) {
         throw new Error("Could not find dotvvm-language-server startServer.js")
     }
 
-    if (runWithNode !== false) {
+    if (runWithNode !== true) {
         setExecutableFlag(serverPath);
     }
 
+    dotvvmOutputChannel = window.createOutputChannel('DotVVM');
+    dotvvmOutputChannel.clear()
+    dotvvmOutputChannel.appendLine(`Starting DotVVM Language Server from ${serverPath}...`)
     const serverOptions: ServerOptions = {
         run: {
             command: runWithNode === true ? "node" : serverPath,
@@ -162,19 +162,21 @@ export function activateLanguageServer(context: ExtensionContext) {
         }
     };
 
+
     const clientOptions: LanguageClientOptions = {
         documentSelector: [{ scheme: 'file', language: 'dotvvm' }],
         revealOutputChannelOn: RevealOutputChannelOn.Never,
         synchronize: {
             fileEvents: workspace.createFileSystemWatcher('{**/*.js,**/*.ts}', false, false, false)
         },
+        outputChannel: dotvvmOutputChannel,
         initializationOptions: {
             configuration: {
                 dotvvm: workspace.getConfiguration('dotvvm'),
                 css: workspace.getConfiguration('css')
             },
             dontFilterIncompleteCompletions: true, // VSCode filters client side and is smarter at it than us
-            isTrusted: (workspace as any).isTrusted
+            isTrusted: workspace.isTrusted
         }
     };
 
@@ -209,14 +211,19 @@ export function activateLanguageServer(context: ExtensionContext) {
             return;
         }
 
+        dotvvmOutputChannel?.clear()
+        dotvvmOutputChannel?.appendLine(`Restarting DotVVM Language Server...`)
+
         restartingLs = true;
         await ls.stop();
         ls = createLanguageServer(serverOptions, clientOptions);
         context.subscriptions.push(ls);
         await ls.start();
         if (showNotification) {
+            dotvvmOutputChannel?.show(true)
             window.showInformationMessage('DotVVM language server restarted.');
         }
+
         restartingLs = false;
     }
 

@@ -3,9 +3,10 @@ import { promises as fs } from 'fs'
 import { FSWatcher, watch } from "chokidar";
 import { DidChangeWatchedFilesParams, FileChangeType, FileEvent } from 'vscode-languageserver';
 import { debounce } from "lodash";
-import { join } from "path";
+import path from "path";
 import { Identifier } from "typescript";
 import { Logger } from "../logger";
+import { DllSeeker } from "./dllSeeker";
 
 export type PropertyMappingMode = "Exclude" | "Attribute" | "InnerElement" | "Both"
 
@@ -69,6 +70,12 @@ export type MarkupControlRegistrationInfo =
 export type ControlRegistrationInfo =
     MarkupControlRegistrationInfo | CodeControlRegistrationInfo
 
+export type DotvvmSerializedAssemblyList = {
+    assemblyDirs: string[]
+    assemblyNames: string[]
+    mainAssembly: string
+}
+
 export type DotvvmSerializedConfig = {
     dotvvmVersion: string
     properties?: { [control: string]: {
@@ -126,11 +133,17 @@ export class SerializedConfigSeeker {
 
     private undeliveredFileEvents: { type: FileChangeType, path: string }[] = [];
 
-    constructor(workspacePaths: string[], private readonly fileName = "dotvvm_serialized_config.json.tmp") {
+    public dllSeeker: DllSeeker
+
+    constructor(
+        workspacePaths: string[],
+        private readonly fileName = "dotvvm_serialized_config.json.tmp",
+        { dllSeeker } : { dllSeeker?: DllSeeker } = {}
+    ) {
         const ignoreRegex = /\.git|node_modules/;
         const glob = `**/${this.fileName}`;
         this.watcher = watch(
-            workspacePaths.map((workspacePath) => join(workspacePath, glob)), {
+            workspacePaths.map((workspacePath) => path.join(workspacePath, glob)), {
                 ignored: (path: string) => ignoreRegex.test(path),
                 ignoreInitial: false,
                 ignorePermissionErrors: true,
@@ -143,6 +156,8 @@ export class SerializedConfigSeeker {
             .on('unlink', (path) => this.onFSEvent(path, FileChangeType.Deleted))
             .on('change', (path) => this.onFSEvent(path, FileChangeType.Changed));
         setTimeout(() => this.scheduleTrigger(), 100);
+
+        this.dllSeeker = dllSeeker || new DllSeeker()
     }
 
     private onFSEvent(path: string, type: FileChangeType) {
@@ -180,6 +195,8 @@ export class SerializedConfigSeeker {
                         conf = { config: c }
                     }
                     this.configs[c.path] = conf;
+
+                    return this.dllSeeker.searchProject(path.dirname(c.path))
                 }))
             } else if (c.type == FileChangeType.Deleted) {
                 delete this.configs[c.path];
@@ -205,6 +222,7 @@ export class SerializedConfigSeeker {
     }
 
     dispose(): void {
-        this.watcher.close();
+        this.watcher.close()
+        this.dllSeeker.dispose()
     }
 }

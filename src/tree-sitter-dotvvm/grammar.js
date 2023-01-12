@@ -88,10 +88,12 @@ module.exports = grammar({
         $.html_comment,
         $.dotvvm_comment,
     ],
+    tokens: ["viewModel"],
 
     supertypes: $ => [ $._attribute_name, $._cs_expression, $._comment, $._html_node ],
   
     rules: {
+
         source_file: $ => seq(prec(10,
             optional(field('directives',$.directives))),
             optional(field('markup', $.markup))),
@@ -112,7 +114,6 @@ module.exports = grammar({
 
         directives: $ => repeat1(seq(
             choice(
-                field('general_directive', $.directive_general),
                 field('masterPage', $.directive_masterPage),
                 field('viewModel', $.directive_viewModel),
                 field('baseType', $.directive_baseType),
@@ -120,17 +121,18 @@ module.exports = grammar({
                 field('import', $.directive_import),
                 field('js', $.directive_js),
                 field('property', $.directive_property),
+                field('general_directive', $.directive_general),
                 // $._comment
             ),
             "\n"
         )),
-        directive_general: $ => directiveSyntax($.directive_name, $.directive_general_value, { optional: true }),
+        directive_general: $ => directiveSyntax(prec(-10, $.directive_name), $.directive_general_value, { optional: true }),
         directive_name: $ => csharpIdentifier,
         directive_general_value: $ => /[^\r\n]+/,
-        directive_viewModel: $ => directiveSyntax("viewModel", $.directive_assembly_qualified_name),
-        directive_baseType: $ => directiveSyntax("baseType", $.directive_assembly_qualified_name),
+        directive_viewModel: $ => directiveSyntax(keywordToken(/view[Mm]odel/, "viewModel"), $.directive_assembly_qualified_name),
+        directive_baseType: $ => directiveSyntax(keywordToken(/base[Tt]ype/, "baseType"), $.directive_assembly_qualified_name),
         directive_js: $ => directiveSyntax("js", $.directive_general_value),
-        directive_masterPage: $ => directiveSyntax("masterPage", $.directive_general_value),
+        directive_masterPage: $ => directiveSyntax(keywordToken(/master[Pp]age/, "masterPage"), $.directive_general_value),
         directive_property: $ => directiveSyntax("property", $.directive_property_value),
         directive_service: $ => directiveSyntax("service", $.directive_type_alias),
         directive_import: $ => directiveSyntax("import", choice($.directive_type_alias, $.cs_namespace)),
@@ -161,7 +163,7 @@ module.exports = grammar({
         // html_comment: $ => seq("<!--", repeat(/[^-]+|\S+/), "-->"), // TODO: use the external scanner?
         // server_comment: $ => seq("<%--", repeat(/[^-]+|\S+/), "--%>"),
         _comment: $ => choice($.html_comment, $.dotvvm_comment),
-        _empty_element_tag_name: $ => choice(...EMPTY_ELEMENTS.map(caseInsensitive)),
+        _empty_element_tag_name: $ => choice(...EMPTY_ELEMENTS.map(e => caseInsensitive(e))),
         // tag_name: $ => /[\w\-_.:]+/,
         doctype: $ => seq(
             '<!',
@@ -582,6 +584,15 @@ module.exports = grammar({
     }
 });
 
+/** token with higher precedence */
+function keywordToken(t, alias_ = null) {
+    t = token(prec(10, t));
+    if (alias_) {
+        t = alias(t, alias_);
+    }
+    return t
+}
+
 function commaSep(rule) {
     return optional(commaSep1(rule))
 }
@@ -596,11 +607,13 @@ function commaSep1(rule) {
     )
 }
 
-// https://github.com/tree-sitter/tree-sitter/issues/122#issuecomment-356370963
-function caseInsensitive (keyword) {
-    return new RegExp(keyword
+// https://github.com/stadelmanma/tree-sitter-fortran/blob/master/grammar.js#L1125
+function caseInsensitive(keyword, aliasAsWord = true) {
+    let result = new RegExp(keyword
       .split('')
       .map(letter => `[${letter.toLowerCase()}${letter.toUpperCase()}]`)
       .join('')
     )
+    if (aliasAsWord) result = alias(result, keyword)
+    return result
 }

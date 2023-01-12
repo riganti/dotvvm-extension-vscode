@@ -1,17 +1,19 @@
 import { urlToPath } from '../../utils';
 import { WritableDocument } from './DocumentBase';
-import { extractScriptTags, extractStyleTag, extractTemplateTag, TagInformation } from './utils';
 import { parseHtml } from './parseHtml';
 import { HTMLDocument } from 'vscode-html-languageservice';
 import { Position, Range } from 'vscode-languageserver';
-import { AttributeNode, HtmlElementNode, ScriptElementNode, StyleElementNode, SyntaxNode } from 'tree-sitter-dotvvm';
+import type { AttributeNode, HtmlElementNode, ScriptElementNode, StyleElementNode } from 'tree-sitter-dotvvm';
 import { typeAncestor } from '../parserutils';
+import { Logger } from '../../logger';
 
 export type DothtmlSublanguage =
     | { lang: 'html' }
     | { lang: 'dotvvm-specific' }
     | { lang: 'css' | 'js', range: [ number, number ], element: HtmlElementNode | ScriptElementNode | StyleElementNode | null, attribute?: AttributeNode | null }
 
+
+export type DotvvmDocumentType = "control" | "page" | "masterpage"
 /**
  * Represents a text document contains a svelte component.
  */
@@ -115,5 +117,25 @@ export class DotvvmDocument extends WritableDocument {
      */
     getURL() {
         return this.url;
+    }
+
+    get dotvvmType(): DotvvmDocumentType {
+        if (this.path?.endsWith(".dotmaster") || this.path?.endsWith(".dotlayout")) {
+            return "masterpage"
+        }
+
+        const directives =
+            this.tree?.rootNode.descendantsOfType("directives")?.[0]
+        if (!directives) {
+            Logger.log("No directives found in document?", this.path)
+        }
+        Logger.log(directives?.toString())
+        const hasControlDirectives = directives && (
+            directives.baseTypeNodes.length > 0 ||
+            directives.propertyNodes.length > 0)
+        if (this.path?.endsWith(".dotcontrol") || hasControlDirectives) {
+            return "control"
+        }
+        return "page"
     }
 }

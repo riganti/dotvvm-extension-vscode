@@ -50,7 +50,14 @@ describe('dotnet utils', () => {
         });
         it('parses nullable`1', () => {
             const result = parseTypeName("System.Nullable`1")
-            assert.deepStrictEqual(result?.name, "Nullable`1");
+            assert.deepStrictEqual(result?.name, "Nullable`1")
+            assert.deepStrictEqual(result, {
+                  assembly: undefined,
+                  fullName: "System.Nullable`1",
+                  kind: "simple",
+                  name: "Nullable`1",
+                  namespace: "System"
+                })
         })
         it('parses nullable<T>', () => {
             const result = parseTypeName("System.Nullable`1[[System.Boolean, CoreLibrary]]")
