@@ -28,3 +28,10 @@
 <!--                     ^ operator -->
 <!--                              ^ operator -->
 
+<a a={command: (string a) => a + string.Empty} />
+<!--               ^ keyword -->
+<!--                   ^ variable -->
+<!--                       ^ operator -->
+<!--                         ^ variable -->
+<!--                               ^ keyword -->
+

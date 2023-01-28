@@ -233,10 +233,13 @@ export type SyntaxType =
   | "cs_interpolated_string_text"
   | "cs_interpolation"
   | "cs_invocation_expression"
+  | "cs_lambda_expression"
   | "cs_member_access_expression"
   | "cs_namespace"
   | "cs_nullable_type"
+  | "cs_parameter"
   | "cs_parenthesized_expression"
+  | "cs_prefix_unary_expression"
   | "cs_string_apos_body"
   | "cs_string_literal"
   | "cs_string_quote_body"
@@ -285,6 +288,7 @@ export type SyntaxType =
 
 export type UnnamedType =
   | "\n"
+  | "!"
   | "!="
   | "\""
   | "$\""
@@ -318,6 +322,7 @@ export type UnnamedType =
   | "<="
   | "="
   | "=="
+  | "=>"
   | ">"
   | ">="
   | ">>"
@@ -368,6 +373,7 @@ export type UnnamedType =
   | "||"
   | "}"
   | "}}"
+  | "~"
   ;
 
 export type TypeString = SyntaxType | UnnamedType;
@@ -399,10 +405,13 @@ export type SyntaxNode =
   | CsInterpolatedStringTextNode
   | CsInterpolationNode
   | CsInvocationExpressionNode
+  | CsLambdaExpressionNode
   | CsMemberAccessExpressionNode
   | CsNamespaceNode
   | CsNullableTypeNode
+  | CsParameterNode
   | CsParenthesizedExpressionNode
+  | CsPrefixUnaryExpressionNode
   | CsStringAposBodyNode
   | CsStringLiteralNode
   | CsStringQuoteBodyNode
@@ -438,6 +447,7 @@ export type SyntaxNode =
   | StartTagNode
   | StyleElementNode
   | UnnamedNode<"\n">
+  | UnnamedNode<"!">
   | UnnamedNode<"!=">
   | UnnamedNode<"\"">
   | UnnamedNode<"$\"">
@@ -471,6 +481,7 @@ export type SyntaxNode =
   | UnnamedNode<"<=">
   | UnnamedNode<"=">
   | UnnamedNode<"==">
+  | UnnamedNode<"=>">
   | UnnamedNode<">">
   | UnnamedNode<">=">
   | UnnamedNode<">>">
@@ -532,6 +543,7 @@ export type SyntaxNode =
   | UnnamedNode<"||">
   | UnnamedNode<"}">
   | UnnamedNode<"}}">
+  | UnnamedNode<"~">
   | ErrorNode
   ;
 
@@ -559,9 +571,11 @@ export type CsExpressionNode =
   | CsIntegerLiteralNode
   | CsInterpolatedStringExpressionNode
   | CsInvocationExpressionNode
+  | CsLambdaExpressionNode
   | CsMemberAccessExpressionNode
   | CsNullLiteralNode
   | CsParenthesizedExpressionNode
+  | CsPrefixUnaryExpressionNode
   | CsRealLiteralNode
   | CsStringLiteralNode
   | DotvvmKeywordExpressionNode
@@ -697,6 +711,13 @@ export interface CsInvocationExpressionNode extends NamedNodeBase {
   functionNode: CsExpressionNode;
 }
 
+export interface CsLambdaExpressionNode extends NamedNodeBase {
+  type: "cs_lambda_expression";
+  bodyNode: CsExpressionNode;
+  parametersNodes: (UnnamedNode<"("> | UnnamedNode<")"> | UnnamedNode<","> | CsParameterNode)[];
+  singleParameterNode?: CsIdentifierNode;
+}
+
 export interface CsMemberAccessExpressionNode extends NamedNodeBase {
   type: "cs_member_access_expression";
   expressionNode: CsExpressionNode;
@@ -712,10 +733,22 @@ export interface CsNullableTypeNode extends NamedNodeBase {
   typeNode: CsArrayTypeNode | CsNullableTypeNode | CsTupleTypeNode | CsTypeNameNode;
 }
 
+export interface CsParameterNode extends NamedNodeBase {
+  type: "cs_parameter";
+  nameNode: CsIdentifierNode;
+  typeNode?: CsTypeNameNode;
+}
+
 export interface CsParenthesizedExpressionNode extends NamedNodeBase<CsExpressionNode> {
   type: "cs_parenthesized_expression";
   firstNamedChild: CsExpressionNode;
   lastNamedChild: CsExpressionNode;
+}
+
+export interface CsPrefixUnaryExpressionNode extends NamedNodeBase {
+  type: "cs_prefix_unary_expression";
+  expressionNode: CsExpressionNode;
+  operatorNode: UnnamedNode<"!"> | UnnamedNode<"+"> | UnnamedNode<"-"> | UnnamedNode<"~">;
 }
 
 export interface CsStringAposBodyNode extends NamedNodeBase {
