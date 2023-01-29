@@ -75,7 +75,28 @@ const predefinedProperties: { [c: string]: PropertyCompletionInfo } = {
 	},
 	"DotVVM.Framework.Controls.Literal.Text": {
 		onlyBindings: true
+	},
+	"DotVVM.Framework.Controls.RenderSettings.Mode": {
+		autocompleteValue: "Server" // Client is default
 	}
+}
+
+const predefinedPGroups: { [c: string]: PropertyCompletionInfo } = {
+	"DotVVM.Framework.Controls.HtmlGenericControl.CssClasses": {
+		onlyBindings: true,
+		bindingTypes: ["value", "resource"],
+		autocompleteBinding: "value"
+	},
+	"DotVVM.Framework.Controls.HtmlGenericControl.CssStyles": {
+		onlyBindings: true,
+		bindingTypes: ["value", "resource"],
+		autocompleteBinding: "value"
+	},
+	"DotVVM.Framework.Controls.JsComponent.Props": {
+		onlyBindings: false,
+		bindingTypes: ["value", "resource", "command", "staticCommand"],
+		autocompleteBinding: "value"
+	},
 }
 
 const bindingTypeMapping: { [c: string]: string[] } = {
@@ -96,15 +117,19 @@ export function createDotvvmControlInfoProvider(
 	if (!config) throw new Error("config is required")
 
 	function getPropertyCompletionInfo(
-		prop: res.NamedDotvvmPropertyInfo
+		prop: res.NamedDotvvmPropertyInfo | (res.NamedDotvvmPropertyGroupInfo & { defaultValue?: any }),
+		isGroup = false
 	): PropertyCompletionInfo {
 		if (prop?.type == null) throw new Error("Missing property type")
-		const predefined = predefinedProperties[prop.declaringType + '.' + prop.name]
+		const predefined =
+			isGroup ? predefinedPGroups[prop.declaringType + '.' + prop.name]
+				    : predefinedProperties[prop.declaringType + '.' + prop.name]
+		
 		const type = parseTypeName(prop.type)
 		const isBindingType = (type?.nongenericName ?? type?.name ?? "") in bindingTypeMapping
 
 		const noValue = prop.type == "System.Boolean" && prop.defaultValue === false
-		const onlyBindings = predefined?.onlyBindings || isBindingType || Boolean(prop.onlyBindings) || prop.isCommand
+		const onlyBindings = predefined?.onlyBindings || isBindingType || Boolean(prop.onlyBindings) || prop.isCommand || (!prop.onlyHardcoded && isGroup && prop.type == "System.Boolean")
 		const bindingTypes =
 			predefined?.bindingTypes ?? (
 			isBindingType ? bindingTypeMapping[type?.nongenericName ?? type?.name!] :
@@ -118,13 +143,18 @@ export function createDotvvmControlInfoProvider(
 			undefined;
 
 		const hasQuotes =
-			prop.type == "System.String" || type?.kind == "array"
+			prop.type == "System.String" || prop.type == "System.Object" || type?.kind == "array"
 
 		const autocompleteValue =
 			prop.type == "System.Boolean" && prop.defaultValue === true ? "false" :
 			undefined
 
 		return { noValue, onlyBindings, bindingTypes, autocompleteBinding, autocompleteValue, hasQuotes, ...predefined }
+	}
+	function getPropertyGroupCompletionInfo(
+		pg: res.NamedDotvvmPropertyGroupInfo
+	): PropertyCompletionInfo {
+		return getPropertyCompletionInfo(pg, true)
 	}
 	function getAttributeCompletionInfo(
 		prop: res.ResolvedPropertyInfo
@@ -133,7 +163,7 @@ export function createDotvvmControlInfoProvider(
 			return {}
 
 		if (prop.kind == 'group') {
-			return {}//TODO property groups
+			return getPropertyGroupCompletionInfo(prop.propertyGroup)
 		}
 
 		return getPropertyCompletionInfo(prop.dotvvmProperty)
@@ -173,7 +203,8 @@ export function createDotvvmControlInfoProvider(
 	return {
 		getControlCompletionInfo,
 		getAttributeCompletionInfo,
-		getPropertyCompletionInfo
+		getPropertyCompletionInfo,
+		getPropertyGroupCompletionInfo,
 	}
 }
 

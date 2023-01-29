@@ -157,8 +157,8 @@ export function activateLanguageServer(context: ExtensionContext) {
             command: runWithNode === false ? serverPath : "node",
             // module: serverModule,
             transport: TransportKind.pipe,
-            args: runWithNode === false || !nodeServerPath ? runExecArgv : [...debugArgs, nodeServerPath]
-            // options: debugOptions
+            args: runWithNode === false || !nodeServerPath ? runExecArgv : [...debugArgs, nodeServerPath],
+            // options: debugOptions, 
         }
     };
 
@@ -197,6 +197,10 @@ export function activateLanguageServer(context: ExtensionContext) {
         context.subscriptions.push(disposable);
     });
 
+    if (ls.isInDebugMode) {
+        ls.outputChannel.show();
+    }
+
     context.subscriptions.push(
         commands.registerCommand('dotvvm.debug.restartLS', async () => {
             await restartLS(true);
@@ -210,12 +214,17 @@ export function activateLanguageServer(context: ExtensionContext) {
         }
 
         restartingLs = true;
-        await ls.stop();
+        try {
+            await ls.stop();
+        } catch (e) {
+            console.log("Failed to stop previous LS, trying to restart anyway, the LS might have already crashed", e);
+        }
         ls = createLanguageServer(serverOptions, clientOptions);
         context.subscriptions.push(ls);
         await ls.start();
         if (showNotification) {
             window.showInformationMessage('DotVVM language server restarted.');
+            ls.outputChannel.show()
         }
         restartingLs = false;
     }

@@ -269,6 +269,7 @@ export function listAttachedProperties(config: SerializedConfigSeeker, context: 
 	return new Map(Array.from(p))
 }
 
+
 export function* listPropertyGroups(config: SerializedConfigSeeker, control: FullControlInfo, context: PropertyMappingMode | null = null): Iterable<NamedDotvvmPropertyGroupInfo> {
 	const baseControl = control.baseType && findControl(config, control.baseType)
 	for (const [n, pg] of Object.entries(control.propGroups))
@@ -379,7 +380,7 @@ export function resolveControlOrProperty(
 
 		property: do {// break target
 			const parentElement = typeAncestor("html_element", element.parent)
-			Logger.log("considering html_element ", node.text, "to be a inner element property")
+			Logger.log(`considering html_element ${node.text} to be a inner element property`)
 			if (parentElement == null) break property
 			
 			const parentName = elementName(parentElement)
