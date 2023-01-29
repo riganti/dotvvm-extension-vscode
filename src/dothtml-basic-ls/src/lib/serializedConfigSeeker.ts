@@ -180,6 +180,8 @@ export class SerializedConfigSeeker {
                         conf = { config: c }
                     }
                     this.configs[c.path] = conf;
+                }).catch(e => {
+                    Logger.error("Could not read config file " + c.path + ": ", e)
                 }))
             } else if (c.type == FileChangeType.Deleted) {
                 delete this.configs[c.path];
