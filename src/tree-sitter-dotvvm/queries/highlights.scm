@@ -50,6 +50,9 @@
 (directive_service name: "service" @keyword)
 (directive_import name: "import" @keyword)
 
+((cs_identifier) @keyword
+ (#match? @keyword "^(void|string|object|byte|sbyte|ushort|short|char|uint|int|ulong|long|float|double|decimal|nint|nuint)$"))
+(cs_lambda_expression "=>" @operator)
 (dotvvm_keyword_expression) @variable.builtin
 (cs_identifier) @variable
 (cs_string_quote_body) @string

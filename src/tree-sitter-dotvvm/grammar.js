@@ -74,7 +74,9 @@ const csharpIdentifier = new RegExp(csharpIdentifierFirstLetter.source + csharpI
 module.exports = grammar({
     name: 'dotvvm',
     conflicts: $ => [
-        [ $.cs_type_name ]
+        [ $.cs_type_name ],
+        [ $.cs_type_name, $._cs_expression ],
+        [ $.cs_parameter, $._cs_expression ], // lambda functions
     ],
     externals: $ => [
         $._start_tag_name,
@@ -529,6 +531,27 @@ module.exports = grammar({
             '}'
         ),
 
+        _cs_parameter_list: $ => seq(
+            '(',
+            commaSep($.cs_parameter),
+            ')'
+        ),
+
+        cs_parameter: $ => seq(
+            optional(field('type', $.cs_type_name)),
+            field('name', $.cs_identifier)
+        ),
+
+        cs_lambda_expression: $ => prec(-1, seq(
+            choice(
+                field('parameters', $._cs_parameter_list),
+                field('single_parameter', $.cs_identifier)
+            ),
+            '=>',
+            field('body', $._cs_expression)
+        )),
+
+
         _cs_expression: $ => choice(
             // $.anonymous_method_expression,
             // $.anonymous_object_creation_expression,
@@ -552,7 +575,7 @@ module.exports = grammar({
             $.cs_invocation_expression,
             // $.is_expression,
             // $.is_pattern_expression,
-            // $.lambda_expression,
+            $.cs_lambda_expression,
             // $.make_ref_expression,
             $.cs_member_access_expression,
             // $.object_creation_expression,
