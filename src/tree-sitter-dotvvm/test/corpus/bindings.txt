@@ -174,3 +174,47 @@ Lambda expression
                     body: (cs_binary_expression
                       left: (cs_identifier)
                       right: (cs_string_literal))))))))))
+
+==================
+Lambda expression without args
+==================
+
+<dot:Button Click={staticCommand: () => true} />
+
+---
+
+(source_file
+    markup: (markup
+        content: (html_element
+          self_closing: (self_closing_tag
+            name: (tag_name)
+            attribute: (attribute
+              name: (attribute_name_property)
+              binding: (attribute_binding
+                name: (binding_name)
+                expr: (binding_expr
+                  expr: (cs_lambda_expression
+                    body: (cs_boolean_literal)))))))))
+
+==================
+Lambda expression single arg
+==================
+
+<dot:Button Click={staticCommand: a => 0} />
+
+---
+
+(source_file
+    markup: (markup
+        content: (html_element
+          self_closing: (self_closing_tag
+            name: (tag_name)
+            attribute: (attribute
+              name: (attribute_name_property)
+              binding: (attribute_binding
+                name: (binding_name)
+                expr: (binding_expr
+                  expr: (cs_lambda_expression
+                    single_parameter: (cs_identifier)
+                    body: (cs_integer_literal)))))))))
+

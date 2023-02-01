@@ -533,7 +533,7 @@ module.exports = grammar({
 
         _cs_parameter_list: $ => seq(
             '(',
-            commaSep1($.cs_parameter),
+            commaSep($.cs_parameter),
             ')'
         ),
 
