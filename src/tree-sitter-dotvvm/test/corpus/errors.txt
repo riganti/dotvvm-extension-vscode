@@ -1,0 +1,15 @@
+==================
+unfinished attached property
+==================
+
+<dot:Sample Type. />
+
+---
+
+(source_file
+      (markup
+        (html_element
+          (self_closing_tag
+            (tag_name)
+            (attribute
+              (attribute_name_attached_property))))))

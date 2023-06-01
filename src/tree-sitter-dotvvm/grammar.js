@@ -280,7 +280,8 @@ module.exports = grammar({
         attribute_name_attached_property: $ => seq(
             field('class', new RegExp('\\p{Lu}' + csharpIdentifierRest.source)),
             ".",
-            field('property', csharpIdentifier)
+            // Not really optional, but helps parsing while typing
+            optional(field('property', csharpIdentifier))
         ),
         attribute_name_property: $ => new RegExp('\\p{Lu}' + csharpIdentifierRest.source), // probably DotVVM property: starts with uppercase letter
         attribute_name_html: $ => choice(...predefinedAttributes, /[^A-Z.<>}{"'/=\s][^<>}{"'./=\s]*/), // probably html: doesn't start with uppercase letter
