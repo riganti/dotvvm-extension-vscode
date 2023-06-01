@@ -187,26 +187,38 @@ export function createDotvvmControlInfoProvider(
 		return getPropertyCompletionInfo(prop.dotvvmProperty)
 
 	}
+	/** Returns whether the control allows child controls in the Children collection.
+	 * Does not apply to InnerElement properties (pretty much every control allows PostBack.Handlers) */
+	function allowsChildren(type: res.FullControlInfo): boolean {
+		return !type.withoutContent &&
+			(type.baseTypeHierarchy == null || type.baseTypeHierarchy.some(t => /^DotVVM\.Framework\.Controls\.DotvvmControl($|,.*)/.test(t)))
+	}
 	function getControlCompletionInfo(
 		control: res.ResolveControlResult
 	): ControlCompletionInfo {
-		if (!control.type) {
-			return {}
+		const type = control.type
+		if (!type) {
+			return emptyObject
 		}
 
 		let predefined =
-			control.type.fullName in predefinedControls
-				? predefinedControls[control.type.fullName]
-				: {}
+			type.fullName in predefinedControls
+				? predefinedControls[type.fullName]
+				: emptyObject
 
+		let selfClosing = type.defaultContentProperty == null;
 		const requiredProperties = new Set<string>()
-		for (const p of res.listProperties(config, control.type)) {
+		for (const p of res.listProperties(config, type)) {
 			if (p.required) {
 				requiredProperties.add(p.name)
+
+				if (p.mappingMode == "InnerElement" || p.mappingMode == "Both") {
+					selfClosing = false
+				}
 			}
 
-			// properties which 
-			if (p.dataContextChange && p.name == control.type.defaultContentProperty) {
+			// properties which are needed for datacontext in the default content property are essentially required
+			if (p.dataContextChange && p.name == type.defaultContentProperty) {
 				for (const pp of p.dataContextChange?.flatMap(c => c.PropertyDependsOn ?? [])) {
 					requiredProperties.add(pp)
 				}
@@ -214,8 +226,10 @@ export function createDotvvmControlInfoProvider(
 		}
 		const autoProperties = Array.from(requiredProperties)
 
-		const selfClosing = control.type.withoutContent && !control.type.defaultContentProperty
-
+		if (selfClosing && allowsChildren(type)) {
+			selfClosing = false
+		}
+		
 		return { selfClosing, autoProperties, ...predefined } // predefined is last - it has precedence
 	}
 	return {

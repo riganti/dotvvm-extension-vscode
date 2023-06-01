@@ -10,7 +10,8 @@
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
-				"--extensionDevelopmentPath=${workspaceFolder}/src/dotvvm-vscode"
+				"--extensionDevelopmentPath=${workspaceFolder}/src/dotvvm-vscode",
+				// "--disable-extensions"
 			],
 			"outFiles": [
 				"${workspaceFolder}/src/dotvvm-vscode/dist/**/*.js"
