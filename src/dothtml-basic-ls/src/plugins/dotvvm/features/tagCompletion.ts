@@ -1,4 +1,4 @@
-import type { ErroneousEndTagNode, HtmlElementNode, SelfClosingTagNode, StartTagNode } from 'tree-sitter-dotvvm';
+import type { EndTagNode, ErroneousEndTagNode, HtmlElementNode, SelfClosingTagNode, StartTagNode } from 'tree-sitter-dotvvm';
 import * as res from '../../../lib/dotvvmControlResolver';
 import type { ResolveControlResult, ResolvedPropertyInfo } from '../../../lib/dotvvmControlResolver';
 import { PropertyMappingMode, SerializedConfigSeeker } from '../../../lib/serializedConfigSeeker';
@@ -8,9 +8,6 @@ import { getCollectionElementType, parseTypeName } from '../../../lib/dotnetUtil
 import type { nullish } from '../../../utils';
 import { DotvvmControlInfoProvider, PropertyCompletionInfo } from '../../../lib/dotvvmControlInformation';
 import { createPropertySnippet } from './completionHelpers';
-
-
-
 
 export class DotvvmTagCompletion
 {
@@ -45,6 +42,7 @@ export class DotvvmTagCompletion
 		tag: string,
 		description: string | undefined,
 		control: ResolveControlResult,
+		endStartingTag: boolean,
 		completeEndTag: boolean
 	): CompletionItem {
 		const info = this.controlInformation.getControlCompletionInfo(control)
@@ -65,14 +63,15 @@ export class DotvvmTagCompletion
 				}).join("")
 
 		const ending =
-			completeEndTag && info.selfClosing ? `$0 />` :
-			completeEndTag ? `>$0</${tag}>` : '$0'
+			endStartingTag && info.selfClosing ? `$0 />` :
+			completeEndTag ? `>$0</${tag}>` :
+			endStartingTag ? `>$0` : '$0'
 		
 		return {
 			label: tag,
 			documentation: description,
 			insertTextFormat: InsertTextFormat.Snippet,
-			insertText: tag + " " + requiredPropertiesSnippet + ending,
+			insertText: tag + (requiredPropertiesSnippet ? " " + requiredPropertiesSnippet : "") + ending,
 			kind: control.kind == "code" ? CompletionItemKind.Class : CompletionItemKind.Module
 		}
 	}
@@ -123,6 +122,11 @@ export class DotvvmTagCompletion
 
 		// when the end tag is missing, we also autocomplete the closing tag
 		const isSelfClosing = elementNode?.type == "self_closing_tag" && !elementNode.descendantsOfType("/>")[0].isMissing()
+		const potentialEndTags = new Set<string>(
+			elementNode?.parent?.namedChildren
+				.filter(c => c.type == "erroneous_end_tag" || c.type == "end_tag")
+				.map(c => (c as EndTagNode).nameNode.text.toLowerCase()) ?? []
+		)
 		const isEndMissing = !isSelfClosing && !elementNode?.text.endsWith('>') && (elementNode?.parent as HtmlElementNode).endNode == null
 	
 		const baseType = this.getExpectedBaseType(containingProperty)
@@ -131,17 +135,21 @@ export class DotvvmTagCompletion
 		const controlCompletions =
 			controls
 				.filter(c => c.control.type?.isAbstract !== true)
-				.map(c => this.createControlCompletion(elementNode, c.tag, c.description, c.control, isEndMissing))
+				.map(c => this.createControlCompletion(elementNode, c.tag, c.description, c.control, isEndMissing, isEndMissing && !potentialEndTags.has(c.tag.toLowerCase())))
 
 		const properties = containingProperty != null ? [] : this.listControlProperties(parentControl, "InnerElement")
 		
-
 		const propertyCompletions = properties.map(p => {
+			// re-close self closing tags, it doesn't make sense for properties
+			const addEndTag = isSelfClosing || isEndMissing && !potentialEndTags.has(p.name.toLowerCase())
 			return <CompletionItem>{
 				label: p.name,
 				// documentation: p.description,
 				insertTextFormat: InsertTextFormat.Snippet,
-				insertText: p.name + (isEndMissing || isSelfClosing ? `>$0</${p.name}>` : '$0'),
+				insertText: p.name + (
+					addEndTag ? `>$0</${p.name}>` :
+					isEndMissing ? `>$0` :
+					'$0'),
 				kind: CompletionItemKind.Field
 			}
 		})
