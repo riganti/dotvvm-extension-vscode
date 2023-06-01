@@ -67,6 +67,14 @@ const predefinedControls: { [c: string]: ControlCompletionInfo } = {
 		autoProperties: ["Value"],
 		selfClosing: true
 	},
+	"DotVVM.Framework.Controls.ConfirmPostBackHandler": {
+		autoProperties: ["Message"],
+		selfClosing: true
+	},
+	"DotVVM.Framework.Controls.SuppressPostBackHandler": {
+		autoProperties: ["Suppress"],
+		selfClosing: true
+	},
 }
 
 const predefinedProperties: { [c: string]: PropertyCompletionInfo } = {
@@ -80,6 +88,10 @@ const predefinedProperties: { [c: string]: PropertyCompletionInfo } = {
 	},
 	"DotVVM.Framework.Controls.RenderSettings.Mode": {
 		autocompleteValue: "Server" // Client is default
+	},
+	"DotVVM.Framework.Controls.SuppressPostBackHandler.Suppress": {
+		bindingTypes: ["value"],
+		autocompleteBinding: "value"
 	}
 }
 
