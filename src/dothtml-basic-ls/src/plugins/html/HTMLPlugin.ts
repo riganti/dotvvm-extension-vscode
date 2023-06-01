@@ -4,7 +4,10 @@ import {
     HTMLDocument,
     CompletionItem as HtmlCompletionItem,
     Node,
-    LanguageService
+    LanguageService,
+    newHTMLDataProvider,
+    getDefaultHTMLDataProvider,
+    IHTMLDataProvider
 } from 'vscode-html-languageservice';
 import {
     CompletionList,
@@ -25,7 +28,6 @@ import {
     getNodeIfIsInComponentStartTag
 } from '../../lib/documents';
 import { LSConfigManager, LSHTMLConfig } from '../../ls-config';
-import { DothtmlDataProvider } from './dothtmlDataProvider'
 import {
     HoverProvider,
     CompletionsProvider,
@@ -42,17 +44,35 @@ export class HTMLPlugin
     private configManager: LSConfigManager;
     private documents = new WeakMap<DotvvmDocument, HTMLDocument>();
     private styleScriptTemplate = new Set(['template', 'style', 'script']);
-    dothtmlDataProvider: DothtmlDataProvider;
     private lang: LanguageService
 
     constructor(
         docManager: DocumentManager,
         configManager: LSConfigManager,
         private configSeeker: SerializedConfigSeeker) {
-        this.dothtmlDataProvider = new DothtmlDataProvider(configSeeker);
+        const provider = getDefaultHTMLDataProvider()
+
+        const wrapper: IHTMLDataProvider = {
+            isApplicable(languageId) {
+                return provider.isApplicable(languageId)
+            },
+            getId() {
+                return provider.getId()
+            },
+            provideTags() {
+                return provider.provideTags()
+            },
+            provideValues(tag, attribute) {
+                return provider.provideValues(tag, attribute)
+            },
+            provideAttributes(tag) {
+                return [] // Handled by DotvvmCompletion
+            },
+        }
+
         this.lang = getLanguageService({
-            customDataProviders: [this.dothtmlDataProvider],
-            // useDefaultDataProvider: false
+            customDataProviders: [wrapper],
+            useDefaultDataProvider: false
         })
 
         this.configManager = configManager;
@@ -127,6 +147,11 @@ export class HTMLPlugin
             // HTML close tag is kindof buggy in dothtml, it's better to filter it out and reimplement with tree-sitter
             if (i.label.startsWith('/'))
                 return false
+
+            if (i.label == 'data-') {
+                // Filter out data- attribute completions, this thing wrongly thinks it's allowed on every element
+                return false
+            }
             return true
         })
 

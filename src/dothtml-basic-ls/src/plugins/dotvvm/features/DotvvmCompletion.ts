@@ -1,7 +1,7 @@
 import { bind } from 'lodash';
 import { EOL } from 'os';
 import { ErroneousEndTagNode, HtmlElementNode, SelfClosingTagNode, StartTagNode, SyntaxNode } from 'tree-sitter-dotvvm';
-import { Range } from 'vscode-html-languageservice';
+import { getDefaultHTMLDataProvider, Range } from 'vscode-html-languageservice';
 import {
     Position,
     CompletionList,
@@ -15,12 +15,14 @@ import {
 import { isInTag, DotvvmDocument } from '../../../lib/documents';
 import { AttributeContext, getAttributeContextAtPosition } from '../../../lib/documents/parseHtml';
 import { getCollectionElementType, parseTypeName } from '../../../lib/dotnetUtils';
+import { createDotvvmControlInfoProvider } from '../../../lib/dotvvmControlInformation';
 import type { ResolveControlResult, ResolvedPropertyInfo } from '../../../lib/dotvvmControlResolver';
 import * as res from '../../../lib/dotvvmControlResolver';
 import { containsPosition, nodeAncestors, nodeToORange, nodeToVsRange, OffsetRange, typeAncestor } from '../../../lib/parserutils';
 import { SerializedConfigSeeker } from '../../../lib/serializedConfigSeeker';
 import { Logger } from '../../../logger';
 import { concatCompletionLists, emptyArray, falsy, nullish } from '../../../utils';
+import { DotvvmAttributeCompletion } from './attributeCompletion';
 import { DotvvmTagCompletion } from './tagCompletion';
 
 const bindingTypes: CompletionItem[] = [
@@ -49,6 +51,7 @@ export function decideCompletionContext(
     const hasError = errorNode || node?.hasError()
     const binding = typeAncestor(['literal_binding', 'attribute_binding'], node)
     const tag = typeAncestor(["start_tag", "self_closing_tag"], node)
+    const attribute = typeAncestor("attribute", node)
 
     let context = "unknown"
     let completionTarget: null | undefined | OffsetRange = null
@@ -91,9 +94,18 @@ export function decideCompletionContext(
 
         resolvedCx = res.resolveControlOrProperty(config, typeAncestor("html_element", node, e => e.startNode != null && e.startNode.endIndex < offset))
     }
+    // attribute/property name
+    else if (containsPosition(offset, tag) && !containsPosition(offset, attribute?.valueNode)) {
+        context = "attribute_name"
+        if (attribute) {
+            completionTarget = nodeToORange(attribute.nameNode)
+        } else {
+            completionTarget = null
+        }
+    }
 
     return {
-        node, binding, tag,
+        node, binding, tag, attribute,
 
         control: resolvedCx?.control,
         property: resolvedCx?.property,
@@ -159,8 +171,11 @@ function getCloseTagCompletion(
 
 export class DotvvmCompletion {
     tagCompletion: DotvvmTagCompletion;
+    attributeCompletion: DotvvmAttributeCompletion;
     constructor(public config: SerializedConfigSeeker) {
-        this.tagCompletion = new DotvvmTagCompletion(config)
+        const controlInformation = createDotvvmControlInfoProvider(config)
+        this.tagCompletion = new DotvvmTagCompletion(config, controlInformation)
+        this.attributeCompletion = new DotvvmAttributeCompletion(config, controlInformation, getDefaultHTMLDataProvider())
     }
 
     
@@ -213,6 +228,10 @@ export class DotvvmCompletion {
                 list(this.tagCompletion.getTagCompletions(cx.tag, cx.control, cx.property)),
                 getCloseTagCompletion(cx.node, offset)
             )
+        }
+
+        if (cx.context == "attribute_name") {
+            return list(this.attributeCompletion.getAttributeCompletions(cx.attribute, cx.control, cx.tag))
         }
 
         return null

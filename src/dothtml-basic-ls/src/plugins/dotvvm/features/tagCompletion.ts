@@ -1,4 +1,4 @@
-import { ErroneousEndTagNode, HtmlElementNode, SelfClosingTagNode, StartTagNode } from 'tree-sitter-dotvvm';
+import type { ErroneousEndTagNode, HtmlElementNode, SelfClosingTagNode, StartTagNode } from 'tree-sitter-dotvvm';
 import * as res from '../../../lib/dotvvmControlResolver';
 import type { ResolveControlResult, ResolvedPropertyInfo } from '../../../lib/dotvvmControlResolver';
 import { PropertyMappingMode, SerializedConfigSeeker } from '../../../lib/serializedConfigSeeker';
@@ -6,18 +6,18 @@ import { CompletionItem, CompletionItemKind, CompletionList, InsertTextFormat, L
 import { nodeToVsRange } from '../../../lib/parserutils';
 import { getCollectionElementType, parseTypeName } from '../../../lib/dotnetUtils';
 import type { nullish } from '../../../utils';
-import { createDotvvmControlInfoProvider, DotvvmControlInfoProvider, PropertyCompletionInfo } from '../../../lib/dotvvmControlInformation';
-import { count } from 'console';
+import { DotvvmControlInfoProvider, PropertyCompletionInfo } from '../../../lib/dotvvmControlInformation';
+import { createPropertySnippet } from './completionHelpers';
 
 
 
 
 export class DotvvmTagCompletion
 {
-	private controlInformation: DotvvmControlInfoProvider
-	constructor(public config: SerializedConfigSeeker)
+	constructor(
+		public config: SerializedConfigSeeker,
+		private controlInformation: DotvvmControlInfoProvider)
 	{
-		this.controlInformation = createDotvvmControlInfoProvider(this.config)
 	}
 
 	private getExpectedBaseType(
@@ -38,42 +38,6 @@ export class DotvvmTagCompletion
 
 		return baseType
 	
-	}
-
-	private static createPropertySnippet(name: string, prop: PropertyCompletionInfo, counter: { i: number }): string {
-		let result = name
-		if (prop.noValue) {
-			return result + " "
-		}
-
-		result += "="
-		if (prop.onlyBindings === true || prop.autocompleteBinding) {
-			if (prop.autocompleteBinding && prop.bindingTypes?.length == 1)
-				result += ("{" + prop.autocompleteBinding + ": ${" + counter.i++ + "}}")
-
-			else if (prop.autocompleteBinding)
-				result += ("{${" + counter.i++ + ":" + prop.autocompleteBinding + "}: ${" + counter.i++ + "}}")
-
-			else 
-				result += "{$" + counter.i++ + "}"
-
-			return result + " "
-		}
-
-		if (prop.autocompleteValue != null) {
-			const addQuotes = prop.hasQuotes ?? /\W/.test(prop.autocompleteValue)
-			if (addQuotes) result += '"'
-
-			result += "${" + counter.i++ + ":" + prop.autocompleteValue + "}"
-
-			if (addQuotes) result += '"'
-			return result + " "
-		}
-
-		if (prop.hasQuotes)
-			return result + '"' + "$" + counter.i++ + '" '
-
-		return result + "$" + counter.i++ + " "
 	}
 
 	private createControlCompletion(
@@ -97,7 +61,7 @@ export class DotvvmTagCompletion
 					if (p.mappingMode == "InnerElement") return "" // TODO: auto-add inner elements
 
 					const property = this.controlInformation.getPropertyCompletionInfo(p)
-					return DotvvmTagCompletion.createPropertySnippet(pName, property, counter)
+					return createPropertySnippet(pName, property, counter)
 				}).join("")
 
 		const ending =
@@ -133,13 +97,12 @@ export class DotvvmTagCompletion
 			...c,
 			additionalTextEdits: [...c.additionalTextEdits ?? [], endEdit(c.label)]
 		}))
-	
 	}
 
 	private listControlProperties(
 		parentControl: ResolveControlResult | undefined,
 		context: PropertyMappingMode
-	) {
+	): res.NamedDotvvmPropertyInfo[] {
 		const properties =
 			parentControl?.type == null
 				? []
@@ -151,7 +114,6 @@ export class DotvvmTagCompletion
 
 		return Array.from(properties).concat(attachedProperties)
 	}
-
 
 	public getTagCompletions(
 		elementNode: StartTagNode | SelfClosingTagNode | undefined,
@@ -191,7 +153,7 @@ export class DotvvmTagCompletion
 		return CompletionList.create(
 			completions,
 			// this makes VSCode refresh the tags on every keystroke
-			// it's necessary in order to make the endEdit work, otherwise the edit range get's outdated
+			// it's necessary in order to make the endEdit work, otherwise the edit range gets outdated
 			true
 		)
 	}
