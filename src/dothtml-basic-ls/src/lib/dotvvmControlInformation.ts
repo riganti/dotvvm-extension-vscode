@@ -3,6 +3,7 @@ import * as res from './dotvvmControlResolver';
 import { emptyObject } from "../utils";
 import { parseTypeName } from "./dotnetUtils";
 
+/** Information used in generating element/control autocompletion items */
 export type ControlCompletionInfo = {
 	/** true if we don't expect any content of this control */
 	selfClosing?: boolean
@@ -10,6 +11,7 @@ export type ControlCompletionInfo = {
 	autoProperties?: string[]
 }
 
+/** Information used in generating attribute/property autocompletion items */
 export type PropertyCompletionInfo = {
 	/** if the property likely won't have any value (i.e. it's boolean with default=false) */
 	noValue?: boolean
@@ -116,6 +118,9 @@ export function createDotvvmControlInfoProvider(
 ) {
 	if (!config) throw new Error("config is required")
 
+	/** Returns information used in autocompletion functions like createPropertySnippet or propertyCompletionKind
+	 * @param isGroup if the property is part of DotVVM property group (CssClasses, CssStyles, Attributes, ...)
+	 */
 	function getPropertyCompletionInfo(
 		prop: res.NamedDotvvmPropertyInfo | (res.NamedDotvvmPropertyGroupInfo & { defaultValue?: any }),
 		isGroup = false
@@ -140,11 +145,12 @@ export function createDotvvmControlInfoProvider(
 			prop.isCommand ? "staticCommand" :
 			prop.onlyBindings ? "value" :
 			onlyBindings && bindingTypes.length > 0 ? bindingTypes[0] :
-			undefined;
+			undefined
 
 		const hasQuotes =
 			prop.type == "System.String" || prop.type == "System.Object" || type?.kind == "array"
 
+		// Autocomplete false for boolean properties defaulting to true. Properties defaulting to false are handled by `noValue`
 		const autocompleteValue =
 			prop.type == "System.Boolean" && prop.defaultValue === true ? "false" :
 			undefined

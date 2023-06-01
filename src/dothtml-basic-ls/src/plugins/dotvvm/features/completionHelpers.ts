@@ -5,11 +5,15 @@ import { PropertyCompletionInfo } from "../../../lib/dotvvmControlInformation"
 import { FullControlInfo, ResolvedControlInfo } from "../../../lib/dotvvmControlResolver"
 import { nullish } from "../../../utils"
 
+/** Attempts to find an HTML element best matching the provided dotvvm control.
+ * If the control should not have html attributes, returns null.
+ */
 export function getBaseHtmlElement(
 	control: FullControlInfo | nullish,
 	element: StartTagNode | SelfClosingTagNode,
 	prefix: string = ""): string | null {
 	let renderWrapperTag: boolean | null = null
+	// 1. Look for WrapperTag, WrapperTagName or RenderWrapperTag=false properties
 	for (const attr of element.attributeNodes) {
 		const name = attr.nameNode.text.toLowerCase()
 		if (name == prefix + "wrappertag" || name == prefix + "wrappertagname" || name == prefix + "tagname") {
@@ -24,10 +28,16 @@ export function getBaseHtmlElement(
 			}
 		}
 	}
+
+	// 2. Some known controls. Match using a full name, but also only the control name to "support" custom TextBox wrappers
 	const fullName = control?.fullName
 	const basicName = element.nameNode.text?.split(":", 2)[1]?.toLowerCase()
 	if (basicName == "textbox" || fullName == "DotVVM.Framework.Controls.TextBox") {
-		return "input"
+		const type = element.attributeNodes.find(x => x.nameNode.text.toLowerCase() == "type")?.valueNode?.text?.toLowerCase()
+		if (type == "multiline")
+			return "textarea"
+		else
+			return "input"
 	}
 	if (basicName == "literal" || fullName == "DotVVM.Framework.Controls.Literal") {
 		return "span"
@@ -39,9 +49,16 @@ export function getBaseHtmlElement(
 		return "a"
 	}
 	if (basicName == "linkbutton" || fullName == "DotVVM.Framework.Controls.LinkButton") {
-		return "button"
+		return "a"
+	}
+	if (fullName == "DotVVM.Framework.Controls.Label") {
+		return "label"
+	}
+	if (fullName == "DotVVM.Framework.Controls.ComboBox" || fullName == "DotVVM.Framework.Controls.MultiSelect") {
+		return "select"
 	}
 	if (fullName == "DotVVM.Framework.Controls.GridView") {
+		// custom GridView are likely not tables
 		return "table"
 	}
 
@@ -93,6 +110,7 @@ export function htmlGenerateDocumentation(item: ITagData | IAttributeData | IVal
 	return result;
 }
 
+/** Returns `Event` for commands, `Property` for other bindable properties, and `Field` for non-bindable properties */
 export function propertyCompletionKind(prop: PropertyCompletionInfo): CompletionItemKind {
 	if (prop.bindingTypes?.includes("value")) {
 		return CompletionItemKind.Property
@@ -103,6 +121,11 @@ export function propertyCompletionKind(prop: PropertyCompletionInfo): Completion
 	return CompletionItemKind.Field
 }
 
+/** Creates a snippet (insertion text template) for the specified DotvvmProperty.
+ * Includes the property name, and
+ *   * sometimes a binding skeleton if the property requires a binding.
+ *   * sometimes a pregenerated value, if the property has a typical value.
+ */
 export function createPropertySnippet(name: string, prop: PropertyCompletionInfo, counter: { i: number, allowFinal?: boolean }): string {
 	let result = name
 	if (prop.noValue) {

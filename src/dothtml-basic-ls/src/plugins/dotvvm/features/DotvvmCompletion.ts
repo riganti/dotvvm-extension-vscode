@@ -104,8 +104,6 @@ export function decideCompletionContext(
         }
     }
 
-    console.log("hovno")
-
     return {
         node, binding, tag, attribute,
 
