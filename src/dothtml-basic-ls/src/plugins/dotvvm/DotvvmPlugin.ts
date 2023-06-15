@@ -27,7 +27,7 @@ import {
     SelectionRangeProvider
 } from '../interfaces';
 import { executeCommand, getCodeActions } from './features/getCodeActions';
-import { DotvvmCompletion } from './features/DotvvmCompletion';
+import { DotvvmCompletion, doCloseTagComplete } from './features/DotvvmCompletion';
 import { getDiagnostics } from './features/getDiagnostics';
 import { getHoverInfo } from './features/getHoverInfo';
 import { getSelectionRange } from './features/getSelectionRanges';
@@ -80,6 +80,24 @@ export class DotvvmPlugin
         }
 
         return this.completion.getCompletions(doc, position);
+    }
+
+    doTagComplete(document: DotvvmDocument, position: Position): string | null {
+        if (!this.featureEnabled('tagComplete')) {
+            return null
+        }
+
+        if (document.determineSublanguage(position).lang != 'html') {
+            return null
+        }
+
+        const offset = document.offsetAt(position)
+        const syntaxNode = document.tree?.nodeAt(offset - 1)
+        if (syntaxNode == null) {
+            return null
+        }
+
+        return doCloseTagComplete(syntaxNode, offset)
     }
 
     async doHover(document: DotvvmDocument, position: Position): Promise<Hover | null> {

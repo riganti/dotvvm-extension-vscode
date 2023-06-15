@@ -86,6 +86,9 @@ const predefinedProperties: { [c: string]: PropertyCompletionInfo } = {
 	"DotVVM.Framework.Controls.Literal.Text": {
 		onlyBindings: true
 	},
+	"DotVVM.Framework.Controls.HtmlGenericControl.InnerText": {
+		onlyBindings: true
+	},
 	"DotVVM.Framework.Controls.RenderSettings.Mode": {
 		autocompleteValue: "Server" // Client is default
 	},

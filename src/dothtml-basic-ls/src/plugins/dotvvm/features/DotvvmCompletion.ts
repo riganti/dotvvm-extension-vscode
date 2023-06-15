@@ -95,7 +95,9 @@ export function decideCompletionContext(
         resolvedCx = res.resolveControlOrProperty(config, typeAncestor("html_element", node, e => e.startNode != null && e.startNode.endIndex < offset))
     }
     // attribute/property name
-    else if (containsPosition(offset, tag) && !containsPosition(offset, attribute?.valueNode)) {
+    else if (containsPosition(offset, tag) && !containsPosition(offset, attribute?.valueNode) &&
+        (!tag?.text.endsWith(">") || tag.endIndex > offset) // if tag ends with > and we are at the end, we are in the content already
+    ) {
         context = "attribute_name"
         if (attribute) {
             completionTarget = nodeToORange(attribute.nameNode)
@@ -152,21 +154,52 @@ function getBindingTypes(property: ResolvedPropertyInfo | falsy): CompletionItem
 }
 
 
+const htmlEmptyElements = [ 'area', 'base', 'br', 'col', 'embed', 'hr', 'img', 'input', 'keygen', 'link', 'menuitem', 'meta', 'param', 'source', 'track', 'wbr' ];
 /** Finds the currently open tag, and suggest an end tag for it */
 function getCloseTagCompletion(
     node: SyntaxNode,
     offset: number
 ): CompletionItem[] {
 
-    let openElement = typeAncestor("html_element", node, e => e.startNode != null && e.startNode.endIndex < offset) as HtmlElementNode
+    // return []
+
+    let openElement = typeAncestor("html_element", node, e => e.startNode != null && e.startNode.endIndex < offset && !htmlEmptyElements.includes(e.startNode.nameNode.text)) as HtmlElementNode
 
     let possibleClosingTag = openElement?.startNode?.nameNode.text
 
     return possibleClosingTag == null ? [] : [{
         label: '/' + possibleClosingTag,
         insertText: '/' + possibleClosingTag + '>',
-        commitCharacters: [ '>' ],
+        detail: "Close tag from line " + (openElement.startPosition.row + 1)
     }]
+}
+
+
+export function doCloseTagComplete(node: SyntaxNode, offset: number): string | null {
+    let openElement = typeAncestor("html_element", node, e => e.startNode != null && !htmlEmptyElements.includes(e.startNode.nameNode.text)) as HtmlElementNode
+    Logger.log("Completing closing tag at", [...nodeAncestors(node)].map(n => n.type).reverse().join(" > "))
+    if (openElement == null) {
+        Logger.error("Cannot close tag, no open element found")
+        return null
+    }
+
+    if (node.type == "</") {
+        // we are closing tag which started potentially far away (triggered by typing </)
+        return openElement.startNode!.nameNode.text + ">";
+    }
+
+    if (openElement.startNode!.endIndex >= offset) {
+        // we are closing the tag which just ended
+        if (openElement.startNode!.endIndex != offset) {
+            // slash in attribute or something similar
+            Logger.log(`Cannot close element which inside of the start tag (start tag is [${openElement.startNode!.startIndex}, ${openElement.startNode!.endIndex}], current position = ${offset})`)
+            return null
+        }
+        return "$0</" + openElement.startNode!.nameNode.text + ">"
+    }
+    
+    // this also gets invoked when new closing tag is added or every time there is a / in the body, we don't want to react to that
+    return null
 }
 
 export class DotvvmCompletion {

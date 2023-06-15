@@ -272,7 +272,7 @@ export async function startServer(options?: LSOptions) {
     connection.onDocumentFormatting((evt) =>
         pluginHost.formatDocument(evt.textDocument, evt.options)
     );
-    connection.onRequest(TagCloseRequest.type, (evt) =>
+    connection.onRequest(TagCloseRequest.type, (evt) => // Called as 'html/tag' from autoClose.ts
         pluginHost.doTagComplete(evt.textDocument, evt.position)
     );
     connection.onDocumentColor((evt) => pluginHost.getDocumentColors(evt.textDocument));

@@ -145,7 +145,7 @@ export class HTMLPlugin
 
         items = items.filter(i => {
             // HTML close tag is kindof buggy in dothtml, it's better to filter it out and reimplement with tree-sitter
-            if (i.label.startsWith('/'))
+            if (i.label.startsWith('/') || i.label.startsWith('</'))
                 return false
 
             if (i.label == 'data-') {
@@ -167,21 +167,6 @@ export class HTMLPlugin
 
     private isInComponentTag(html: HTMLDocument, document: DotvvmDocument, position: Position) {
         return !!getNodeIfIsInComponentStartTag(html, document.offsetAt(position));
-    }
-
-    doTagComplete(document: DotvvmDocument, position: Position): string | null {
-        if (!this.featureEnabled('tagComplete')) {
-            return null;
-        }
-        if (document.determineSublanguage(position).lang != 'html') {
-            return null;
-        }
-        const html = this.documents.get(document);
-        if (!html) {
-            return null;
-        }
-
-        return this.lang.doTagComplete(document, position, html);
     }
 
     getDocumentSymbols(document: DotvvmDocument): SymbolInformation[] {
