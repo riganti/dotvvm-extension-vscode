@@ -22,7 +22,6 @@ const defaultLSConfig: LSConfig = {
         enable: true,
         hover: { enable: true },
         completions: { enable: true, emmet: true },
-        tagComplete: { enable: true },
         documentSymbols: { enable: true },
         linkedEditing: { enable: true }
     },
@@ -31,6 +30,7 @@ const defaultLSConfig: LSConfig = {
         codeActions: { enable: true },
         selectionRange: { enable: true },
         completions: { enable: true },
+        tagComplete: { enable: true },
         diagnostics: { enable: true },
         hover: { enable: true },
     }
@@ -84,9 +84,6 @@ export interface LSHTMLConfig {
         enable: boolean;
         emmet: boolean;
     };
-    tagComplete: {
-        enable: boolean;
-    };
     documentSymbols: {
         enable: boolean;
     };
@@ -101,6 +98,7 @@ export interface LSDotvvmConfig {
     enable: boolean
     diagnostics: Switch
     completions: Switch
+    tagComplete: Switch
     hover: Switch
     codeActions: Switch
     selectionRange: Switch

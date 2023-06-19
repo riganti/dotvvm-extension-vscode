@@ -1,19 +1,20 @@
 import * as _ from "lodash";
-import { parse } from "path";
 import { AttributeNode, HtmlElementNode, ScriptElementNode, StyleElementNode, SyntaxNode } from "tree-sitter-dotvvm";
 import { Logger } from "../logger";
-import { choose, emptyArray, emptyObject, nullish, unique, uniqueBy } from "../utils";
-import { DotnetType, parseTypeName } from "./dotnetUtils";
+import { choose, emptyObject, nullish, unique, uniqueBy } from "../utils";
+import { DotnetType, parseTypeName, stripAssemblyName } from "./dotnetUtils";
 import { nodeToORange, OffsetRange, typeAncestor } from "./parserutils";
-import { CodeControlRegistrationInfo, DotvvmControlInfo, DotvvmPropertyGroupInfo, DotvvmPropertyInfo, MarkupControlRegistrationInfo, PropertyMappingMode, SerializedConfigSeeker } from "./serializedConfigSeeker";
+import { CodeControlRegistrationInfo, DotvvmControlInfo, DotvvmPropertyGroupInfo, DotvvmPropertyInfo, DotvvmSerializedConfig, MarkupControlRegistrationInfo, PropertyMappingMode, SerializedConfigSeeker } from "./serializedConfigSeeker";
 
 
 export type FullControlInfo = DotvvmControlInfo & {
 	name: string
 	fullName: string
-	properties: { readonly [name: string]: Readonly<DotvvmPropertyInfo> },
-	propGroups: { readonly [name: string]: Readonly<DotvvmPropertyGroupInfo> },
-	capabilities: { readonly [name: string]: Readonly<DotvvmPropertyInfo> },
+	baseTypeHierarchy: string[] | null
+	allInterfaces: string[] | null
+	properties: { readonly [name: string]: Readonly<DotvvmPropertyInfo> }
+	propGroups: { readonly [name: string]: Readonly<DotvvmPropertyGroupInfo> }
+	capabilities: { readonly [name: string]: Readonly<DotvvmPropertyInfo> }
 }
 
 export type ResolveControlResult =
@@ -59,10 +60,14 @@ export function findControl(config: SerializedConfigSeeker, type: string | Dotne
 
 	for (const c of Object.values(config.configs)) {
 		if (c.controls && t.fullName in c.controls) {
+			const control = c.controls[t.fullName]
+			const { baseTypeHierarchy, allInterfaces } = collectBaseTypes(c, control);
 			return {
-				...c.controls[t.fullName],
+				...control,
 				fullName: t.fullName,
 				name: t.name,
+				baseTypeHierarchy,
+				allInterfaces,
 				properties: c.properties?.[t.fullName] ?? emptyObject,
 				propGroups: c.propertyGroups?.[t.fullName] ?? emptyObject,
 				capabilities: c.capabilities?.[t.fullName] ?? emptyObject
@@ -73,6 +78,8 @@ export function findControl(config: SerializedConfigSeeker, type: string | Dotne
 	for (const c of Object.values(config.configs)) {
 		if (c.properties && t.fullName in c.properties) {
 			return {
+				baseTypeHierarchy: null,
+				allInterfaces: null,
 				assembly: t.assembly ?? "unknown",
 				fullName: t.fullName,
 				name: t.name,
@@ -82,6 +89,27 @@ export function findControl(config: SerializedConfigSeeker, type: string | Dotne
 			}
 		}
 	}
+}
+
+function collectBaseTypes(c: DotvvmSerializedConfig, control: DotvvmControlInfo) {
+	let baseType = stripAssemblyName(control.baseType)
+	if (baseType == null || c.controls == null) {
+		return { baseTypeHierarchy: null, allInterfaces: null }
+	}
+	const baseTypeHierarchy = []
+	const allInterfaces = [...control.interfaces ?? []]
+	while (baseType != null && baseType != "System.Object") {
+		baseTypeHierarchy.push(baseType)
+		const baseControl: DotvvmControlInfo = c.controls![baseType]
+		if (baseControl == null) {
+			Logger.log("Could not find control", baseType)
+		}
+		if (baseControl?.interfaces) {
+			allInterfaces.push(...baseControl.interfaces)
+		}
+		baseType = stripAssemblyName(baseControl?.baseType)
+	}
+	return { baseTypeHierarchy, allInterfaces }
 }
 
 export function resolveControl(config: SerializedConfigSeeker, name: string): ResolveControlResult | undefined {
@@ -171,7 +199,7 @@ export function listAllControls(config: SerializedConfigSeeker): ControlListResu
 }
 
 export function listControls(config: SerializedConfigSeeker, baseType: string | nullish): ControlListResult[] {
-	baseType = baseType && (parseTypeName(baseType)?.fullName ?? baseType)
+	baseType = stripAssemblyName(baseType)
 
 	const all = listAllControls(config)
 	if (!baseType && baseType == "DotVVM.Framework.Controls.DotvvmBindableObject")
@@ -185,7 +213,7 @@ export function listControls(config: SerializedConfigSeeker, baseType: string | 
 		while (base != null) {
 			if (base.fullName == baseType)
 				return true
-			if (base.interfaces && base.interfaces.some(i => parseTypeName(i)?.fullName == baseType))
+			if (base.interfaces && base.interfaces.some(i => stripAssemblyName(i) == baseType))
 				return true
 			base = findControl(config, base.baseType) ?? null
 		}

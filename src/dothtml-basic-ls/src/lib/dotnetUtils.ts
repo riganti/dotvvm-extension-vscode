@@ -129,6 +129,24 @@ export function parseTypeName(t: string): DotnetType | null {
 	return parsed.type
 }
 
+export function stripAssemblyName(t: string): string
+export function stripAssemblyName(t: string | nullish): string | null
+export function stripAssemblyName(t: string | nullish): string | null {
+	if (t == null) return null
+	if (!t.includes(',')) {
+		return t
+	}
+	if (!t.includes('[')) {
+		// no generic arguments, simple (and quick) regex replace is enough
+		return t.replace(/,.*$/, '')
+	}
+	const parsed = parseTypeName(t)
+	if (!parsed) {
+		return null
+	}
+	return parsed.fullName
+}
+
 const specializedCollectionTypes: { [k: string]: DotnetType } = {
 	"DotVVM.Framework.Controls.PostBackHandlerCollection": parseTypeName("DotVVM.Framework.Controls.PostBackHandler, DotVVM.Framework")!
 }

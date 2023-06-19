@@ -13,3 +13,39 @@ unfinished attached property
             (tag_name)
             (attribute
               (attribute_name_attached_property))))))
+
+===================
+unfinished open tag
+
+<span>
+  <Po
+		<dot:ConfirmPostBackHandler ></dot:ConfirmPostBackHandler>
+	</PostBack.Handlers>
+</span>
+
+---
+
+(source_file
+      (markup
+        (html_element
+          (self_closing_tag
+            (tag_name)
+            (attribute
+              (attribute_name_attached_property))))
+        (html_text)
+        (html_element
+          (start_tag
+            (tag_name))
+          (html_element
+            (start_tag
+              (tag_name)
+              (MISSING ">"))
+            (html_element
+              (start_tag
+                (tag_name))
+              (end_tag
+                (tag_name)))
+            (erroneous_end_tag
+              (erroneous_end_tag_name)))
+          (end_tag
+            (tag_name)))))

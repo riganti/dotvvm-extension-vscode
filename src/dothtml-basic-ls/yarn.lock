@@ -2630,13 +2630,13 @@ __metadata:
   linkType: hard
 
 "tree-sitter@npm:^0.20.0":
-  version: 0.20.0
-  resolution: "tree-sitter@npm:0.20.0"
+  version: 0.20.1
+  resolution: "tree-sitter@npm:0.20.1"
   dependencies:
     nan: ^2.14.0
     node-gyp: latest
     prebuild-install: ^6.0.1
-  checksum: 25d05c10e921571c56d45331873f3ecbba98b7140d645fba48bf5b4d16c2418170743d087cfa0a81111ab35cf43bff14110931403c14dc6d6d85e3bfe4cd0ea3
+  checksum: a33bf01f9dc558aa0075c9634d06743ed9b7fbf273d2acfbe96daf83f48aec46be7dc42d80d2423c36593d36d3bf189d3fa023d6ce389e20ff9527fae118b215
   languageName: node
   linkType: hard
 
